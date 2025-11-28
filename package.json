@@ -1,0 +1,32 @@
+{
+  "name": "ainews-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI News Pipeline - Automated news processing and distribution system",
+  "license": "MIT",
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx}\" \"functions/*/src/**/*.{ts,tsx}\" \"apps/*/src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.{ts,tsx}\" \"functions/*/src/**/*.{ts,tsx}\" \"apps/*/src/**/*.{ts,tsx}\"",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.0.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

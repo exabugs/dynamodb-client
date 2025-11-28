@@ -1,0 +1,5 @@
+packages:
+  - 'packages/*'
+  - 'functions/*'
+  - 'functions/maintenance/*'
+  - 'apps/*'

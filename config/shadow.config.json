@@ -1,0 +1,100 @@
+{
+  "$schemaVersion": "1.0",
+  "$generatedFrom": "packages/api-types/src/schema.ts (SchemaRegistryConfig)",
+  "database": {
+    "name": "ainews",
+    "timestamps": {
+      "createdAt": "createdAt",
+      "updatedAt": "updatedAt"
+    }
+  },
+  "resources": {
+    "articles": {
+      "shadows": {
+        "name": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "publishedAt": {
+          "type": "datetime"
+        },
+        "language": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "datetime"
+        },
+        "updatedAt": {
+          "type": "datetime"
+        }
+      },
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      },
+      "ttl": {
+        "days": 90
+      }
+    },
+    "tasks": {
+      "shadows": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "datetime"
+        },
+        "createdAt": {
+          "type": "datetime"
+        },
+        "updatedAt": {
+          "type": "datetime"
+        }
+      },
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      }
+    },
+    "fetchLogs": {
+      "shadows": {
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "executedAt": {
+          "type": "datetime"
+        },
+        "createdAt": {
+          "type": "datetime"
+        },
+        "updatedAt": {
+          "type": "datetime"
+        }
+      },
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      },
+      "ttl": {
+        "days": 30
+      }
+    }
+  }
+}

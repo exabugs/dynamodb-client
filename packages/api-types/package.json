@@ -1,0 +1,27 @@
+{
+  "name": "@ainews/api-types",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "generate:shadow": "node dist/scripts/generate-shadow-config.js",
+    "build": "tsc && node dist/scripts/generate-shadow-config.js",
+    "clean": "rm -rf dist",
+    "lint": "echo 'Linting skipped for now'",
+    "format": "prettier --write src",
+    "test": "vitest --run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  }
+}
