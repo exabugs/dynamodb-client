@@ -1,6 +1,7 @@
 # DynamoDB Client SDK
 
 [![CI](https://github.com/exabugs/dynamodb-client/actions/workflows/ci.yml/badge.svg)](https://github.com/exabugs/dynamodb-client/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/exabugs/dynamodb-client/branch/main/graph/badge.svg)](https://codecov.io/gh/exabugs/dynamodb-client)
 [![npm version](https://badge.fury.io/js/@exabugs%2Fdynamodb-client.svg)](https://www.npmjs.com/package/@exabugs/dynamodb-client)
 
 DynamoDB Single-Table Client SDK with MongoDB-like API, Shadow Records, and Lambda implementation for serverless applications.

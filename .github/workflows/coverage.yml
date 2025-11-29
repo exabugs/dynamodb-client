@@ -33,19 +33,11 @@ jobs:
           # Coverage threshold check is handled by vitest.config.ts
           # See: coverage.thresholds in vitest.config.ts
 
-      # Codecov is disabled for private repositories (requires paid plan)
-      # Uncomment when repository becomes public
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     files: ./coverage/coverage-final.json
-      #     flags: unittests
-      #     name: codecov-umbrella
-      #     fail_ci_if_error: false
-
-      - name: Generate coverage badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          echo "Coverage badge generation would go here"
-          # This would typically use a service like shields.io or codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
