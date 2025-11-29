@@ -1,0 +1,35 @@
+{
+  "$schemaVersion": "1.0",
+  "resources": {
+    "articles": {
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      },
+      "shadows": {
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "publishedAt": { "type": "datetime" },
+        "createdAt": { "type": "datetime" },
+        "updatedAt": { "type": "datetime" }
+      },
+      "ttl": {
+        "days": 90
+      }
+    },
+    "tasks": {
+      "sortDefaults": {
+        "field": "priority",
+        "order": "DESC"
+      },
+      "shadows": {
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "number" },
+        "dueDate": { "type": "datetime" },
+        "createdAt": { "type": "datetime" },
+        "updatedAt": { "type": "datetime" }
+      }
+    }
+  }
+}

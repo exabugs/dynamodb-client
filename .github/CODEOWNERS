@@ -1,0 +1,27 @@
+# This file defines code owners for the repository
+# Code owners are automatically requested for review when someone opens a pull request
+
+# Default owners for everything in the repo
+* @exabugs
+
+# CI/CD workflows
+/.github/workflows/ @exabugs
+
+# Core library code
+/src/ @exabugs
+
+# Tests
+/__tests__/ @exabugs
+
+# Documentation
+/docs/ @exabugs
+/README.md @exabugs
+
+# Terraform modules
+/terraform/ @exabugs
+
+# Package configuration
+/package.json @exabugs
+/tsconfig.json @exabugs
+/vitest.config.ts @exabugs
+/eslint.config.js @exabugs

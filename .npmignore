@@ -1,0 +1,32 @@
+# Source files
+src/
+__tests__/
+examples/
+
+# Configuration files
+tsconfig.json
+tsconfig.cjs.json
+vitest.config.ts
+eslint.config.js
+.prettierrc
+prettier.config.cjs
+
+# Development files
+.git/
+.github/
+.vscode/
+.kiro/
+node_modules/
+
+# Documentation (except README.md)
+docs/
+
+# Build artifacts
+*.log
+*.tsbuildinfo
+coverage/
+
+# Environment files
+.env
+.env.*
+.envrc
