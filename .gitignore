@@ -19,6 +19,9 @@ functions/**/dist/*.cjs
 infra/.env*
 !infra/.env.example
 
+# npm configuration (contains tokens)
+.npmrc
+
 # Terraform
 infra/**/.terraform/
 infra/**/*.tfstate

@@ -24,6 +24,9 @@
     "type": "git",
     "url": "https://github.com/exabugs/dynamodb-client.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "bugs": {
     "url": "https://github.com/exabugs/dynamodb-client/issues"
   },

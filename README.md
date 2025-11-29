@@ -1,52 +1,110 @@
-# AIニュース自動配信パイプライン
+# DynamoDB Client SDK
 
-AI News Pipeline - Automated news processing and distribution system
+[![CI](https://github.com/exabugs/dynamodb-client/actions/workflows/ci.yml/badge.svg)](https://github.com/exabugs/dynamodb-client/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/@exabugs%2Fdynamodb-client.svg)](https://www.npmjs.com/package/@exabugs/dynamodb-client)
 
-## プロジェクト概要
+DynamoDB Single-Table Client SDK with MongoDB-like API, Shadow Records, and Lambda implementation for serverless applications.
 
-ニュース記事の取得から音声合成、動画レンダリング、配信までを自動化するシステムです。DynamoDB Single-Table設計による動的シャドー管理、AppSync GraphQL API、React管理画面、Expo/React Nativeモバイルアプリを統合し、エンドツーエンドのニュース配信ワークフローを提供します。
+## Features
 
-## 技術スタック
+- 🚀 MongoDB-like API for DynamoDB
+- 📦 Single-Table Design with Shadow Records
+- 🔐 Multiple authentication methods (IAM, Cognito, Token)
+- ⚡ Lambda function implementation included
+- 🎨 react-admin integration
+- 📝 TypeScript support
+- 🏗️ Terraform modules for deployment
 
-- **モノレポ管理**: pnpm workspace
-- **言語**: TypeScript, Node.js 22
-- **インフラ**: AWS (DynamoDB, Lambda, AppSync, Cognito, S3, CloudFront)
-- **IaC**: Terraform
-- **フロントエンド**: React 19, react-admin 5, Expo 54
-- **テスト**: Vitest
-- **Lint/Format**: ESLint 9, Prettier
+## Installation
 
-## 必要要件
+### From GitHub Packages (Private Repository)
 
-- Node.js >= 22.0.0
-- pnpm >= 9.0.0
-- AWS CLI (configured)
-- Terraform >= 1.5.0
-
-## セットアップ
+1. Create a Personal Access Token with `read:packages` scope
+2. Configure `.npmrc`:
 
 ```bash
-# 依存関係のインストール
-make install
-# または
-pnpm install
-
-# Lint実行
-make lint
-
-# フォーマット
-make format
-
-# テスト実行
-make test
-
-# ビルド
-make build
+@exabugs:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
 ```
 
-## Makefile操作
+3. Install the package:
 
-プロジェクトでは頻度の高い操作をMakefileで管理しています。
+```bash
+npm install @exabugs/dynamodb-client
+```
+
+For detailed instructions, see [Private Package Usage Guide](docs/PRIVATE_PACKAGE_USAGE.md).
+
+### From npm (Public - Coming Soon)
+
+```bash
+npm install @exabugs/dynamodb-client
+```
+
+## Quick Start
+
+### Client Usage (IAM Authentication)
+
+```typescript
+import { DynamoClient } from '@exabugs/dynamodb-client/client/iam';
+
+const client = new DynamoClient(FUNCTION_URL, {
+  region: 'ap-northeast-1',
+});
+
+const db = client.db();
+const collection = db.collection('articles');
+
+// Create
+await collection.insertOne({ title: 'Hello World', content: '...' });
+
+// Read
+const article = await collection.findOne({ title: 'Hello World' });
+
+// Update
+await collection.updateOne({ id: article.id }, { $set: { status: 'published' } });
+
+// Delete
+await collection.deleteOne({ id: article.id });
+```
+
+### Server Usage (Lambda Function)
+
+```typescript
+import { createHandler } from '@exabugs/dynamodb-client/server/handler';
+
+export const handler = createHandler({
+  tableName: process.env.TABLE_NAME!,
+  region: process.env.AWS_REGION!,
+});
+```
+
+## Requirements
+
+- Node.js >= 18.0.0
+- AWS Account (for DynamoDB and Lambda)
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Build
+npm run build
+
+# Lint
+npm run lint
+
+# Format
+npm run format
+```
 
 ### 主要コマンド
 
