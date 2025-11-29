@@ -448,7 +448,7 @@ jobs:
       - run: npm test
       - run: npm run test:coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage/coverage-final.json
 
