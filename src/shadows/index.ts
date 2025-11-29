@@ -18,6 +18,14 @@ export type {
   ShadowDiff,
 } from './types.js';
 
+// スキーマ定義のエクスポート
+export {
+  ShadowFieldType as ShadowFieldTypeEnum,
+  type ShadowFieldDefinition,
+  type ResourceSchema,
+  type SchemaRegistryConfig,
+} from './schema.js';
+
 // ジェネレーター関数のエクスポート
 export {
   escapeString,

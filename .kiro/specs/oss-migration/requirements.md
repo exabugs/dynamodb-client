@@ -231,3 +231,21 @@ ainews-pipeline プロジェクトから dynamodb-client ライブラリを独�
 3. THE SECURITY.md SHALL 脆弱性の報告方法を含む
 4. THE SECURITY.md SHALL セキュリティアップデートのポリシーを含む
 5. THE package.json SHALL セキュリティ監査スクリプトを含む（`npm audit`）
+
+
+### 要件16: Shadow Config の生成ツールと Example
+
+**ユーザーストーリー:** 開発者として、Shadow Config の設定方法が明確で、簡単に始められることを期待する
+
+#### 受入基準
+
+1. THE システム SHALL TypeScript スキーマから `shadow.config.json` を生成するツールを提供する
+2. THE システム SHALL `examples/` ディレクトリに完全な動作例を含む
+3. THE Example SHALL TypeScript スキーマ定義のサンプルを含む
+4. THE Example SHALL 生成された `shadow.config.json` のサンプルを含む
+5. THE Example SHALL Lambda デプロイ用の設定例を含む
+6. THE README.md SHALL Shadow Config の作成手順を詳細に説明する
+7. THE README.md SHALL Example へのリンクを含む
+8. THE ドキュメント SHALL フィールドタイプ（string, number, datetime）の説明を含む
+9. THE ドキュメント SHALL デフォルトソート設定の説明を含む
+10. THE ドキュメント SHALL TTL 設定の説明を含む

@@ -669,3 +669,290 @@ Properties serve as the bridge between human-readable specifications and machine
 4. **国際化**: 英語のドキュメントで国際的なユーザーに対応
 5. **品質**: CI/CD により品質を保証
 6. **コミュニティ**: OSS として公開し、コミュニティからのフィードバックを得る
+
+
+## Shadow Config 生成ツールと Example
+
+### 概要
+
+Shadow Config は DynamoDB Client の最も重要な設定です。ユーザーが簡単に設定を作成できるよう、TypeScript スキーマから自動生成するツールと、完全な動作例を提供します。
+
+### コンポーネント
+
+#### 1. Schema 型定義
+
+```typescript
+// src/shadows/schema.ts
+
+export enum ShadowFieldType {
+  String = 'string',
+  Number = 'number',
+  Datetime = 'datetime',
+}
+
+export interface ShadowFieldDefinition {
+  type: ShadowFieldType;
+}
+
+export interface ResourceSchema<T = any> {
+  resource: string;
+  type: T;
+  shadows: {
+    sortableFields: Record<string, ShadowFieldDefinition>;
+  };
+  sortDefaults?: {
+    field: string;
+    order: 'ASC' | 'DESC';
+  };
+  ttl?: {
+    days: number;
+  };
+}
+
+export interface SchemaRegistryConfig {
+  database: {
+    name: string;
+    timestamps: {
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
+  resources: Record<string, ResourceSchema>;
+}
+```
+
+#### 2. 生成スクリプト
+
+```typescript
+// src/scripts/generate-shadow-config.ts
+
+/**
+ * SchemaRegistryConfig から shadow.config.json を生成
+ *
+ * 使用方法:
+ * 1. スキーマ定義ファイルを作成（例: my-schema.ts）
+ * 2. npx generate-shadow-config my-schema.ts -o shadow.config.json
+ */
+```
+
+**機能:**
+- TypeScript スキーマファイルを読み込み
+- `SchemaRegistryConfig` を抽出
+- `shadow.config.json` を生成
+- デフォルトソート設定を自動決定（updatedAt DESC または最初のフィールド ASC）
+
+#### 3. Example ディレクトリ構造
+
+```
+examples/
+├── README.md                    # Example の説明
+├── basic/                       # 基本的な使用例
+│   ├── schema.ts               # TypeScript スキーマ定義
+│   ├── shadow.config.json      # 生成された設定
+│   ├── lambda/                 # Lambda デプロイ例
+│   │   ├── handler.ts
+│   │   └── package.json
+│   └── client/                 # クライアント使用例
+│       ├── index.ts
+│       └── package.json
+├── advanced/                    # 高度な使用例
+│   ├── schema.ts               # 複数リソース、TTL 設定
+│   ├── shadow.config.json
+│   └── ...
+└── react-admin/                 # React Admin 統合例
+    ├── schema.ts
+    ├── shadow.config.json
+    └── ...
+```
+
+### Example: Basic
+
+#### schema.ts
+
+```typescript
+import { SchemaRegistryConfig, ShadowFieldType } from '@exabugs/dynamodb-client/shadows';
+
+// Article 型定義
+export interface Article {
+  id: string;
+  title: string;
+  content: string;
+  status: 'draft' | 'published';
+  author: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// スキーマレジストリ
+export const MySchemaRegistry: SchemaRegistryConfig = {
+  database: {
+    name: 'myapp',
+    timestamps: {
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    },
+  },
+  resources: {
+    articles: {
+      resource: 'articles',
+      type: {} as Article,
+      shadows: {
+        sortableFields: {
+          title: { type: ShadowFieldType.String },
+          status: { type: ShadowFieldType.String },
+          author: { type: ShadowFieldType.String },
+          createdAt: { type: ShadowFieldType.Datetime },
+          updatedAt: { type: ShadowFieldType.Datetime },
+        },
+      },
+    },
+  },
+};
+```
+
+#### 生成コマンド
+
+```bash
+npx @exabugs/dynamodb-client generate-shadow-config schema.ts -o shadow.config.json
+```
+
+#### 生成される shadow.config.json
+
+```json
+{
+  "$schemaVersion": "2.0",
+  "$generatedFrom": "schema.ts (MySchemaRegistry)",
+  "database": {
+    "name": "myapp",
+    "timestamps": {
+      "createdAt": "createdAt",
+      "updatedAt": "updatedAt"
+    }
+  },
+  "resources": {
+    "articles": {
+      "shadows": {
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "datetime" },
+        "updatedAt": { "type": "datetime" }
+      },
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      }
+    }
+  }
+}
+```
+
+### README 更新
+
+Quick Start セクションを以下のように更新：
+
+```markdown
+## 🚀 Quick Start
+
+### 1. Define Your Schema (TypeScript)
+
+Create a `schema.ts` file:
+
+\`\`\`typescript
+import { SchemaRegistryConfig, ShadowFieldType } from '@exabugs/dynamodb-client/shadows';
+
+export interface Article {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const MySchema: SchemaRegistryConfig = {
+  database: {
+    name: 'myapp',
+    timestamps: {
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    },
+  },
+  resources: {
+    articles: {
+      resource: 'articles',
+      type: {} as Article,
+      shadows: {
+        sortableFields: {
+          title: { type: ShadowFieldType.String },
+          status: { type: ShadowFieldType.String },
+          createdAt: { type: ShadowFieldType.Datetime },
+          updatedAt: { type: ShadowFieldType.Datetime },
+        },
+      },
+    },
+  },
+};
+\`\`\`
+
+### 2. Generate Shadow Config
+
+\`\`\`bash
+npx @exabugs/dynamodb-client generate-shadow-config schema.ts -o shadow.config.json
+\`\`\`
+
+**Or see complete examples:**
+- [Basic Example](examples/basic/) - Simple setup
+- [Advanced Example](examples/advanced/) - Multiple resources, TTL
+- [React Admin Example](examples/react-admin/) - Admin UI integration
+
+### 3. Deploy Lambda with Config
+
+See [Deployment Guide](docs/DEPLOYMENT.md) for details.
+
+### 4. Use Client
+
+\`\`\`typescript
+import { DynamoClient } from '@exabugs/dynamodb-client/client/iam';
+
+const client = new DynamoClient(FUNCTION_URL, { region: 'ap-northeast-1' });
+const articles = client.db().collection('articles');
+
+await articles.insertOne({ title: 'Hello', status: 'published' });
+\`\`\`
+```
+
+### package.json 更新
+
+```json
+{
+  "bin": {
+    "generate-shadow-config": "./dist/scripts/generate-shadow-config.js"
+  },
+  "exports": {
+    "./shadows": {
+      "import": "./dist/shadows/index.js",
+      "types": "./dist/shadows/index.d.ts"
+    }
+  }
+}
+```
+
+### テスト戦略
+
+#### Unit Tests
+- スキーマ型定義のテスト
+- 生成スクリプトのテスト（入力 → 出力の検証）
+
+#### Integration Tests
+- Example の動作確認（CI で自動実行）
+- 生成された設定ファイルの妥当性検証
+
+### 実装の優先順位
+
+1. **高**: Schema 型定義の追加
+2. **高**: 生成スクリプトの実装
+3. **高**: Basic Example の作成
+4. **中**: Advanced Example の作成
+5. **中**: React Admin Example の作成
+6. **低**: CLI オプションの拡張（watch mode, validation など）
