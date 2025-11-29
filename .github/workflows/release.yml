@@ -12,56 +12,56 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests
         run: npm test
-      
+
       - name: Build package
         run: npm run build
-      
+
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Update package.json version
         run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
-      
+
       - name: Publish to npm (Trusted Publishing)
         run: npm publish --provenance --access public
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ steps.version.outputs.VERSION }}
           body: |
             ## Changes in this Release
-            
+
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-            
+
             ## Installation
-            
+
             ```bash
             npm install @exabugs/dynamodb-client@${{ steps.version.outputs.VERSION }}
             ```
-            
+
             ## Links
-            
+
             - [npm package](https://www.npmjs.com/package/@exabugs/dynamodb-client/v/${{ steps.version.outputs.VERSION }})
             - [Documentation](https://github.com/${{ github.repository }}#readme)
           draft: false

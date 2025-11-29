@@ -1,55 +1,55 @@
 version: 2
 updates:
   # Enable version updates for npm
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Tokyo"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Tokyo'
     open-pull-requests-limit: 10
     reviewers:
-      - "exabugs"
+      - 'exabugs'
     labels:
-      - "dependencies"
-      - "automated"
+      - 'dependencies'
+      - 'automated'
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: 'chore'
+      include: 'scope'
     # Group AWS SDK updates together
     groups:
       aws-sdk:
         patterns:
-          - "@aws-sdk/*"
-          - "@aws-crypto/*"
-          - "@smithy/*"
+          - '@aws-sdk/*'
+          - '@aws-crypto/*'
+          - '@smithy/*'
       typescript:
         patterns:
-          - "typescript"
-          - "@types/*"
-          - "@typescript-eslint/*"
+          - 'typescript'
+          - '@types/*'
+          - '@typescript-eslint/*'
       testing:
         patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "eslint"
-          - "@eslint/*"
-          - "prettier"
+          - 'vitest'
+          - '@vitest/*'
+          - 'eslint'
+          - '@eslint/*'
+          - 'prettier'
 
   # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Tokyo"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Tokyo'
     open-pull-requests-limit: 5
     reviewers:
-      - "exabugs"
+      - 'exabugs'
     labels:
-      - "github-actions"
-      - "automated"
+      - 'github-actions'
+      - 'automated'
     commit-message:
-      prefix: "ci"
+      prefix: 'ci'

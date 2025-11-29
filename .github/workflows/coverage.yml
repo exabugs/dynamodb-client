@@ -10,29 +10,29 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests with coverage
         run: npm run test:coverage
-      
+
       - name: Check coverage threshold
         run: |
           echo "Coverage report generated successfully"
           # Coverage threshold check is handled by vitest.config.ts
           # See: coverage.thresholds in vitest.config.ts
-      
+
       # Codecov is disabled for private repositories (requires paid plan)
       # Uncomment when repository becomes public
       # - name: Upload coverage to Codecov
@@ -43,7 +43,7 @@ jobs:
       #     flags: unittests
       #     name: codecov-umbrella
       #     fail_ci_if_error: false
-      
+
       - name: Generate coverage badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
