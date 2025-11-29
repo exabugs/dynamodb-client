@@ -171,38 +171,6 @@ Each example includes:
 
 ---
 
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    subgraph "Client Applications"
-        A[React Admin]
-        B[Mobile App]
-        C[Custom App]
-    end
-
-    subgraph "AWS Lambda"
-        D[Lambda Function<br/>Function URL]
-    end
-
-    subgraph "AWS DynamoDB"
-        E[(DynamoDB<br/>Single Table)]
-    end
-
-    A -->|HTTPS| D
-    B -->|HTTPS| D
-    C -->|HTTPS| D
-    D -->|AWS SDK| E
-
-    style A fill:#61dafb,stroke:#333,stroke-width:2px
-    style B fill:#61dafb,stroke:#333,stroke-width:2px
-    style C fill:#61dafb,stroke:#333,stroke-width:2px
-    style D fill:#ff9900,stroke:#333,stroke-width:2px
-    style E fill:#527fff,stroke:#333,stroke-width:2px
-```
-
----
-
 ## 📚 Documentation
 
 ### Available Documentation
