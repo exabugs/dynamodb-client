@@ -6,10 +6,9 @@
  */
 import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { DeleteOneParams, DeleteOneResult } from '../types.js';
 import { ItemNotFoundError, createLogger } from '../../index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
-
+import type { DeleteOneParams, DeleteOneResult } from '../types.js';
 import { executeDynamoDBOperation, getDBClient, getTableName } from '../utils/dynamodb.js';
 
 const logger = createLogger({ service: 'records-lambda' });

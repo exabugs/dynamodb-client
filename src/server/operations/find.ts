@@ -6,10 +6,9 @@
  */
 import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { FindParams, FindResult } from '../types.js';
 import { ConfigError, createLogger, getResourceSchema, getShadowConfig } from '../../index.js';
 import type { ShadowConfig } from '../shadow/index.js';
-
+import type { FindParams, FindResult } from '../types.js';
 import {
   executeDynamoDBOperation,
   extractCleanRecord,

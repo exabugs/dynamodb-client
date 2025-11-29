@@ -1,10 +1,9 @@
 /**
  * 入力検証ユーティリティ
  */
+import { InvalidFilterError } from '../../index.js';
 import { getDefaultSort, isValidShadowField } from '../shadow/index.js';
 import type { ShadowConfig } from '../shadow/index.js';
-
-import { InvalidFilterError } from '../../index.js';
 import type { FindManyReferenceParams, FindParams } from '../types.js';
 
 /**

@@ -6,7 +6,6 @@
  */
 import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { OperationError, UpdateManyParams, UpdateManyResult } from '../types.js';
 import {
   createLogger,
   generateShadowRecords,
@@ -14,7 +13,7 @@ import {
   getShadowConfig,
 } from '../../index.js';
 import { calculateShadowDiff, generateMainRecordSK } from '../shadow/index.js';
-
+import type { OperationError, UpdateManyParams, UpdateManyResult } from '../types.js';
 import {
   calculateTimeoutRisk,
   logBulkOperationComplete,

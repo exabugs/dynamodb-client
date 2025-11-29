@@ -217,8 +217,8 @@
   - 高度な使用例を作成
   - _Requirements: 12.4_
 
-- [ ] 11. CI/CD の設定
-- [ ] 11.1 .github/workflows/ci.yml の作成
+- [x] 11. CI/CD の設定
+- [x] 11.1 .github/workflows/ci.yml の作成
   - プルリクエスト時のテスト実行を設定
   - プルリクエスト時のビルド実行を設定
   - プルリクエスト時のリント実行を設定

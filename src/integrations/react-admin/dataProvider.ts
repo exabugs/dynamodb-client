@@ -31,6 +31,7 @@
  * });
  * ```
  */
+
 /**
  * NOTE: react-admin の型定義による any の使用
  *
@@ -47,6 +48,7 @@
  * 1. react-admin v5 の型定義を調査し、より厳密な型付けが可能か確認
  * 2. カスタム型定義を作成して、プロジェクト固有のリソース型を使用
  */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataProvider } from 'react-admin';
 

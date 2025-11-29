@@ -6,7 +6,6 @@
  */
 import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { UpdateOneParams, UpdateOneResult } from '../types.js';
 import {
   ItemNotFoundError,
   createLogger,
@@ -15,7 +14,7 @@ import {
   getShadowConfig,
 } from '../../index.js';
 import { calculateShadowDiff, generateMainRecordSK, isDiffEmpty } from '../shadow/index.js';
-
+import type { UpdateOneParams, UpdateOneResult } from '../types.js';
 import {
   executeDynamoDBOperation,
   getDBClient,

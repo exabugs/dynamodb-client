@@ -6,7 +6,6 @@
  */
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { InsertOneParams, InsertOneResult } from '../types.js';
 import {
   createLogger,
   generateShadowRecords,
@@ -14,9 +13,9 @@ import {
   getShadowConfig,
   ulid,
 } from '../../index.js';
-import { generateMainRecordSK } from '../shadow/index.js';
-
 import { getSchemaVersion, getShadowConfigHash } from '../shadow/config.js';
+import { generateMainRecordSK } from '../shadow/index.js';
+import type { InsertOneParams, InsertOneResult } from '../types.js';
 import {
   executeDynamoDBOperation,
   getDBClient,

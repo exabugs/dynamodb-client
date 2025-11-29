@@ -92,6 +92,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src --ext ts --max-warnings 10",
     "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",

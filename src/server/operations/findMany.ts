@@ -6,10 +6,9 @@
  */
 import { BatchGetCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { FindManyParams, FindManyResult } from '../types.js';
 import { createLogger } from '../../index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
-
+import type { FindManyParams, FindManyResult } from '../types.js';
 import {
   executeDynamoDBOperation,
   extractCleanRecord,

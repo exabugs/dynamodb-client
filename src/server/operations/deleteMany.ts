@@ -6,10 +6,9 @@
  */
 import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import type { DeleteManyParams, DeleteManyResult, OperationError } from '../types.js';
 import { createLogger } from '../../index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
-
+import type { DeleteManyParams, DeleteManyResult, OperationError } from '../types.js';
 import {
   calculateTimeoutRisk,
   logBulkOperationComplete,
