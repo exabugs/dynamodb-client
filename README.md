@@ -87,7 +87,47 @@ yarn add @exabugs/dynamodb-client
 
 ## 🚀 Quick Start
 
-### Client-Side Usage
+### 1. Configure Shadow Records (Required)
+
+Shadow Records enable efficient sorting without GSIs. Create a `shadow.config.json` file:
+
+```json
+{
+  "$schemaVersion": "2.0",
+  "resources": {
+    "articles": {
+      "sortDefaults": {
+        "field": "updatedAt",
+        "order": "DESC"
+      },
+      "shadows": {
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "datetime" },
+        "updatedAt": { "type": "datetime" }
+      }
+    }
+  }
+}
+```
+
+**Field Types:**
+
+- `string` - Text fields
+- `number` - Numeric fields
+- `datetime` - ISO 8601 timestamps
+
+### 2. Deploy Lambda Function
+
+Set the shadow config as an environment variable (base64 encoded):
+
+```bash
+export SHADOW_CONFIG=$(cat shadow.config.json | base64)
+```
+
+Or use the included Terraform modules (see [Deployment](#-deployment)).
+
+### 3. Client-Side Usage
 
 ```typescript
 import { DynamoClient } from '@exabugs/dynamodb-client/client/iam';
@@ -114,7 +154,7 @@ await articles.updateOne({ id: article.id }, { $set: { status: 'published' } });
 await articles.deleteOne({ id: article.id });
 ```
 
-### Server-Side (Lambda)
+### 4. Server-Side (Lambda)
 
 ```typescript
 import { createHandler } from '@exabugs/dynamodb-client/server/handler';
@@ -125,7 +165,7 @@ export const handler = createHandler({
 });
 ```
 
-### React Admin Integration
+### 5. React Admin Integration (Optional)
 
 ```typescript
 import { dataProvider } from '@exabugs/dynamodb-client/integrations/react-admin';
