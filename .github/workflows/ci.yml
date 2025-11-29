@@ -99,6 +99,9 @@ jobs:
       
       - name: Build package
         run: npm run build
-      
+
+      - name: Show npm version
+        run: npm -v
+
       - name: Publish to npm (Trusted Publishing)
         run: npm publish --provenance --access public
