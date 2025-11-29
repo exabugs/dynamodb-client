@@ -12,7 +12,7 @@ module.exports = {
   importOrder: [
     '^@aws-sdk/(.*)$',
     '^react(.*)$',
-    '^@ainews/(.*)$',
+    '^@exabugs/(.*)$',
     '^[./]',
   ],
   importOrderSeparation: true,

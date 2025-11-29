@@ -6,8 +6,8 @@
   - 移行計画を確認
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 2. ainews 固有コードの削除
-- [ ] 2.1 ディレクトリの削除
+- [x] 2. ainews 固有コードの削除
+- [x] 2.1 ディレクトリの削除
   - `apps/` ディレクトリを削除
   - `functions/` ディレクトリを削除
   - `packages/api-types/` ディレクトリを削除
@@ -15,29 +15,29 @@
   - `config/` ディレクトリを削除
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 2.2 ルートファイルの削除
+- [x] 2.2 ルートファイルの削除
   - `.envrc`, `.envrc.example` を削除
   - `Makefile` を削除
   - `CHANGELOG.md` を削除
   - `pnpm-workspace.yaml`, `pnpm-lock.yaml` を削除
   - _Requirements: 2.6, 2.7_
 
-- [ ] 2.3 設定ファイルの削除
-  - `prettier.config.cjs` を削除（後で新規作成）
-  - `eslint.config.js` を削除（後で新規作成）
-  - `tsconfig.base.json` を削除
-  - `vitest.setup.ts` を削除（後で新規作成）
+- [x] 2.3 設定ファイルの保持
+  - `prettier.config.cjs` を保持（後で修正）
+  - `eslint.config.js` を保持（後で修正）
+  - `tsconfig.base.json` を保持（後で修正）
+  - `vitest.setup.ts` を保持（後で修正）
   - _Requirements: 2.6, 2.7_
 
-- [ ] 2.4 .kiro/ ディレクトリの整理
+- [x] 2.4 .kiro/ ディレクトリの整理
   - `.kiro/specs/ainews-pipeline/` を削除
   - `.kiro/steering/` を削除
   - `.kiro/specs/dynamodb-client/` を残す
   - `.kiro/specs/oss-migration/` を残す
   - _Requirements: 2.6, 2.7_
 
-- [ ] 3. ディレクトリ構造の再設計
-- [ ] 3.1 ソースコードの移行
+- [x] 3. ディレクトリ構造の再設計
+- [x] 3.1 ソースコードの移行
   - `packages/core/src/` → `src/` に移動
   - `packages/core/src/client/` → `src/client/` に移動
   - `packages/core/src/server/` → `src/server/` に移動
@@ -46,19 +46,19 @@
   - `packages/core/src/types.ts` → `src/types.ts` に移動
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 3.2 テストコードの移行
+- [x] 3.2 テストコードの移行
   - `packages/core/src/__tests__/` → `__tests__/` に移動
   - ainews 固有のテストケースを削除
   - 汎用的なテストケースのみを残す
   - _Requirements: 3.1, 9.1, 9.2, 9.3_
 
-- [ ] 3.3 packages/ ディレクトリの削除
+- [x] 3.3 packages/ ディレクトリの削除
   - `packages/core/` ディレクトリを削除（移行完了後）
   - `packages/` ディレクトリを削除
   - _Requirements: 3.2_
 
-- [ ] 4. パッケージ設定の更新
-- [ ] 4.1 package.json の作成
+- [x] 4. パッケージ設定の更新
+- [x] 4.1 package.json の作成
   - 新しい package.json を作成
   - パッケージ名を `@exabugs/dynamodb-client` に変更
   - npm 公開に必要なフィールドを追加
@@ -70,43 +70,43 @@
   - devDependencies を定義
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5, 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 4.2 .npmignore の作成
+- [x] 4.2 .npmignore の作成
   - .npmignore ファイルを作成
   - 不要なファイルを除外
   - _Requirements: 8.5_
 
-- [ ] 4.3 tsconfig.json の作成
+- [x] 4.3 tsconfig.json の作成
   - 新しい tsconfig.json を作成（ESM 用）
   - tsconfig.cjs.json を作成（CJS 用）
   - _Requirements: 3.1_
 
-- [ ] 4.4 vitest.config.ts の作成
+- [x] 4.4 vitest.config.ts の作成
   - 新しい vitest.config.ts を作成
   - カバレッジ設定を追加
   - _Requirements: 9.5, 9.6_
 
-- [ ] 4.5 eslint.config.js の作成
+- [x] 4.5 eslint.config.js の作成
   - 新しい eslint.config.js を作成
   - TypeScript ルールを追加
   - _Requirements: 3.1_
 
-- [ ] 4.6 .prettierrc の作成
+- [x] 4.6 .prettierrc の作成
   - 新しい .prettierrc を作成
   - フォーマットルールを定義
   - _Requirements: 3.1_
 
-- [ ] 5. インポートパスの更新
-- [ ] 5.1 クライアントコードのインポート更新
+- [x] 5. インポートパスの更新
+- [x] 5.1 クライアントコードのインポート更新
   - `@ainews/core` → `@exabugs/dynamodb-client` に変更
   - `@ainews/api-types` への参照を削除
   - _Requirements: 4.3, 5.1_
 
-- [ ] 5.2 サーバーコードのインポート更新
+- [x] 5.2 サーバーコードのインポート更新
   - `@ainews/core` → `@exabugs/dynamodb-client` に変更
   - `@ainews/api-types` への参照を削除
   - _Requirements: 4.3, 5.1_
 
-- [ ] 5.3 テストコードのインポート更新
+- [x] 5.3 テストコードのインポート更新
   - `@ainews/core` → `@exabugs/dynamodb-client` に変更
   - `@ainews/api-types` への参照を削除
   - _Requirements: 4.3, 5.1_
@@ -225,23 +225,23 @@
   - main ブランチへのマージ時の npm 公開を設定（オプション）
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 12. テストの実行
-- [ ] 12.1 ビルドの実行
+- [x] 12. テストの実行
+- [x] 12.1 ビルドの実行
   - `npm run build` を実行
   - ビルドエラーを修正
   - _Requirements: 9.4_
 
-- [ ] 12.2 テストの実行
+- [x] 12.2 テストの実行
   - `npm test` を実行
   - テストエラーを修正
   - _Requirements: 9.4, 9.5_
 
-- [ ] 12.3 リントの実行
+- [x] 12.3 リントの実行
   - `npm run lint` を実行
   - リントエラーを修正
   - _Requirements: 9.4_
 
-- [ ] 12.4 カバレッジの確認
+- [x] 12.4 カバレッジの確認
   - `npm run test:coverage` を実行
   - カバレッジ 80% 以上を確認
   - _Requirements: 9.4_

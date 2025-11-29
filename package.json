@@ -1,32 +1,130 @@
 {
-  "name": "ainews-pipeline",
+  "name": "@exabugs/dynamodb-client",
   "version": "1.0.0",
-  "private": true,
-  "description": "AI News Pipeline - Automated news processing and distribution system",
+  "description": "DynamoDB Single-Table Client SDK with MongoDB-like API, Shadow Records, and Lambda implementation for serverless applications",
+  "author": "exabugs",
   "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "keywords": [
+    "dynamodb",
+    "single-table",
+    "mongodb",
+    "lambda",
+    "aws",
+    "client",
+    "sdk",
+    "react-admin",
+    "shadow-records",
+    "serverless",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exabugs/dynamodb-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/exabugs/dynamodb-client/issues"
+  },
+  "homepage": "https://github.com/exabugs/dynamodb-client#readme",
+  "files": [
+    "dist",
+    "terraform",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client/index.js",
+      "types": "./dist/client/index.d.ts"
+    },
+    "./client/iam": {
+      "import": "./dist/client/index.iam.js",
+      "types": "./dist/client/index.iam.d.ts"
+    },
+    "./client/cognito": {
+      "import": "./dist/client/index.cognito.js",
+      "types": "./dist/client/index.cognito.d.ts"
+    },
+    "./client/token": {
+      "import": "./dist/client/index.token.js",
+      "types": "./dist/client/index.token.d.ts"
+    },
+    "./server": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./server/handler": {
+      "import": "./dist/server/handler.cjs",
+      "types": "./dist/server/handler.d.ts"
+    },
+    "./types": {
+      "import": "./dist/server/types.js",
+      "types": "./dist/server/types.d.ts"
+    },
+    "./shadows": {
+      "import": "./dist/shadows/index.js",
+      "types": "./dist/shadows/index.d.ts"
+    },
+    "./integrations/react-admin": {
+      "import": "./dist/integrations/react-admin/index.js",
+      "types": "./dist/integrations/react-admin/index.d.ts"
+    },
+    "./terraform": "./terraform/main.tf"
+  },
+  "peerDependencies": {
+    "react-admin": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react-admin": {
+      "optional": true
+    }
+  },
   "scripts": {
-    "lint": "pnpm -r lint",
-    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx}\" \"functions/*/src/**/*.{ts,tsx}\" \"apps/*/src/**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"packages/*/src/**/*.{ts,tsx}\" \"functions/*/src/**/*.{ts,tsx}\" \"apps/*/src/**/*.{ts,tsx}\"",
-    "test": "pnpm -r test",
-    "build": "pnpm -r build",
-    "clean": "pnpm -r clean"
+    "build": "tsc && node esbuild.config.js",
+    "build:client": "tsc",
+    "build:lambda": "node esbuild.config.js",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext ts --max-warnings 10",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@aws-crypto/sha256-js": "5.2.0",
+    "@aws-sdk/client-dynamodb": "3.929.0",
+    "@aws-sdk/credential-provider-node": "3.929.0",
+    "@aws-sdk/lib-dynamodb": "3.929.0",
+    "@smithy/protocol-http": "5.3.5",
+    "@smithy/signature-v4": "5.3.5",
+    "@smithy/util-utf8": "4.2.0",
+    "aws-jwt-verify": "5.1.1",
+    "ulid": "3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.0.0",
+    "@types/aws-lambda": "^8.10.0",
+    "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^2.0.0",
+    "esbuild": "^0.20.0",
     "eslint": "^9.0.0",
-    "globals": "^16.5.0",
+    "globals": "^15.0.0",
     "prettier": "^3.0.0",
-    "tsx": "^4.20.6",
+    "react-admin": "^5.0.0",
     "typescript": "^5.3.0",
-    "vitest": "^2.1.9"
+    "vitest": "^2.0.0"
   },
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=18.0.0"
   }
 }
