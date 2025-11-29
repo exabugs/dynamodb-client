@@ -61,7 +61,6 @@
 ### 🎨 Integrations
 
 - **react-admin** - Admin UI out of the box
-- **GraphQL** - AppSync integration ready
 - **REST API** - Lambda Function URLs
 - **Terraform** - Complete IaC modules
 
@@ -174,24 +173,18 @@ graph TB
 
 ## 📚 Documentation
 
-### Core Concepts
+### Available Documentation
 
-- **[Single-Table Design](docs/single-table-design.md)** - Learn about our data modeling approach
-- **[Shadow Records](docs/shadow-records.md)** - Efficient sorting without GSIs
-- **[Authentication](docs/authentication.md)** - Multiple auth strategies explained
-- **[Terraform Modules](terraform/README.md)** - Infrastructure deployment guide
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design
+- **[Client Usage](docs/CLIENT_USAGE.md)** - Client-side API guide
+- **[React Admin Integration](docs/react-admin-integration.md)** - Admin UI setup
+- **[Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
+- **[Terraform Modules](terraform/README.md)** - Infrastructure as Code
 
-### API Reference
+### GitHub Actions
 
-- **[Client API](docs/api/client.md)** - Complete client-side API reference
-- **[Server API](docs/api/server.md)** - Lambda handler configuration
-- **[React Admin](docs/api/react-admin.md)** - Admin UI integration guide
-
-### Guides
-
-- **[Getting Started](docs/guides/getting-started.md)** - Step-by-step tutorial
-- **[Deployment](docs/guides/deployment.md)** - Production deployment guide
-- **[Best Practices](docs/guides/best-practices.md)** - Recommended patterns
+- **[GitHub Actions Setup](docs/GITHUB_ACTIONS_SETUP.md)** - CI/CD configuration
+- **[Troubleshooting](docs/GITHUB_ACTIONS_TROUBLESHOOTING.md)** - Common issues and solutions
 
 ---
 
@@ -256,7 +249,7 @@ make deploy-prd    # Deploy to production
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions!
 
 ### Development Workflow
 
@@ -265,6 +258,13 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Guidelines
+
+- Follow the existing code style
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
 
 ---
 
