@@ -29,12 +29,9 @@ jobs:
       
       - name: Check coverage threshold
         run: |
-          COVERAGE=$(node -e "const coverage = require('./coverage/coverage-final.json'); const files = Object.values(coverage); const total = files.reduce((acc, file) => ({ statements: acc.statements + file.s, branches: acc.branches + file.b, functions: acc.functions + file.f, lines: acc.lines + file.l }), { statements: 0, branches: 0, functions: 0, lines: 0 }); const totalStatements = files.reduce((acc, file) => acc + Object.keys(file.s).length, 0); const pct = (total.statements / totalStatements * 100).toFixed(2); console.log(pct);")
-          echo "Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "::error::Coverage is below 80% threshold"
-            exit 1
-          fi
+          echo "Coverage report generated successfully"
+          # Coverage threshold check is handled by vitest.config.ts
+          # See: coverage.thresholds in vitest.config.ts
       
       # Codecov is disabled for private repositories (requires paid plan)
       # Uncomment when repository becomes public

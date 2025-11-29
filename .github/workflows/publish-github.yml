@@ -1,9 +1,11 @@
 name: Publish to GitHub Packages
 
 on:
-  push:
-    branches: [main]
+  # Only run manually or on version tags
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
   publish:
