@@ -204,7 +204,7 @@ graph TB
 ### Prerequisites
 
 - Node.js >= 18.0.0
-- pnpm >= 9.0.0
+- npm, pnpm, or yarn
 - AWS Account (for deployment)
 
 ### Setup
@@ -215,24 +215,24 @@ git clone https://github.com/exabugs/dynamodb-client.git
 cd dynamodb-client
 
 # Install dependencies
-pnpm install
+npm install
 
 # Run tests
-pnpm test
+npm test
 
 # Build
-pnpm build
+npm run build
 ```
 
 ### Available Commands
 
 ```bash
-pnpm test              # Run tests
-pnpm test:coverage     # Run tests with coverage
-pnpm lint              # Lint code
-pnpm format            # Format code
-pnpm build             # Build package
-pnpm clean             # Clean build artifacts
+npm test              # Run tests
+npm run test:coverage # Run tests with coverage
+npm run lint          # Lint code
+npm run format        # Format code
+npm run build         # Build package
+npm run clean         # Clean build artifacts
 ```
 
 ---
