@@ -122,7 +122,7 @@
     "@vitest/coverage-v8": "^2.0.0",
     "esbuild": "^0.20.0",
     "eslint": "^9.0.0",
-    "globals": "^15.0.0",
+    "globals": "^16.5.0",
     "prettier": "^3.0.0",
     "react-admin": "^5.0.0",
     "typescript": "^5.3.0",
