@@ -170,6 +170,7 @@ Each example includes:
 - ✅ Configuration templates
 
 ---
+
 ## 🏗️ Architecture
 
 ```mermaid
