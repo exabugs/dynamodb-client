@@ -201,18 +201,18 @@
   - すべてのソースファイルに著作権表示を追加
   - _Requirements: 7.4_
 
-- [ ] 10. Terraform モジュールの整理
-- [ ] 10.1 terraform/ ディレクトリの作成
+- [x] 10. Terraform モジュールの整理
+- [x] 10.1 terraform/ ディレクトリの作成
   - `packages/core/terraform/` → `terraform/` に移動
   - ainews 固有のリソースを削除
   - Lambda 関数デプロイ用のモジュールのみを残す
   - _Requirements: 12.1, 12.2_
 
-- [ ] 10.2 terraform/README.md の作成
+- [x] 10.2 terraform/README.md の作成
   - モジュールの使用方法を記述
   - _Requirements: 12.3_
 
-- [ ] 10.3 terraform/examples/ の作成
+- [x] 10.3 terraform/examples/ の作成
   - 基本的な使用例を作成
   - 高度な使用例を作成
   - _Requirements: 12.4_

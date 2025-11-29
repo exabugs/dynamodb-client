@@ -17,7 +17,7 @@ DynamoDB Single-Table設計向けのRecords Lambda関数をデプロイするTer
 
 ```hcl
 module "lambda_records" {
-  source = "github.com/your-org/dynamodb-client//packages/core/terraform"
+  source = "github.com/exabugs/dynamodb-client//terraform"
 
   project_name = "my-project"
   environment  = "dev"
@@ -43,7 +43,7 @@ module "lambda_records" {
 
 ```hcl
 module "lambda_records" {
-  source = "../packages/core/terraform"  # 相対パス
+  source = "./terraform"  # 相対パス
 
   project_name = "my-project"
   environment  = "dev"
