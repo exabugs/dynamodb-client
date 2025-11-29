@@ -1,29 +1,61 @@
 # GitHub Actions Setup Guide
 
-## Required Secrets
+## Trusted Publishing (Recommended)
 
-### NPM_TOKEN
+npm は Trusted Publishing (OpenID Connect) を推奨しています。これはトークンを使わずに、より安全に GitHub Actions から npm に公開できる方法です。
 
-npm に自動公開するために、Granular Access Token が必要です。
+### 1. npm で Trusted Publishing を設定
 
-#### 1. npm Granular Access Token の作成
+1. https://www.npmjs.com/ にログイン
+2. パッケージページに移動: https://www.npmjs.com/package/@exabugs/dynamodb-client/access
+3. **Publishing Access** タブをクリック
+4. **Add Trusted Publisher** をクリック
+5. 設定:
+   - **Provider**: GitHub Actions
+   - **Repository**: `exabugs/dynamodb-client`
+   - **Workflow**: `release.yml`（または `ci.yml`）
+   - **Environment**: 空欄（または `production`）
+6. **Add** をクリック
+
+これで完了です！GitHub Secrets の設定は不要です。
+
+### 2. ワークフローの設定
+
+ワークフローには以下の設定が必要です（既に設定済み）：
+
+```yaml
+permissions:
+  contents: read
+  id-token: write  # Trusted Publishing に必要
+
+steps:
+  - name: Publish to npm
+    run: npm publish --provenance --access public
+```
+
+`--provenance` フラグにより、パッケージの出所が検証可能になります。
+
+---
+
+## Alternative: NPM_TOKEN (非推奨)
+
+Trusted Publishing が利用できない場合のみ、Granular Access Token を使用してください。
+
+### 1. npm Granular Access Token の作成
 
 1. https://www.npmjs.com/ にログイン
 2. プロフィール > Access Tokens > Generate New Token
 3. **Granular Access Token** を選択
 4. 設定:
    - **Token Name**: `github-actions-dynamodb-client`
-   - **Expiration**: 1 year（または適切な期間）
+   - **Expiration**: 1 year
    - **Packages and scopes**: 
      - Select packages: `@exabugs/dynamodb-client`
      - Permissions: `Read and write`
-   - **Organizations**: なし（個人パッケージの場合）
-   - **IP ranges**: なし（GitHub Actions の IP は動的）
-
 5. **Generate Token** をクリック
-6. トークンをコピー（一度しか表示されません）
+6. トークンをコピー
 
-#### 2. GitHub Secrets への登録
+### 2. GitHub Secrets への登録
 
 1. https://github.com/exabugs/dynamodb-client/settings/secrets/actions にアクセス
 2. **New repository secret** をクリック

@@ -79,6 +79,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publish]')
+    permissions:
+      contents: read
+      id-token: write
     
     steps:
       - name: Checkout code
@@ -97,15 +100,5 @@ jobs:
       - name: Build package
         run: npm run build
       
-      - name: Check NPM_TOKEN
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::error::NPM_TOKEN secret is not set. Please configure it in repository settings."
-            echo "See docs/GITHUB_ACTIONS_SETUP.md for instructions."
-            exit 1
-          fi
-      
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm (Trusted Publishing)
+        run: npm publish --provenance --access public

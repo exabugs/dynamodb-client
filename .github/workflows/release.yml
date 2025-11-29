@@ -9,6 +9,9 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     
     steps:
       - name: Checkout code
@@ -39,18 +42,8 @@ jobs:
       - name: Update package.json version
         run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
       
-      - name: Check NPM_TOKEN
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::error::NPM_TOKEN secret is not set. Please configure it in repository settings."
-            echo "See docs/GITHUB_ACTIONS_SETUP.md for instructions."
-            exit 1
-          fi
-      
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm (Trusted Publishing)
+        run: npm publish --provenance --access public
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
