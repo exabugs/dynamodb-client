@@ -85,71 +85,91 @@ yarn add @exabugs/dynamodb-client
 
 ---
 
-## 🚀 Quick Start
+## 🏗️ Architecture
 
-### 1. Configure Shadow Records (Required)
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        A[React Admin]
+        B[Mobile App]
+        C[Custom App]
+    end
 
-Shadow Records enable efficient sorting without GSIs. You need a `shadow.config.json` configuration file.
+    subgraph "AWS Lambda"
+        D[Lambda Function<br/>Function URL]
+    end
 
-**For detailed setup**, see:
+    subgraph "AWS DynamoDB"
+        E[(DynamoDB<br/>Single Table)]
+    end
 
-- [Architecture Documentation](docs/ARCHITECTURE.md#shadow-records) - Shadow Records explained
-- [Deployment Guide](docs/DEPLOYMENT.md) - How to configure and deploy
+    A -->|HTTPS| D
+    B -->|HTTPS| D
+    C -->|HTTPS| D
+    D -->|AWS SDK| E
 
-**Quick note:** The config defines which fields are sortable and their types (string, number, datetime).
-
-### 2. Client-Side Usage
-
-```typescript
-import { DynamoClient } from '@exabugs/dynamodb-client/client/iam';
-
-// Initialize client
-const client = new DynamoClient(FUNCTION_URL, {
-  region: 'ap-northeast-1',
-});
-
-const db = client.db();
-const articles = db.collection('articles');
-
-// CRUD operations with MongoDB-like syntax
-await articles.insertOne({
-  title: 'Hello DynamoDB',
-  content: 'Single-table design made easy!',
-  tags: ['dynamodb', 'serverless'],
-});
-
-const article = await articles.findOne({ title: 'Hello DynamoDB' });
-
-await articles.updateOne({ id: article.id }, { $set: { status: 'published' } });
-
-await articles.deleteOne({ id: article.id });
-```
-
-### 3. Server-Side (Lambda)
-
-```typescript
-import { createHandler } from '@exabugs/dynamodb-client/server/handler';
-
-export const handler = createHandler({
-  tableName: process.env.TABLE_NAME!,
-  region: process.env.AWS_REGION!,
-});
-```
-
-### 4. React Admin Integration (Optional)
-
-```typescript
-import { dataProvider } from '@exabugs/dynamodb-client/integrations/react-admin';
-
-const App = () => (
-  <Admin dataProvider={dataProvider(FUNCTION_URL, { region: 'ap-northeast-1' })}>
-    <Resource name="articles" list={ArticleList} edit={ArticleEdit} />
-  </Admin>
-);
+    style A fill:#61dafb,stroke:#333,stroke-width:2px
+    style B fill:#61dafb,stroke:#333,stroke-width:2px
+    style C fill:#61dafb,stroke:#333,stroke-width:2px
+    style D fill:#ff9900,stroke:#333,stroke-width:2px
+    style E fill:#527fff,stroke:#333,stroke-width:2px
 ```
 
 ---
 
+## 🚀 Quick Start & Examples
+
+Get started in 3 steps: **Schema Definition → Deploy Infrastructure → Use Client**
+
+### Complete Examples Available
+
+We provide complete, working examples for every step:
+
+| Example                                    | What You'll Learn                                    | Time   |
+| ------------------------------------------ | ---------------------------------------------------- | ------ |
+| **[Schema](./examples/schema/)**           | Define TypeScript schemas and generate shadow config | 5 min  |
+| **[Terraform](./examples/terraform/)**     | Deploy Lambda + DynamoDB + Cognito to AWS            | 10 min |
+| **[Client](./examples/client/)**           | Node.js CRUD operations with MongoDB-like API        | 10 min |
+| **[React Admin](./examples/react-admin/)** | Build complete admin UI with authentication          | 15 min |
+
+### Quick Example
+
+```typescript
+// 1. Define schema
+export const MySchema: SchemaRegistryConfig = {
+  database: { name: 'myapp' },
+  resources: {
+    articles: {
+      resource: 'articles',
+      type: {} as Article,
+      shadows: { sortableFields: { title: { type: 'string' } } },
+    },
+  },
+};
+
+// 2. Deploy with Terraform (see examples/terraform/)
+// terraform apply
+
+// 3. Use the client
+const client = new DynamoClient(FUNCTION_URL);
+const articles = client.db().collection('articles');
+
+await articles.insertOne({ title: 'Hello DynamoDB' });
+const article = await articles.findOne({ title: 'Hello DynamoDB' });
+```
+
+### 📚 Full Documentation
+
+👉 **[Complete Examples Guide →](./examples/)** - Step-by-step tutorials with full source code
+
+Each example includes:
+
+- ✅ Complete source code
+- ✅ Step-by-step instructions
+- ✅ Terraform integration
+- ✅ Configuration templates
+
+---
 ## 🏗️ Architecture
 
 ```mermaid

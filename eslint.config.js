@@ -47,6 +47,14 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/**', 'dist/**', 'build/**', '.kiro/**', '*.config.js', '*.config.ts'],
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      '.kiro/**',
+      '*.config.js',
+      '*.config.ts',
+      'examples/**',
+    ],
   },
 ];

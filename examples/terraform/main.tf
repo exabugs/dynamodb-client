@@ -95,7 +95,7 @@ resource "aws_cognito_user_pool_client" "main" {
 
 # Records Lambda Module with External Config
 module "lambda_records" {
-  source = "../../"
+  source = "../../terraform"
 
   project_name = var.project_name
   environment  = var.environment
@@ -110,7 +110,7 @@ module "lambda_records" {
   cognito_client_id    = aws_cognito_user_pool_client.main.id
 
   # Shadow Config from External File
-  shadow_config = base64encode(file("${path.module}/shadow.config.json"))
+  shadow_config = filebase64("${path.module}/shadow.config.json")
 
   # Logging (environment-specific)
   log_retention_days = var.environment == "prd" ? 30 : 7

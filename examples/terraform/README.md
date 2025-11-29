@@ -1,6 +1,6 @@
-# Advanced Example
+# Terraform Example
 
-This example demonstrates an advanced deployment with:
+This example demonstrates how to deploy the DynamoDB Client Lambda function with:
 
 - Multi-environment support (dev/stg/prd)
 - External shadow configuration file
@@ -55,18 +55,21 @@ terraform output
 ## Environment-Specific Settings
 
 ### Development (dev)
+
 - Log retention: 7 days
 - Log level: debug
 - MFA: Optional
 - PITR: Disabled
 
 ### Staging (stg)
+
 - Log retention: 7 days
 - Log level: info
 - MFA: Optional
 - PITR: Disabled
 
 ### Production (prd)
+
 - Log retention: 30 days
 - Log level: warn
 - MFA: Required
@@ -100,6 +103,7 @@ The `shadow.config.json` file defines sortable fields for each resource:
 ## CloudWatch Alarms
 
 The example includes a CloudWatch Alarm that triggers when:
+
 - Lambda function errors exceed 10 in a 5-minute period
 
 To receive notifications, provide an SNS topic ARN:
