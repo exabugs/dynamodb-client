@@ -36,17 +36,15 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
       
-      # Codecov is disabled for private repositories (requires paid plan)
-      # Uncomment when repository becomes public
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   if: matrix.node-version == '22.x'
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     files: ./coverage/coverage-final.json
-      #     flags: unittests
-      #     name: codecov-umbrella
-      #     fail_ci_if_error: false
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == '22.x'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   build:
     name: Build
@@ -98,6 +96,14 @@ jobs:
       
       - name: Build package
         run: npm run build
+      
+      - name: Check NPM_TOKEN
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error::NPM_TOKEN secret is not set. Please configure it in repository settings."
+            echo "See docs/GITHUB_ACTIONS_SETUP.md for instructions."
+            exit 1
+          fi
       
       - name: Publish to npm
         run: npm publish --access public

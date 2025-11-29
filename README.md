@@ -17,28 +17,12 @@ DynamoDB Single-Table Client SDK with MongoDB-like API, Shadow Records, and Lamb
 
 ## Installation
 
-### From GitHub Packages (Private Repository)
-
-1. Create a Personal Access Token with `read:packages` scope
-2. Configure `.npmrc`:
-
-```bash
-@exabugs:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
-```
-
-3. Install the package:
-
 ```bash
 npm install @exabugs/dynamodb-client
-```
-
-For detailed instructions, see [Private Package Usage Guide](docs/PRIVATE_PACKAGE_USAGE.md).
-
-### From npm (Public - Coming Soon)
-
-```bash
-npm install @exabugs/dynamodb-client
+# or
+pnpm add @exabugs/dynamodb-client
+# or
+yarn add @exabugs/dynamodb-client
 ```
 
 ## Quick Start
