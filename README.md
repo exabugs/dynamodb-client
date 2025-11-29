@@ -89,45 +89,16 @@ yarn add @exabugs/dynamodb-client
 
 ### 1. Configure Shadow Records (Required)
 
-Shadow Records enable efficient sorting without GSIs. Create a `shadow.config.json` file:
+Shadow Records enable efficient sorting without GSIs. You need a `shadow.config.json` configuration file.
 
-```json
-{
-  "$schemaVersion": "2.0",
-  "resources": {
-    "articles": {
-      "sortDefaults": {
-        "field": "updatedAt",
-        "order": "DESC"
-      },
-      "shadows": {
-        "title": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      }
-    }
-  }
-}
-```
+**For detailed setup**, see:
 
-**Field Types:**
+- [Architecture Documentation](docs/ARCHITECTURE.md#shadow-records) - Shadow Records explained
+- [Deployment Guide](docs/DEPLOYMENT.md) - How to configure and deploy
 
-- `string` - Text fields
-- `number` - Numeric fields
-- `datetime` - ISO 8601 timestamps
+**Quick note:** The config defines which fields are sortable and their types (string, number, datetime).
 
-### 2. Deploy Lambda Function
-
-Set the shadow config as an environment variable (base64 encoded):
-
-```bash
-export SHADOW_CONFIG=$(cat shadow.config.json | base64)
-```
-
-Or use the included Terraform modules (see [Deployment](#-deployment)).
-
-### 3. Client-Side Usage
+### 2. Client-Side Usage
 
 ```typescript
 import { DynamoClient } from '@exabugs/dynamodb-client/client/iam';
@@ -154,7 +125,7 @@ await articles.updateOne({ id: article.id }, { $set: { status: 'published' } });
 await articles.deleteOne({ id: article.id });
 ```
 
-### 4. Server-Side (Lambda)
+### 3. Server-Side (Lambda)
 
 ```typescript
 import { createHandler } from '@exabugs/dynamodb-client/server/handler';
@@ -165,7 +136,7 @@ export const handler = createHandler({
 });
 ```
 
-### 5. React Admin Integration (Optional)
+### 4. React Admin Integration (Optional)
 
 ```typescript
 import { dataProvider } from '@exabugs/dynamodb-client/integrations/react-admin';
