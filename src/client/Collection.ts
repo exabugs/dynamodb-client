@@ -25,9 +25,17 @@ export type AuthHeadersGetter<TAuthOptions = unknown> = (
 ) => Promise<Record<string, string>>;
 
 /**
- * コレクションのドキュメント型の基本インターフェース
+ * ドキュメント入力型の基本インターフェース（id はオプショナル）
  */
-export interface DocumentBase {
+export interface InputBase {
+  id?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * ドキュメント結果型の基本インターフェース（id は必須）
+ */
+export interface ResultBase {
   id: string;
   [key: string]: unknown;
 }
@@ -38,10 +46,10 @@ export interface DocumentBase {
  * MongoDB風のCRUD操作を提供します。
  * 型安全なフィルタとクエリAPIでDynamoDBを操作できます。
  *
- * @template TSchema - コレクションのドキュメント型
+ * @template TSchema - コレクションのドキュメント型（ResultBase を extends）
  * @template TAuthOptions - 認証オプションの型
  */
-export class Collection<TSchema extends DocumentBase = DocumentBase, TAuthOptions = unknown> {
+export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = unknown> {
   constructor(
     private endpoint: string,
     private databaseName: string,
@@ -165,7 +173,7 @@ export class Collection<TSchema extends DocumentBase = DocumentBase, TAuthOption
     return responseObj.items || [];
   }
 
-  async insertOne(document: TSchema): Promise<InsertOneResult> {
+  async insertOne(document: InputBase & Omit<TSchema, 'id'>): Promise<InsertOneResult> {
     const response = await this.request('insertOne', { document });
     const result = response as { insertedId: string };
     return {
@@ -174,7 +182,7 @@ export class Collection<TSchema extends DocumentBase = DocumentBase, TAuthOption
     };
   }
 
-  async insertMany(documents: TSchema[]): Promise<InsertManyResult> {
+  async insertMany(documents: (InputBase & Omit<TSchema, 'id'>)[]): Promise<InsertManyResult> {
     const response = await this.request('insertMany', { documents });
     // Records Lambdaは統一形式 { count, successIds, failedIds, errors } を返す
     // MongoDB互換形式に変換

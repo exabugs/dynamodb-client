@@ -1,13 +1,8 @@
 /**
- * シャドーフィールドの型定義
- */
-export type ShadowFieldType = 'string' | 'number' | 'datetime';
-
-/**
  * シャドー設定のフィールド定義
  */
 export interface ShadowFieldConfig {
-  type: ShadowFieldType;
+  type: 'string' | 'number' | 'datetime';
 }
 
 /**

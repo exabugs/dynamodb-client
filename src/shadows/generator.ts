@@ -1,4 +1,4 @@
-import type { ShadowFieldType } from './types.js';
+import type { ShadowFieldType } from './schema.js';
 
 /**
  * 文字列値をエスケープする
@@ -57,6 +57,21 @@ export function formatDatetime(value: string | Date | null | undefined): string 
 }
 
 /**
+ * boolean値をフォーマットする
+ *
+ * @param value - boolean値（null/undefinedも許容）
+ * @returns 'true' または 'false' または空文字
+ */
+export function formatBoolean(value: boolean | null | undefined): string {
+  // null/undefined は空文字を返す
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return value ? 'true' : 'false';
+}
+
+/**
  * フィールド値を型に応じてフォーマットする
  *
  * @param type - フィールドの型
@@ -65,7 +80,7 @@ export function formatDatetime(value: string | Date | null | undefined): string 
  */
 export function formatFieldValue(
   type: ShadowFieldType,
-  value: string | number | Date | null | undefined
+  value: string | number | Date | boolean | null | undefined
 ): string {
   switch (type) {
     case 'string':
@@ -78,6 +93,8 @@ export function formatFieldValue(
       return formatNumber(value as number | null | undefined);
     case 'datetime':
       return formatDatetime(value as string | Date | null | undefined);
+    case 'boolean':
+      return formatBoolean(value as boolean | null | undefined);
     default:
       throw new Error(`Unknown shadow field type: ${type}`);
   }
@@ -104,10 +121,14 @@ export function formatFieldValue(
  * @example
  * generateShadowSK('createdAt', '2025-11-12T10:00:00.000Z', '01HZXY123', 'datetime')
  * // => 'createdAt#2025-11-12T10:00:00.000Z#id#01HZXY123'
+ *
+ * @example
+ * generateShadowSK('isPublished', true, '01HZXY123', 'boolean')
+ * // => 'isPublished#true#id#01HZXY123'
  */
 export function generateShadowSK(
   fieldName: string,
-  value: string | number | Date,
+  value: string | number | Date | boolean,
   recordId: string,
   type: ShadowFieldType = 'string'
 ): string {

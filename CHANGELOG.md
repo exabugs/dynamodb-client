@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2024-11-30
+
+### Added
+
+- Boolean type support for shadow fields
+  - Added `'boolean'` to `ShadowFieldType`
+  - Added `formatBoolean()` function for boolean value formatting
+  - Boolean values are formatted as `'true'` or `'false'` strings
+  - Full test coverage for boolean shadow records
+
+### Changed
+
+- Updated `formatFieldValue()` to handle boolean type
+- Updated `generateShadowSK()` to support boolean values
+- Exported `formatBoolean` from shadows module
+
 ## [0.1.0] - 2024-11-29
 
 ### Added

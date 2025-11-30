@@ -10,20 +10,14 @@
  */
 
 // 型定義のエクスポート
-export type {
-  ShadowFieldType,
-  ShadowFieldConfig,
-  ResourceShadowConfig,
-  ShadowConfig,
-  ShadowDiff,
-} from './types.js';
+export type { ShadowFieldConfig, ResourceShadowConfig, ShadowConfig, ShadowDiff } from './types.js';
 
 // スキーマ定義のエクスポート
-export {
-  ShadowFieldType as ShadowFieldTypeEnum,
-  type ShadowFieldDefinition,
-  type ResourceSchema,
-  type SchemaRegistryConfig,
+export type {
+  ShadowFieldType,
+  ShadowFieldDefinition,
+  ResourceSchema,
+  SchemaRegistryConfig,
 } from './schema.js';
 
 // ジェネレーター関数のエクスポート
@@ -31,6 +25,7 @@ export {
   escapeString,
   formatNumber,
   formatDatetime,
+  formatBoolean,
   formatFieldValue,
   generateShadowSK,
   generateMainRecordSK,

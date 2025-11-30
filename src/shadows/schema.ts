@@ -8,11 +8,7 @@
 /**
  * シャドーフィールドの型
  */
-export enum ShadowFieldType {
-  String = 'string',
-  Number = 'number',
-  Datetime = 'datetime',
-}
+export type ShadowFieldType = 'string' | 'number' | 'datetime' | 'boolean';
 
 /**
  * シャドーフィールドの定義

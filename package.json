@@ -1,6 +1,6 @@
 {
   "name": "@exabugs/dynamodb-client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DynamoDB Single-Table Client SDK with MongoDB-like API, Shadow Records, and Lambda implementation for serverless applications",
   "author": "exabugs",
   "license": "MIT",
@@ -104,7 +104,8 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
-    "prepublishOnly": "npm run build && npm run test:unit"
+    "prepublishOnly": "npm run build && npm run test:unit && cd examples && npm run prepare",
+    "postpublish": "cd examples && npm run restore"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "5.2.0",

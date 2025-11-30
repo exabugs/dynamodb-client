@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   escapeString,
+  formatBoolean,
   formatDatetime,
   formatFieldValue,
   formatNumber,
@@ -108,6 +109,24 @@ describe('Shadow Generator', () => {
     });
   });
 
+  describe('formatBoolean', () => {
+    it('trueを"true"に変換する', () => {
+      expect(formatBoolean(true)).toBe('true');
+    });
+
+    it('falseを"false"に変換する', () => {
+      expect(formatBoolean(false)).toBe('false');
+    });
+
+    it('nullを空文字に変換する', () => {
+      expect(formatBoolean(null)).toBe('');
+    });
+
+    it('undefinedを空文字に変換する', () => {
+      expect(formatBoolean(undefined)).toBe('');
+    });
+  });
+
   describe('formatFieldValue', () => {
     it('string型の値を正しくフォーマットする', () => {
       expect(formatFieldValue('string', 'Tech News')).toBe('Tech#News');
@@ -125,6 +144,11 @@ describe('Shadow Generator', () => {
       );
       const date = new Date('2025-11-12T10:00:00.000Z');
       expect(formatFieldValue('datetime', date)).toBe('2025-11-12T10:00:00.000Z');
+    });
+
+    it('boolean型の値を正しくフォーマットする', () => {
+      expect(formatFieldValue('boolean', true)).toBe('true');
+      expect(formatFieldValue('boolean', false)).toBe('false');
     });
 
     it('未知の型の場合はエラーをスローする', () => {
@@ -200,6 +224,27 @@ describe('Shadow Generator', () => {
         const date = new Date('2025-11-12T19:00:00+09:00');
         const sk = generateShadowSK('createdAt', date, '01HZXY123', 'datetime');
         expect(sk).toBe('createdAt#2025-11-12T10:00:00.000Z#id#01HZXY123');
+      });
+    });
+
+    describe('boolean型フィールド', () => {
+      it('trueのシャドーSKを生成する', () => {
+        const sk = generateShadowSK('isPublished', true, '01HZXY123', 'boolean');
+        expect(sk).toBe('isPublished#true#id#01HZXY123');
+      });
+
+      it('falseのシャドーSKを生成する', () => {
+        const sk = generateShadowSK('isPublished', false, '01HZXY123', 'boolean');
+        expect(sk).toBe('isPublished#false#id#01HZXY123');
+      });
+
+      it('異なるレコードIDで異なるSKを生成する', () => {
+        const sk1 = generateShadowSK('isActive', true, '01HZXY123', 'boolean');
+        const sk2 = generateShadowSK('isActive', true, '01HZXY456', 'boolean');
+
+        expect(sk1).toBe('isActive#true#id#01HZXY123');
+        expect(sk2).toBe('isActive#true#id#01HZXY456');
+        expect(sk1).not.toBe(sk2);
       });
     });
 
