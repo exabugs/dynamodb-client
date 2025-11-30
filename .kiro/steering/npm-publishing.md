@@ -6,7 +6,13 @@
 
 ## パブリッシュ手順
 
-### 1. バージョンの更新
+このプロジェクトには2つのパブリッシュ方法があります：
+
+### 方法1: CI Workflow経由（推奨）
+
+mainブランチへのプッシュ時に、コミットメッセージに `[publish]` を含めることで自動的にnpmにパブリッシュされます。
+
+#### 1. バージョンの更新
 
 ```bash
 # package.jsonのバージョンを更新
@@ -16,15 +22,38 @@ vim package.json  # "version": "0.1.x" を更新
 vim CHANGELOG.md  # 新バージョンのエントリを追加
 ```
 
-### 2. 変更をコミット
+#### 2. 変更をコミット（[publish]を含める）
+
+**重要**: コミットメッセージに `[publish]` を含めること！
 
 ```bash
+git add package.json CHANGELOG.md
+git commit -m "chore: bump version to 0.1.x [publish]"
+git push origin main
+```
+
+これで、CI Workflowの`publish`ジョブが自動的に実行され、npmにパブリッシュされます。
+
+### 方法2: Release Workflow経由（Gitタグ使用）
+
+Gitタグをプッシュすることで、Release Workflowが実行されます。
+
+#### 1. バージョンの更新とコミット
+
+```bash
+# package.jsonのバージョンを更新
+vim package.json  # "version": "0.1.x" を更新
+
+# CHANGELOGを更新
+vim CHANGELOG.md  # 新バージョンのエントリを追加
+
+# 変更をコミット
 git add package.json CHANGELOG.md
 git commit -m "chore: bump version to 0.1.x"
 git push origin main
 ```
 
-### 3. Gitタグの作成とプッシュ
+#### 2. Gitタグの作成とプッシュ
 
 **重要**: タグ名は `v` プレフィックス付きのセマンティックバージョニング形式（`v0.1.x`）を使用すること。
 
@@ -36,9 +65,27 @@ git tag v0.1.x
 git push origin v0.1.x
 ```
 
-### 4. GitHub Actionsの確認
+### GitHub Actionsの確認
 
-タグをプッシュすると、以下のワークフローが自動的に実行されます：
+#### CI Workflow (方法1)
+
+コミットメッセージに `[publish]` を含めてプッシュすると、以下が実行されます：
+
+- **CI Workflow** (`.github/workflows/ci.yml`)
+  - テストを実行（Node.js 18.x, 20.x, 22.x）
+  - パッケージをビルド
+  - npmにパブリッシュ（Trusted Publishing使用）
+
+実行条件：
+```yaml
+if: github.event_name == 'push' && 
+    github.ref == 'refs/heads/main' && 
+    contains(github.event.head_commit.message, '[publish]')
+```
+
+#### Release Workflow (方法2)
+
+タグをプッシュすると、以下が実行されます：
 
 - **Release Workflow** (`.github/workflows/release.yml`)
   - テストを実行
@@ -49,7 +96,10 @@ git push origin v0.1.x
 
 実行状況を確認：
 ```bash
-# ワークフロー実行一覧を表示
+# CI Workflowの実行一覧を表示
+gh run list --workflow=ci.yml --limit 5
+
+# Release Workflowの実行一覧を表示
 gh run list --workflow=release.yml --limit 5
 
 # 特定の実行の詳細を表示
@@ -141,7 +191,18 @@ git push origin v0.1.x
 
 ## チェックリスト
 
-パブリッシュ前に以下を確認：
+### 方法1: CI Workflow経由
+
+- [ ] package.jsonのバージョンを更新した
+- [ ] CHANGELOG.mdに新バージョンのエントリを追加した
+- [ ] ローカルでテストが通過する（`npm test`）
+- [ ] ローカルでビルドが成功する（`npm run build`）
+- [ ] コミットメッセージに `[publish]` を含めた
+- [ ] 変更をコミットしてプッシュした
+- [ ] GitHub Actionsの実行を確認した
+- [ ] npmにパブリッシュされたことを確認した
+
+### 方法2: Release Workflow経由
 
 - [ ] package.jsonのバージョンを更新した
 - [ ] CHANGELOG.mdに新バージョンのエントリを追加した
