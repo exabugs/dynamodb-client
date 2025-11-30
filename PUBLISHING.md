@@ -36,6 +36,7 @@ This document describes how to publish `@exabugs/dynamodb-client` to npm.
 ### First Time Setup
 
 1. **Login to npm**:
+
    ```bash
    npm login
    ```
@@ -48,6 +49,7 @@ This document describes how to publish `@exabugs/dynamodb-client` to npm.
 ### Publishing
 
 1. **Update version** (choose one):
+
    ```bash
    npm version patch  # 0.1.0 -> 0.1.1
    npm version minor  # 0.1.0 -> 0.2.0
@@ -59,6 +61,7 @@ This document describes how to publish `@exabugs/dynamodb-client` to npm.
    - Document all changes
 
 3. **Build and test**:
+
    ```bash
    npm run clean
    npm run build
@@ -66,11 +69,13 @@ This document describes how to publish `@exabugs/dynamodb-client` to npm.
    ```
 
 4. **Dry run** (check what will be published):
+
    ```bash
    npm publish --dry-run
    ```
 
 5. **Publish to npm**:
+
    ```bash
    npm publish
    ```
@@ -104,6 +109,7 @@ This document describes how to publish `@exabugs/dynamodb-client` to npm.
 ### "You do not have permission to publish"
 
 Make sure you're logged in with the correct npm account:
+
 ```bash
 npm whoami
 npm login
@@ -116,6 +122,7 @@ The package name `@exabugs/dynamodb-client` should be unique under your scope.
 ### "Version already exists"
 
 You need to bump the version number:
+
 ```bash
 npm version patch
 ```

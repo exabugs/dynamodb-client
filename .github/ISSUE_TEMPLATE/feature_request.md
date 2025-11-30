@@ -7,19 +7,24 @@ assignees: ''
 ---
 
 ## Feature Description
+
 A clear and concise description of the feature you'd like to see.
 
 ## Problem Statement
+
 Is your feature request related to a problem? Please describe.
 Example: I'm always frustrated when [...]
 
 ## Proposed Solution
+
 Describe the solution you'd like to see implemented.
 
 ## Alternative Solutions
+
 Describe any alternative solutions or features you've considered.
 
 ## Use Case
+
 Describe how this feature would be used in practice.
 
 ```typescript
@@ -31,15 +36,19 @@ const client = new DynamoClient(FUNCTION_URL);
 ```
 
 ## Benefits
+
 - Benefit 1
 - Benefit 2
 - Benefit 3
 
 ## Potential Drawbacks
+
 Are there any potential drawbacks or concerns with this feature?
 
 ## Additional Context
+
 Add any other context, screenshots, or examples about the feature request here.
 
 ## Related Issues
+
 Link to any related issues or discussions.

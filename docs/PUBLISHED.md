@@ -100,6 +100,7 @@ pnpm test
 **原因**: トークンが無効または権限が不足
 
 **解決方法**:
+
 1. トークンに`read:packages`スコープがあることを確認
 2. `.npmrc`のトークンが正しく設定されていることを確認
 
@@ -108,12 +109,14 @@ pnpm test
 **原因**: パッケージが見つからない
 
 **解決方法**:
+
 1. パッケージ名が`@exabugs/dynamodb-client`であることを確認
 2. GitHubでパッケージが公開されていることを確認
 
 ### pnpmでインストールできない
 
 **解決方法**:
+
 ```bash
 # 環境変数を使用
 export GITHUB_TOKEN=your_github_token
@@ -127,6 +130,7 @@ pnpm install
 初回リリース
 
 **主要機能**:
+
 - MongoDB-like API for DynamoDB
 - Single-Table Design with Shadow Records
 - Multiple authentication methods (IAM, Cognito, Token)
@@ -136,6 +140,7 @@ pnpm install
 - Terraform modules for deployment
 
 **含まれるモジュール**:
+
 - Client SDK (IAM, Cognito, Token authentication)
 - Server implementation (Lambda handler)
 - Shadow records management

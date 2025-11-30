@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * Shadow Config 自動生成スクリプト
  *
@@ -12,7 +13,6 @@
  * 例:
  *   npx generate-shadow-config schema.ts -o shadow.config.json
  */
-
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -103,7 +103,7 @@ async function loadSchemaFile(schemaFile: string): Promise<SchemaRegistryConfig>
 
     if (!schemaConfig) {
       throw new Error(
-        'SchemaRegistryConfig not found. Please export as default or named export (SchemaRegistryConfig, MySchema, schema, config)',
+        'SchemaRegistryConfig not found. Please export as default or named export (SchemaRegistryConfig, MySchema, schema, config)'
       );
     }
 
@@ -126,7 +126,7 @@ async function loadSchemaFile(schemaFile: string): Promise<SchemaRegistryConfig>
  */
 function generateShadowConfig(
   schemaConfig: SchemaRegistryConfig,
-  schemaFile: string,
+  schemaFile: string
 ): ShadowConfig {
   console.log('🔄 Generating shadow.config.json...');
 

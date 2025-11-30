@@ -120,6 +120,7 @@ npm ci
 **原因**: トークンが無効または権限が不足
 
 **解決方法**:
+
 1. トークンに `read:packages` スコープがあることを確認
 2. トークンが有効期限切れでないことを確認
 3. `.npmrc` のトークンが正しく設定されていることを確認
@@ -129,6 +130,7 @@ npm ci
 **原因**: パッケージが公開されていない、または名前が間違っている
 
 **解決方法**:
+
 1. パッケージ名が `@exabugs/dynamodb-client` であることを確認
 2. GitHub Packagesにパッケージが公開されていることを確認
    - https://github.com/exabugs/dynamodb-client/packages
@@ -138,6 +140,7 @@ npm ci
 **原因**: pnpmは `.npmrc` の環境変数展開をサポートしていない場合がある
 
 **解決方法**:
+
 ```bash
 # 直接トークンを指定（開発環境のみ）
 //npm.pkg.github.com/:_authToken=ghp_xxxxxxxxxxxx

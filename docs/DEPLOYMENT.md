@@ -18,6 +18,7 @@ git push origin main
 ```
 
 GitHub Actionsが自動的に以下を実行します：
+
 1. テストの実行
 2. ビルド
 3. GitHub Packagesへの公開
@@ -102,6 +103,7 @@ git push origin main --tags
 ```
 
 これにより、`release.yml` ワークフローが実行され、以下が自動的に行われます：
+
 1. テストとビルド
 2. GitHub Packagesへの公開
 3. GitHubリリースの作成
@@ -145,6 +147,7 @@ node -e "const { DynamoClient } = require('@exabugs/dynamodb-client/client/iam')
 **原因**: パッケージ名またはレジストリURLが間違っている
 
 **解決方法**:
+
 1. `package.json` の `name` が `@exabugs/dynamodb-client` であることを確認
 2. `publishConfig.registry` が `https://npm.pkg.github.com` であることを確認
 
@@ -153,6 +156,7 @@ node -e "const { DynamoClient } = require('@exabugs/dynamodb-client/client/iam')
 **原因**: テストまたはビルドが失敗している
 
 **解決方法**:
+
 1. GitHub Actionsのログを確認
 2. ローカルで `npm test` と `npm run build` を実行して問題を特定
 3. 修正してpush
@@ -162,6 +166,7 @@ node -e "const { DynamoClient } = require('@exabugs/dynamodb-client/client/iam')
 **原因**: パッケージがプライベートで、認証が必要
 
 **解決方法**:
+
 1. `.npmrc` が正しく設定されていることを確認
 2. トークンに `read:packages` スコープがあることを確認
 3. パッケージの可視性設定を確認（Settings > Packages）

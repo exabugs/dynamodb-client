@@ -26,7 +26,7 @@ npm は Trusted Publishing (OpenID Connect) を推奨しています。これは
 ```yaml
 permissions:
   contents: read
-  id-token: write  # Trusted Publishing に必要
+  id-token: write # Trusted Publishing に必要
 
 steps:
   - name: Publish to npm
@@ -49,7 +49,7 @@ Trusted Publishing が利用できない場合のみ、Granular Access Token を
 4. 設定:
    - **Token Name**: `github-actions-dynamodb-client`
    - **Expiration**: 1 year
-   - **Packages and scopes**: 
+   - **Packages and scopes**:
      - Select packages: `@exabugs/dynamodb-client`
      - Permissions: `Read and write`
 5. **Generate Token** をクリック
@@ -98,7 +98,7 @@ Trusted Publishing が利用できない場合のみ、Granular Access Token を
 
 ### release.yml
 
-- **トリガー**: version tag (v*.*.*)
+- **トリガー**: version tag (v*.*.\*)
 - **実行内容**:
   - テスト実行
   - ビルド
@@ -162,6 +162,7 @@ git push
 ### ビルドが失敗する
 
 1. **ローカルでビルドを確認**
+
    ```bash
    npm run build
    ```
@@ -175,6 +176,7 @@ git push
 ### テストが失敗する
 
 1. **ローカルでテストを確認**
+
    ```bash
    npm test
    ```

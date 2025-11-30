@@ -26,9 +26,9 @@ DynamoDB ClientはMongoDB風のAPIを提供し、react-adminのデータプロ�
 ### データプロバイダーの作成
 
 ```typescript
-import { DynamoClient } from '@exabugs/dynamodb-client/client/cognito';
-
 import { DataProvider } from 'react-admin';
+
+import { DynamoClient } from '@exabugs/dynamodb-client/client/cognito';
 
 export function createDataProvider(options: DataProviderOptions): DataProvider {
   function createClient(): DynamoClient {

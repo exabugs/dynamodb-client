@@ -38,6 +38,7 @@ gh run list --status in_progress --json databaseId --jq '.[].databaseId' | xargs
 **原因**: ワークフロー内でgit pushを実行し、それが新しいワークフローをトリガーしている
 
 **解決方法**:
+
 ```yaml
 # ワークフローからのpushを除外
 on:
@@ -49,6 +50,7 @@ on:
 ```
 
 または、特定の条件でのみ実行：
+
 ```yaml
 on:
   push:
@@ -64,6 +66,7 @@ jobs:
 **原因**: .npmrcファイルがない、またはトークンが設定されていない
 
 **解決方法**:
+
 ```yaml
 - name: Setup .npmrc for GitHub Packages
   run: |
@@ -79,6 +82,7 @@ jobs:
 **原因**: 環境変数が設定されていない、またはテストが環境依存
 
 **解決方法**:
+
 ```yaml
 - name: Run tests
   run: npm test
@@ -92,11 +96,12 @@ jobs:
 **原因**: Node.jsバージョンの不一致、依存関係の問題
 
 **解決方法**:
+
 ```yaml
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '22.x'  # package.jsonのenginesと一致させる
+    node-version: '22.x' # package.jsonのenginesと一致させる
     cache: 'npm'
 ```
 
@@ -105,12 +110,13 @@ jobs:
 **原因**: 権限不足、パッケージ名の重複
 
 **解決方法**:
+
 ```yaml
 jobs:
   publish:
     permissions:
       contents: read
-      packages: write  # 必須
+      packages: write # 必須
 ```
 
 ## デバッグ方法
@@ -159,7 +165,7 @@ act -s GITHUB_TOKEN=your_token
   uses: actions/setup-node@v4
   with:
     node-version: '22.x'
-    cache: 'npm'  # node_modulesをキャッシュ
+    cache: 'npm' # node_modulesをキャッシュ
 ```
 
 ### 並列実行
@@ -185,25 +191,30 @@ jobs:
 ## 現在のワークフロー設定
 
 ### ci.yml
+
 - **トリガー**: mainブランチへのpush、PRの作成/更新
 - **実行内容**: テスト、ビルド
 - **注意**: 毎回実行されるため、テストは高速に保つ
 
 ### pr.yml
+
 - **トリガー**: PRの作成/更新
 - **実行内容**: フォーマットチェック、リント、テスト、ビルド、セキュリティ監査
 
 ### coverage.yml
+
 - **トリガー**: mainブランチへのpush、PRの作成/更新
 - **実行内容**: カバレッジ計測
 
 ### publish-github.yml
-- **トリガー**: バージョンタグ（v*.*.*）のpush、手動実行
+
+- **トリガー**: バージョンタグ（v*.*.\*）のpush、手動実行
 - **実行内容**: GitHub Packagesへの公開
 - **注意**: mainブランチへのpushでは実行されない
 
 ### release.yml
-- **トリガー**: バージョンタグ（v*.*.*）のpush
+
+- **トリガー**: バージョンタグ（v*.*.\*）のpush
 - **実行内容**: npm公開、GitHubリリース作成
 
 ## 推奨事項
@@ -217,7 +228,7 @@ jobs:
 ```yaml
 jobs:
   test:
-    timeout-minutes: 10  # 10分でタイムアウト
+    timeout-minutes: 10 # 10分でタイムアウト
 ```
 
 ## 参考リンク

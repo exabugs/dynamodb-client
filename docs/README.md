@@ -156,20 +156,16 @@ Records Lambda API の型定義は `@exabugs/dynamodb-client/types` からエク
 
 ```typescript
 import type {
-  ApiErrorResponse,
-  // 操作タイプ
-  ApiOperation,
-  // リクエスト型
+  ApiErrorResponse, // 操作タイプ
+  ApiOperation, // リクエスト型
   ApiRequest,
-  ApiResponse,
-  // レスポンス型
+  ApiResponse, // レスポンス型
   ApiSuccessResponse,
   BulkOperationResult,
   DeleteOneParams,
   FindManyParams,
   FindOneParams,
-  FindParams,
-  // データ型
+  FindParams, // データ型
   FindResult,
   InsertOneParams,
   OperationError,

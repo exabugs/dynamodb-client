@@ -47,9 +47,8 @@ await client.connect();
 ブラウザまたはNode.jsで、Cognitoトークンを使用する場合に使用します。
 
 ```typescript
-import { Auth } from 'aws-amplify';
-
 import { DynamoClient } from '@ainews/core/client/cognito';
+import { Auth } from 'aws-amplify';
 
 const client = new DynamoClient(FUNCTION_URL, {
   auth: {
