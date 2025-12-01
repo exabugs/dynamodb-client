@@ -121,16 +121,22 @@ graph TB
 
 Get started in 3 steps: **Schema Definition → Deploy Infrastructure → Use Client**
 
-### Complete Examples Available
+### Complete Example Project
 
-We provide complete, working examples for every step:
+We provide a complete, working example project that demonstrates all features:
 
-| Example                                    | What You'll Learn                                    | Time   |
-| ------------------------------------------ | ---------------------------------------------------- | ------ |
-| **[Schema](./examples/schema/)**           | Define TypeScript schemas and generate shadow config | 5 min  |
-| **[Terraform](./examples/terraform/)**     | Deploy Lambda + DynamoDB + Cognito to AWS            | 10 min |
-| **[Client](./examples/client/)**           | Node.js CRUD operations with MongoDB-like API        | 10 min |
-| **[React Admin](./examples/react-admin/)** | Build complete admin UI with authentication          | 15 min |
+👉 **[dynamodb-client-example](https://github.com/exabugs/dynamodb-client-example)** - Full-stack example with React Admin
+
+This example includes:
+
+- ✅ Complete TypeScript schemas (Articles, Tasks)
+- ✅ Terraform infrastructure (DynamoDB, Lambda, Cognito)
+- ✅ React Admin UI with authentication
+- ✅ Shadow Records for efficient sorting
+- ✅ Production-ready configuration
+- ✅ Step-by-step QUICKSTART guide
+
+**Use it as a template** for your own projects!
 
 ### Quick Example
 
@@ -138,6 +144,7 @@ We provide complete, working examples for every step:
 // 1. Define schema
 export const MySchema: SchemaRegistryConfig = {
   database: {
+    name: 'myapp',
     timestamps: {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
@@ -152,7 +159,7 @@ export const MySchema: SchemaRegistryConfig = {
   },
 };
 
-// 2. Deploy with Terraform (see examples/terraform/)
+// 2. Deploy with Terraform (see dynamodb-client-example)
 // terraform apply
 
 // 3. Use the client
@@ -163,16 +170,11 @@ await articles.insertOne({ title: 'Hello DynamoDB' });
 const article = await articles.findOne({ title: 'Hello DynamoDB' });
 ```
 
-### 📚 Full Documentation
+### 📚 Getting Started
 
-👉 **[Complete Examples Guide →](./examples/)** - Step-by-step tutorials with full source code
-
-Each example includes:
-
-- ✅ Complete source code
-- ✅ Step-by-step instructions
-- ✅ Terraform integration
-- ✅ Configuration templates
+1. **Clone the example project**: `git clone https://github.com/exabugs/dynamodb-client-example.git`
+2. **Follow the QUICKSTART guide**: See [QUICKSTART.md](https://github.com/exabugs/dynamodb-client-example/blob/main/QUICKSTART.md)
+3. **Customize for your needs**: Modify schemas, add resources, deploy to AWS
 
 ---
 
@@ -233,22 +235,24 @@ npm run clean         # Clean build artifacts
 
 ## 🚢 Deployment
 
-### Using Terraform
+### Using the Example Project
+
+The easiest way to deploy is using the [dynamodb-client-example](https://github.com/exabugs/dynamodb-client-example) project:
 
 ```bash
-cd terraform
-terraform init
-terraform plan -var-file=envs/dev.tfvars
-terraform apply -var-file=envs/dev.tfvars
+# Clone the example
+git clone https://github.com/exabugs/dynamodb-client-example.git
+cd dynamodb-client-example
+
+# Deploy to dev environment
+make deploy-dev
+
+# Deploy to other environments
+make deploy-stg    # Staging
+make deploy-prd    # Production
 ```
 
-### Using Make
-
-```bash
-make deploy-dev    # Deploy to dev environment
-make deploy-stg    # Deploy to staging
-make deploy-prd    # Deploy to production
-```
+See the [example project's documentation](https://github.com/exabugs/dynamodb-client-example) for detailed deployment instructions.
 
 ---
 
