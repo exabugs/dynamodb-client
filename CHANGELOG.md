@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-01-19
+
+### Fixed
+
+- **Server**: Removed `database` field validation from Lambda handler
+  - Fixed runtime error: "Missing required field: database"
+  - `MongoDBStyleRequest` interface no longer includes `database` field
+  - `parseRequestBody()` function no longer validates `database` field
+  - Completes the v0.2.0 breaking change implementation
+
+### Added
+
+- **Tests**: Added comprehensive unit tests for Lambda handler
+  - Request body parsing tests (7 tests)
+  - MongoDB-style API operation tests (8 tests)
+  - v0.2.0 breaking change verification tests (2 tests)
+  - CORS and method validation tests (2 tests)
+  - Authentication header validation tests (2 tests)
+  - Total: 21 new tests to prevent regression
+
 ## [0.2.0] - 2024-12-01
 
 ### Changed

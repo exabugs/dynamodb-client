@@ -180,7 +180,6 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
  */
 interface MongoDBStyleRequest {
   operation: string;
-  database: string;
   collection: string;
   params: unknown;
 }
@@ -203,9 +202,6 @@ function parseRequestBody(body: string | undefined): ApiRequest {
     // 必須フィールドの検証
     if (!parsed.operation) {
       throw new Error('Missing required field: operation');
-    }
-    if (!parsed.database) {
-      throw new Error('Missing required field: database');
     }
     if (!parsed.collection) {
       throw new Error('Missing required field: collection');
