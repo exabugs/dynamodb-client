@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2024-12-01
+
+### Added
+
+- **Types**: Export `ResultBase` and `InputBase` from `@exabugs/dynamodb-client/client`
+  - `ResultBase`: Base interface for document results (with required `id` field)
+  - `InputBase`: Base interface for document inputs (with optional `id` field)
+  - Allows users to extend `ResultBase` for type-safe collection definitions
+  - Improves type safety when defining custom document interfaces
+
+### Changed
+
+- **Client**: Updated `client/index.ts` to export base types
+  - `export { Collection, type InputBase, type ResultBase } from './Collection.js'`
+
 ## [0.2.1] - 2025-01-19
 
 ### Fixed
