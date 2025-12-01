@@ -31,7 +31,7 @@ module "lambda_records" {
   cognito_user_pool_id = module.cognito.user_pool_id
 
   # シャドウ設定（base64エンコード）
-  shadow_config = base64encode(file("${path.root}/../config/shadow.config.json"))
+  shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 
   # ログ設定
   log_retention_days = 7
@@ -57,7 +57,7 @@ module "lambda_records" {
   cognito_user_pool_id = module.cognito.user_pool_id
 
   # シャドウ設定（base64エンコード）
-  shadow_config = base64encode(file("${path.root}/../config/shadow.config.json"))
+  shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 }
 ```
 
@@ -133,7 +133,7 @@ module "lambda_records" {
 Terraformでは、シャドウ設定をbase64エンコードして渡します：
 
 ```hcl
-shadow_config = base64encode(file("${path.root}/../config/shadow.config.json"))
+shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 ```
 
 ## IAMポリシー

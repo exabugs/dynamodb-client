@@ -312,7 +312,7 @@ return {
 カスタム`Datagrid`を使用して、`shadow.config.json`に基づいて自動的に`sortable`プロパティを設定します：
 
 ```typescript
-import shadowConfig from '@config/shadow.config.json';
+import shadowConfig from '@example/api-types/shadow.config.json';
 
 function isSortableField(resource: string | undefined, field: string): boolean {
   if (field === 'id') return true; // idは常にソート可能

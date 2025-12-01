@@ -11,7 +11,7 @@
  * - キャッシュ有効期間: Lambda実行環境が存在する間（通常15分〜数時間）
  *
  * 設定変更の反映:
- * - config/shadow.config.jsonを変更
+ * - packages/api-types/shadow.config.jsonを変更
  * - Terraformで再度apply（環境変数が更新される）
  * - Lambda関数が自動的に再デプロイされ、新しい設定が反映される
  *
