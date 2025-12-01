@@ -36,7 +36,6 @@ describe('Collection', () => {
   beforeEach(() => {
     collection = new Collection<Product>(
       MOCK_ENDPOINT,
-      MOCK_DATABASE,
       MOCK_COLLECTION,
       undefined, // authToken (deprecated)
       MOCK_AUTH_OPTIONS, // authOptions
@@ -50,7 +49,6 @@ describe('Collection', () => {
     it('コレクションを作成できる', () => {
       expect(collection).toBeInstanceOf(Collection);
       expect(collection.getName()).toBe(MOCK_COLLECTION);
-      expect(collection.getDatabaseName()).toBe(MOCK_DATABASE);
       expect(collection.getEndpoint()).toBe(MOCK_ENDPOINT);
       expect(collection.getAuthOptions()).toEqual(MOCK_AUTH_OPTIONS);
     });

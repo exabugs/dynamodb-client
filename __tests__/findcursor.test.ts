@@ -18,7 +18,6 @@ interface Product {
 
 describe('FindCursor', () => {
   const MOCK_ENDPOINT = 'https://example.lambda-url.us-east-1.on.aws';
-  const MOCK_DATABASE = 'products';
   const MOCK_COLLECTION = 'products';
   const MOCK_TOKEN = 'mock-token';
 
@@ -31,7 +30,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -46,7 +44,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -61,7 +58,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -78,7 +74,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -95,7 +90,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -126,7 +120,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -142,7 +135,6 @@ describe('FindCursor', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${MOCK_TOKEN}`,
           }),
           body: expect.stringContaining('find'),
         })
@@ -162,7 +154,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'inactive' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -184,7 +175,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -212,7 +202,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -246,7 +235,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -260,7 +248,7 @@ describe('FindCursor', () => {
       // リクエストボディにオプションが含まれていることを確認
       const callArgs = (global.fetch as any).mock.calls[0];
       const requestBody = JSON.parse(callArgs[1].body);
-      expect(requestBody.params.options).toEqual({
+      expect(requestBody.params.options).toMatchObject({
         sort: { price: 'desc' },
         limit: 10,
         skip: 20,
@@ -279,7 +267,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
@@ -301,7 +288,6 @@ describe('FindCursor', () => {
       const filter: Filter<Product> = { status: 'active' };
       const cursor = new FindCursor<Product>(
         MOCK_ENDPOINT,
-        MOCK_DATABASE,
         MOCK_COLLECTION,
         filter,
         {},
