@@ -8,5 +8,5 @@
  */
 
 export { Database } from './Database.js';
-export { Collection } from './Collection.js';
+export { Collection, type InputBase, type ResultBase } from './Collection.js';
 export { FindCursor } from './FindCursor.js';
