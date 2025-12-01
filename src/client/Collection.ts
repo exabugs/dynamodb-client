@@ -52,7 +52,6 @@ export interface ResultBase {
 export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = unknown> {
   constructor(
     private endpoint: string,
-    private databaseName: string,
     private collectionName: string,
     private authToken: string | undefined,
     private authOptions: TAuthOptions | undefined,
@@ -66,10 +65,6 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
 
   getEndpoint(): string {
     return this.endpoint;
-  }
-
-  getDatabaseName(): string {
-    return this.databaseName;
   }
 
   getAuthToken(): string | undefined {
@@ -86,7 +81,6 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
   private async request(operation: string, params: Record<string, unknown>): Promise<unknown> {
     const requestBody = JSON.stringify({
       operation,
-      database: this.databaseName,
       collection: this.collectionName,
       params,
     });
@@ -142,7 +136,6 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
   find(filter: Filter<TSchema> = {}, options?: FindOptions): FindCursor<TSchema, TAuthOptions> {
     return new FindCursor<TSchema, TAuthOptions>(
       this.endpoint,
-      this.databaseName,
       this.collectionName,
       filter,
       options,

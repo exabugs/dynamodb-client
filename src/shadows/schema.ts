@@ -56,9 +56,6 @@ export interface ResourceSchema<T = any> {
 export interface SchemaRegistryConfig {
   /** データベース設定 */
   database: {
-    /** データベース名 */
-    name: string;
-
     /** タイムスタンプフィールド名 */
     timestamps: {
       createdAt: string;

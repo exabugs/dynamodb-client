@@ -18,7 +18,7 @@ interface Product {
 
 describe('FindCursor', () => {
   const MOCK_ENDPOINT = 'https://example.lambda-url.us-east-1.on.aws';
-  const MOCK_DATABASE = 'test-db';
+  const MOCK_DATABASE = 'products';
   const MOCK_COLLECTION = 'products';
   const MOCK_TOKEN = 'mock-token';
 

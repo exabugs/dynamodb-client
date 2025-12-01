@@ -64,14 +64,13 @@ describe('DynamoClient', () => {
     });
 
     it('データベースインスタンスを取得できる', () => {
-      const db = client.db('test-db');
+      const db = client.db();
       expect(db).toBeDefined();
-      expect(db.getDatabaseName()).toBe('test-db');
     });
 
     it('接続前にdb()を呼ぶとエラーになる', () => {
       const disconnectedClient = new DynamoClient(MOCK_ENDPOINT);
-      expect(() => disconnectedClient.db('test-db')).toThrow(
+      expect(() => disconnectedClient.db()).toThrow(
         'Client is not connected. Please call await client.connect() before using the client.'
       );
     });
@@ -92,7 +91,7 @@ describe('DynamoClient', () => {
       await client.connect();
       await client.close();
 
-      expect(() => client.db('test-db')).toThrow(
+      expect(() => client.db()).toThrow(
         'Client is not connected. Please call await client.connect() before using the client.'
       );
     });
@@ -121,18 +120,6 @@ describe('DynamoClient', () => {
   describe('入力バリデーション', () => {
     it('空のエンドポイントでエラーになる', () => {
       expect(() => new DynamoClient('')).toThrow('Endpoint cannot be empty');
-    });
-
-    it('空のデータベース名でエラーになる', async () => {
-      const client = new DynamoClient(MOCK_ENDPOINT);
-      await client.connect();
-      expect(() => client.db('')).toThrow('Database name cannot be empty');
-    });
-
-    it('空白のみのデータベース名でエラーになる', async () => {
-      const client = new DynamoClient(MOCK_ENDPOINT);
-      await client.connect();
-      expect(() => client.db('   ')).toThrow('Database name cannot be empty');
     });
   });
 

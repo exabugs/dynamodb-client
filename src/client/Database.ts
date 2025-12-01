@@ -16,7 +16,6 @@ import type { ClientOptions } from './DynamoClient.js';
 export class Database<TAuthOptions = unknown> {
   constructor(
     private _endpoint: string,
-    private _databaseName: string,
     private _authToken: string | undefined,
     private _authOptions: TAuthOptions | undefined,
     private _clientOptions: ClientOptions | undefined,
@@ -25,10 +24,6 @@ export class Database<TAuthOptions = unknown> {
 
   getEndpoint(): string {
     return this._endpoint;
-  }
-
-  getDatabaseName(): string {
-    return this._databaseName;
   }
 
   getAuthToken(): string | undefined {
@@ -48,7 +43,6 @@ export class Database<TAuthOptions = unknown> {
 
     return new Collection<TSchema, TAuthOptions>(
       this._endpoint,
-      this._databaseName,
       name,
       this._authToken,
       this._authOptions,

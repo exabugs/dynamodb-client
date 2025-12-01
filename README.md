@@ -137,7 +137,12 @@ We provide complete, working examples for every step:
 ```typescript
 // 1. Define schema
 export const MySchema: SchemaRegistryConfig = {
-  database: { name: 'myapp' },
+  database: {
+    timestamps: {
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    },
+  },
   resources: {
     articles: {
       resource: 'articles',

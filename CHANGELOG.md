@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-12-01
+
+### Changed
+
+- **BREAKING**: Removed `databaseName` parameter from all APIs
+  - `DynamoClient.db()` no longer requires a database name argument
+  - `createDataProvider()` no longer requires `databaseName` option
+  - `Database` class no longer stores or uses database name
+  - `Collection` and `FindCursor` no longer include database name in requests
+  - Simplified architecture: DynamoDB table is 1:1 with Lambda function
+  - For multi-tenant use cases, use separate DynamoDB tables instead
+
+### Migration Guide
+
+**Before (v0.1.x):**
+```typescript
+const client = new DynamoClient(apiUrl);
+await client.connect();
+const db = client.db('myapp');
+const collection = db.collection('users');
+
+const dataProvider = createDataProvider({
+  apiUrl: 'https://...',
+  databaseName: 'myapp',
+  tokenProvider,
+});
+```
+
+**After (v0.2.0):**
+```typescript
+const client = new DynamoClient(apiUrl);
+await client.connect();
+const db = client.db();
+const collection = db.collection('users');
+
+const dataProvider = createDataProvider({
+  apiUrl: 'https://...',
+  tokenProvider,
+});
+```
+
 ## [0.1.2] - 2024-11-30
 
 ### Added

@@ -36,9 +36,6 @@ export interface DataProviderOptions {
   /** Records Lambda Function URL */
   apiUrl: string;
 
-  /** データベース名 */
-  databaseName: string;
-
   /** トークンプロバイダー */
   tokenProvider: TokenProvider;
 

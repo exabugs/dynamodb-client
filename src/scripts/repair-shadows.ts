@@ -236,7 +236,7 @@ async function main() {
   console.log(`Client connected: ${client.isConnected()}\n`);
 
   const collection = client
-    .db('ainews')
+    .db()
     .collection<{ id: string; [key: string]: unknown }>(resource);
 
   if (recordId) {

@@ -25,7 +25,6 @@ interface ShadowConfig {
   $schemaVersion: string;
   $generatedFrom: string;
   database: {
-    name: string;
     timestamps: {
       createdAt: string;
       updatedAt: string;
@@ -176,7 +175,6 @@ function generateShadowConfig(
     $schemaVersion: '2.0',
     $generatedFrom: schemaFile,
     database: {
-      name: schemaConfig.database.name,
       timestamps: schemaConfig.database.timestamps,
     },
     resources,
@@ -205,7 +203,6 @@ async function main(): Promise<void> {
     writeFileSync(outputPath, output, 'utf-8');
 
     console.log(`✅ Generated shadow.config.json at ${outputPath}`);
-    console.log(`📊 Database: ${config.database.name}`);
     console.log(`📊 Resources: ${Object.keys(config.resources).join(', ')}`);
 
     process.exit(0);

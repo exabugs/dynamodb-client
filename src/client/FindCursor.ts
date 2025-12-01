@@ -34,7 +34,6 @@ export class FindCursor<
    * FindCursorを作成
    *
    * @param endpoint - Lambda Function URL
-   * @param databaseName - データベース名
    * @param collectionName - コレクション名
    * @param filter - フィルタ条件
    * @param options - 検索オプション
@@ -45,7 +44,6 @@ export class FindCursor<
    */
   constructor(
     private endpoint: string,
-    private databaseName: string,
     private collectionName: string,
     private filter: Filter<TSchema>,
     options: FindOptions = {},
@@ -142,7 +140,6 @@ export class FindCursor<
 
     const requestBody = JSON.stringify({
       operation: 'find',
-      database: this.databaseName,
       collection: this.collectionName,
       params: {
         filter: this.filter,

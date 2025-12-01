@@ -67,7 +67,7 @@ export class DynamoClient<TAuthOptions = unknown> {
     this.connected = true;
   }
 
-  db(name: string): Database<TAuthOptions> {
+  db(): Database<TAuthOptions> {
     if (!this.connected) {
       throw new Error(
         'Client is not connected. Please call await client.connect() before using the client. ' +
@@ -75,13 +75,8 @@ export class DynamoClient<TAuthOptions = unknown> {
       );
     }
 
-    if (!name || name.trim() === '') {
-      throw new Error('Database name cannot be empty');
-    }
-
     return new Database<TAuthOptions>(
       this.endpoint,
-      name,
       this.authToken,
       this.options?.auth,
       this.options,

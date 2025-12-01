@@ -23,7 +23,6 @@
  *
  * const dataProvider = createDataProvider({
  *   apiUrl: 'https://your-lambda-url.amazonaws.com',
- *   databaseName: 'your-database',
  *   tokenProvider,
  *   defaultPerPage: 25,
  *   defaultSortField: 'updatedAt',
@@ -140,7 +139,6 @@ function getNextTokenFromCache(resource: string, page: number): string | undefin
 export function createDataProvider(options: DataProviderOptions): DataProvider {
   const {
     apiUrl,
-    databaseName,
     tokenProvider,
     defaultPerPage = 25,
     defaultSortField = 'id',
@@ -182,7 +180,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const { field = defaultSortField, order = defaultSortOrder } = params.sort || {};
         const filter = params.filter || {};
 
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // フィルターまたはソートが変更された場合、キャッシュをクリア
@@ -239,7 +237,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // IDでレコードを検索（デフォルトソートを指定）
@@ -270,7 +268,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // IDの配列でレコードを検索（デフォルトソートを指定）
@@ -300,7 +298,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const { field = defaultSortField, order = defaultSortOrder } = params.sort || {};
         const filter = params.filter || {};
 
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // 外部キーフィルタを追加
@@ -340,7 +338,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // レコードを挿入
@@ -369,7 +367,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // レコードを更新
@@ -401,7 +399,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // 複数レコードを更新
@@ -430,7 +428,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // 削除前にレコードを取得（react-adminが削除されたレコードを期待するため、デフォルトソートを指定）
@@ -461,7 +459,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
       await client.connect();
 
       try {
-        const db = client.db(databaseName);
+        const db = client.db();
         const collection = db.collection(resource);
 
         // 複数レコードを削除
