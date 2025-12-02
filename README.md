@@ -256,6 +256,66 @@ See the [example project's documentation](https://github.com/exabugs/dynamodb-cl
 
 ---
 
+## 🔧 Shadow Configuration
+
+### Overview
+
+The shadow feature automatically makes all fields sortable without requiring JSON configuration files. Configuration is managed entirely through environment variables.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SHADOW_CREATED_AT_FIELD` | `createdAt` | Field name for creation timestamp |
+| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp |
+| `SHADOW_STRING_MAX_BYTES` | `100` | Max bytes for primitive types (array/object use 2x) |
+| `SHADOW_NUMBER_PADDING` | `15` | Padding digits for numbers |
+
+### Supported Types
+
+- **string**: Strings (truncated at 100 bytes)
+- **number**: Numbers (offset method, range: -10^15 to +10^15)
+- **boolean**: Booleans (true=1, false=0)
+- **datetime**: ISO 8601 datetime strings
+- **array**: Arrays (JSON stringified, truncated at 200 bytes)
+- **object**: Objects (JSON stringified, truncated at 200 bytes)
+
+### Automatic Shadow Generation
+
+Only fields that exist in each record are automatically shadowed:
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  title: 'Article',
+  viewCount: 123,
+  published: true,
+  tags: ['tech', 'aws'],
+  metadata: { category: 'tech' }
+};
+
+// Automatically generates shadow records:
+// - id#01HQXYZ123#id#01HQXYZ123
+// - title#Article#id#01HQXYZ123
+// - viewCount#1000000000000123#id#01HQXYZ123
+// - published#1#id#01HQXYZ123
+// - tags#["aws","tech"]#id#01HQXYZ123
+// - metadata#{"category":"tech"}#id#01HQXYZ123
+```
+
+### Exclusion Rules
+
+- Fields starting with `__` are excluded (internal metadata)
+- `null` or `undefined` values are excluded
+
+### Important Notes
+
+- Records without a specific field won't appear in sort results for that field
+- Primitive types are truncated at 100 bytes, complex types at 200 bytes
+- Number range is -10^15 to +10^15 (within JavaScript's safe integer range)
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions!

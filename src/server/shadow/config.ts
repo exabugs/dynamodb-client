@@ -1,64 +1,32 @@
 /**
- * サーバーサイドシャドウ設定管理
+ * サーバーサイドシャドウ設定管理（簡素化版）
  *
  * シャドー設定を環境変数から読み込み、グローバル変数にキャッシュします。
- * 設定はTerraformデプロイ時に環境変数として埋め込まれるため、
- * 実行時のI/Oが不要で、最も高速かつシンプルです。
+ * JSON設定ファイルは廃止され、環境変数のみで管理されます。
  *
  * キャッシュの動作:
- * - 初回呼び出し時: 環境変数からパースしてキャッシュ
+ * - 初回呼び出し時: 環境変数から読み込んでキャッシュ
  * - 2回目以降: キャッシュから即座に取得
  * - キャッシュ有効期間: Lambda実行環境が存在する間（通常15分〜数時間）
  *
  * 設定変更の反映:
- * - packages/api-types/shadow.config.jsonを変更
- * - Terraformで再度apply（環境変数が更新される）
+ * - Terraformで環境変数を変更
  * - Lambda関数が自動的に再デプロイされ、新しい設定が反映される
  *
- * 要件: 8.7
+ * 要件: 2.9-2.11
  */
-import type { ShadowSchema } from './generator.js';
-import type { ShadowFieldConfig } from './types.js';
 
 /**
- * シャドー設定の全体構造
+ * シャドー設定（簡素化版）
  */
 export interface ShadowConfig {
-  /** スキーマバージョン */
-  $schemaVersion: string;
-  /** 生成日時 */
-  $generatedAt?: string;
-  /** 生成元ファイル */
-  $generatedFrom?: string;
-  /** データベース設定 */
-  database?: {
-    name: string;
-    timestamps?: {
-      createdAt: string;
-      updatedAt: string;
-    };
-  };
-  /** リソースごとの設定 */
-  resources: {
-    [resourceName: string]: {
-      /** ソート可能なフィールド定義 */
-      shadows: {
-        [fieldName: string]: {
-          /** フィールドの型 */
-          type: 'string' | 'number' | 'datetime' | 'boolean';
-        };
-      };
-      /** デフォルトソート設定 */
-      sortDefaults: {
-        field: string;
-        order: 'ASC' | 'DESC';
-      };
-      /** TTL設定（オプション） */
-      ttl?: {
-        days: number;
-      };
-    };
-  };
+  /** タイムスタンプフィールド名 */
+  createdAtField: string;
+  updatedAtField: string;
+  /** プリミティブ型の最大バイト数（array/objectは2倍） */
+  stringMaxBytes: number;
+  /** 数値のパディング桁数 */
+  numberPadding: number;
 }
 
 /**
@@ -67,118 +35,39 @@ export interface ShadowConfig {
 let cachedShadowConfig: ShadowConfig | null = null;
 
 /**
- * シャドー設定を取得（キャッシュ付き）
+ * シャドー設定を取得（環境変数から）
  *
- * 環境変数SHADOW_CONFIGからbase64エンコードされたJSON文字列をデコードしてパースして取得。
- * 初回呼び出し時のみパース処理を行い、以降はキャッシュを使用。
+ * 環境変数から設定を読み込み、グローバル変数にキャッシュします。
+ * 初回呼び出し時のみ環境変数を読み込み、以降はキャッシュを使用。
  *
  * @returns シャドー設定
- * @throws 環境変数が未設定、または不正な形式の場合
+ * @throws 環境変数が不正な値の場合
  *
  * @example
  * ```typescript
  * const config = getShadowConfig();
- * const articleSchema = getResourceSchema(config, 'articles');
- * const shadows = generateShadowRecords(record, articleSchema);
+ * // => { createdAtField: 'createdAt', updatedAtField: 'updatedAt', stringMaxBytes: 100, numberPadding: 20 }
  * ```
  */
 export function getShadowConfig(): ShadowConfig {
   if (!cachedShadowConfig) {
-    const configBase64 = process.env.SHADOW_CONFIG;
+    cachedShadowConfig = {
+      createdAtField: process.env.SHADOW_CREATED_AT_FIELD || 'createdAt',
+      updatedAtField: process.env.SHADOW_UPDATED_AT_FIELD || 'updatedAt',
+      stringMaxBytes: parseInt(process.env.SHADOW_STRING_MAX_BYTES || '100', 10),
+      numberPadding: parseInt(process.env.SHADOW_NUMBER_PADDING || '15', 10),
+    };
 
-    if (!configBase64) {
-      throw new Error('SHADOW_CONFIG environment variable is not set');
+    // バリデーション
+    if (cachedShadowConfig.stringMaxBytes <= 0) {
+      throw new Error('SHADOW_STRING_MAX_BYTES must be positive');
     }
-
-    try {
-      // Base64デコード
-      const configJson = Buffer.from(configBase64, 'base64').toString('utf-8');
-      cachedShadowConfig = JSON.parse(configJson) as ShadowConfig;
-
-      // 基本的なバリデーション
-      if (!cachedShadowConfig.$schemaVersion) {
-        throw new Error('Missing $schemaVersion in shadow config');
-      }
-
-      if (!cachedShadowConfig.resources || typeof cachedShadowConfig.resources !== 'object') {
-        throw new Error('Missing or invalid resources in shadow config');
-      }
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new Error(`Invalid JSON in SHADOW_CONFIG environment variable: ${error.message}`);
-      }
-      throw error;
+    if (cachedShadowConfig.numberPadding <= 0 || cachedShadowConfig.numberPadding > 15) {
+      throw new Error('SHADOW_NUMBER_PADDING must be between 1 and 15');
     }
   }
 
   return cachedShadowConfig;
-}
-
-/**
- * 特定のリソースのシャドースキーマを取得する
- *
- * @param config - シャドー設定全体
- * @param resourceName - リソース名（例: 'articles', 'tasks'）
- * @returns シャドースキーマ
- * @throws リソースが設定に存在しない場合
- *
- * @example
- * ```typescript
- * const config = getShadowConfig();
- * const schema = getResourceSchema(config, 'articles');
- * // => { resource: 'articles', sortableFields: { name: { type: 'string' }, ... } }
- * ```
- */
-export function getResourceSchema(config: ShadowConfig, resourceName: string): ShadowSchema {
-  const resourceConfig = config.resources[resourceName];
-
-  if (!resourceConfig) {
-    throw new Error(`Resource '${resourceName}' not found in shadow config`);
-  }
-
-  return {
-    resource: resourceName,
-    sortableFields: resourceConfig.shadows,
-  };
-}
-
-/**
- * 設定ハッシュを取得
- *
- * レコード作成時にメタデータとして保存するために使用。
- * SHADOW_CONFIG環境変数（base64エンコードされたJSON）からSHA-256ハッシュを生成する。
- *
- * @returns 設定ハッシュ（SHA-256）
- */
-export function getShadowConfigHash(): string {
-  // 設定をロード（キャッシュされていなければロードされる）
-  getShadowConfig();
-
-  // 環境変数 SHADOW_CONFIG は Terraform により base64 エンコードされた JSON として設定される
-  // この値をハッシュ化することで、設定の変更を検知できる
-  const configBase64 = process.env.SHADOW_CONFIG;
-  if (!configBase64) {
-    throw new Error('SHADOW_CONFIG environment variable is not set');
-  }
-
-  // Node.js の crypto モジュールを使用してハッシュを計算
-  // Lambda 環境では crypto は標準モジュール
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require('crypto');
-  const hash = crypto.createHash('sha256').update(configBase64).digest('hex');
-  return hash;
-}
-
-/**
- * スキーマバージョンを取得
- *
- * レコード作成時にメタデータとして保存するために使用。
- *
- * @returns スキーマバージョン
- */
-export function getSchemaVersion(): string {
-  const config = getShadowConfig();
-  return config.$schemaVersion;
 }
 
 /**
@@ -189,65 +78,4 @@ export function getSchemaVersion(): string {
  */
 export function clearShadowConfigCache(): void {
   cachedShadowConfig = null;
-}
-
-/**
- * リソースの全シャドーフィールドを取得する
- *
- * @param config - シャドー設定全体
- * @param resourceName - リソース名
- * @returns 全シャドーフィールドの設定
- */
-export function getAllShadowFields(
-  config: ShadowConfig,
-  resourceName: string
-): Record<string, ShadowFieldConfig> {
-  const resourceConfig = config.resources[resourceName];
-
-  if (!resourceConfig) {
-    throw new Error(`Resource '${resourceName}' not found in shadow config`);
-  }
-
-  return resourceConfig.shadows;
-}
-
-/**
- * 指定されたフィールドが有効なシャドーフィールドかどうかを検証する
- *
- * @param config - シャドー設定全体
- * @param resourceName - リソース名
- * @param fieldName - 検証するフィールド名
- * @returns フィールドが有効な場合true
- */
-export function isValidShadowField(
-  config: ShadowConfig,
-  resourceName: string,
-  fieldName: string
-): boolean {
-  try {
-    const allFields = getAllShadowFields(config, resourceName);
-    return fieldName in allFields;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * リソースのデフォルトソート設定を取得する
- *
- * @param config - シャドー設定全体
- * @param resourceName - リソース名
- * @returns デフォルトソート設定
- */
-export function getDefaultSort(
-  config: ShadowConfig,
-  resourceName: string
-): { field: string; order: 'ASC' | 'DESC' } {
-  const resourceConfig = config.resources[resourceName];
-
-  if (!resourceConfig) {
-    throw new Error(`Resource '${resourceName}' not found in shadow config`);
-  }
-
-  return resourceConfig.sortDefaults;
 }
