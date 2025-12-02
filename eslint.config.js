@@ -37,6 +37,35 @@ export default [
     },
   },
   {
+    // テストファイル用の設定（tsconfig.jsonから除外されているため、projectを無効化）
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/__tests__/**/*.ts', '**/__tests__/**/*.tsx'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        // テストファイルはtsconfig.jsonから除外されているため、projectを無効化
+        project: false,
+      },
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      'no-undef': 'off',
+    },
+  },
+  {
     files: ['**/*.jsx', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
