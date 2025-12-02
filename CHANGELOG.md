@@ -7,7 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2025-01-20
+## [0.3.3] - 2024-12-02
+
+### Fixed
+
+- **Types**: Made `shadows` property optional in `ResourceSchema` interface
+  - Allows schemas without `shadows.sortableFields` definition
+  - Maintains backward compatibility with v0.2.x schemas
+  - All fields are automatically shadowed in v0.3.x
+
+## [0.3.2] - 2024-12-02
+
+### Changed
+
+- **Shadow Configuration**: Simplified shadow configuration (auto-shadow simplification)
+  - Removed `shadow.config.json` file requirement
+  - Removed `generate-shadow-config` CLI tool
+  - All fields are now automatically shadowed without configuration
+  - Simplified package structure and build process
+
+## [0.3.1] - 2024-12-02
+
+### Fixed
+
+- **Build**: Fixed TypeScript compilation errors
+  - Fixed syntax errors in timestamps.ts and validation.ts
+  - Updated ShadowConfig type imports
+  - Removed unused getResourceSchema calls
+- **ESLint**: Fixed ESLint parsing errors for test files
+  - Added separate ESLint configuration for test files
+  - Configured `project: false` for test files excluded from tsconfig.json
+
+## [0.3.0] - 2024-12-01
 
 ### Added
 

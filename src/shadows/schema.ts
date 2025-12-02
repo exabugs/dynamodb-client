@@ -21,6 +21,9 @@ export interface ShadowFieldDefinition {
  * リソーススキーマの定義
  *
  * @template T - リソースの型（例: Article, Task など）
+ *
+ * @exabugs/dynamodb-client v0.3.x では、シャドウ設定は環境変数ベースになりました。
+ * shadows プロパティは後方互換性のために残されていますが、省略可能です。
  */
 export interface ResourceSchema<T = any> {
   /** リソース名（複数形、例: "articles", "tasks"） */
@@ -29,8 +32,8 @@ export interface ResourceSchema<T = any> {
   /** リソースの型定義（型チェック用） */
   type: T;
 
-  /** シャドー設定 */
-  shadows: {
+  /** シャドー設定（省略可、v0.3.x では不要） */
+  shadows?: {
     /** ソート可能なフィールドの定義 */
     sortableFields: Record<string, ShadowFieldDefinition>;
   };
