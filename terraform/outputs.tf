@@ -49,8 +49,3 @@ output "function_url_id" {
   description = "Lambda Function URL ID"
   value       = aws_lambda_function_url.records.url_id
 }
-
-output "shadow_config" {
-  description = "シャドー設定（base64エンコード）"
-  value       = var.shadow_config
-}
