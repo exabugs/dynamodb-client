@@ -168,7 +168,8 @@ describe('generateShadowRecords', () => {
 
     expect(shadows).toHaveLength(7); // 7つのフィールド
     expect(shadows.every((s) => s.PK === 'articles')).toBe(true);
-    expect(shadows.every((s) => s.data.id === '01HQXYZ123')).toBe(true);
+    // シャドウレコードにはdataフィールドがない（IDはSKから抽出）
+    expect(shadows.every((s) => s.SK.includes('#id#01HQXYZ123'))).toBe(true);
   });
 
   it('__プレフィックスのフィールドを除外する', () => {

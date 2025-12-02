@@ -12,11 +12,6 @@ export interface ShadowRecord {
   PK: string;
   /** ソートキー（シャドウキー） */
   SK: string;
-  /** レコードデータ（最小限の情報） */
-  data: {
-    /** レコードID */
-    id: string;
-  };
 }
 
 /**
@@ -271,10 +266,10 @@ export function generateMainRecordSK(recordId: string): string {
  * const config = getShadowConfig();
  * const shadows = generateShadowRecords(record, 'articles', config);
  * // => [
- * //   { PK: 'articles', SK: 'id#01HQXYZ...#id#01HQXYZ...', data: { id: '01HQXYZ...' } },
- * //   { PK: 'articles', SK: 'title#Article#id#01HQXYZ...', data: { id: '01HQXYZ...' } },
- * //   { PK: 'articles', SK: 'viewCount#10000000000000000123#id#01HQXYZ...', data: { id: '01HQXYZ...' } },
- * //   { PK: 'articles', SK: 'tags#["aws","tech"]#id#01HQXYZ...', data: { id: '01HQXYZ...' } },
+ * //   { PK: 'articles', SK: 'id#01HQXYZ...#id#01HQXYZ...' },
+ * //   { PK: 'articles', SK: 'title#Article#id#01HQXYZ...' },
+ * //   { PK: 'articles', SK: 'viewCount#10000000000000000123#id#01HQXYZ...' },
+ * //   { PK: 'articles', SK: 'tags#["aws","tech"]#id#01HQXYZ...' },
  * // ]
  * ```
  */
@@ -312,7 +307,6 @@ export function generateShadowRecords(
     shadows.push({
       PK: resourceName,
       SK: sk,
-      data: { id: record.id as string },
     });
   }
 

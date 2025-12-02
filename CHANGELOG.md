@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2024-12-02
+
+### Changed
+
+- **Shadow Records**: Removed `data` field from shadow records
+  - Shadow records now only contain `PK` and `SK` fields
+  - Record ID is extracted from `SK` (format: `{field}#{value}#id#{recordId}`)
+  - Reduces storage cost and simplifies data structure
+  - No functional changes - ID extraction logic remains the same
+
 ## [0.3.4] - 2024-12-02
 
 ### Removed
