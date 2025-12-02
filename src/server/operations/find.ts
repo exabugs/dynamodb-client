@@ -6,8 +6,7 @@
  */
 import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
-import { ConfigError, createLogger, getResourceSchema, getShadowConfig } from '../../index.js';
-import type { ShadowConfig } from '../shadow/index.js';
+import { ConfigError, createLogger, getShadowConfig } from '../../index.js';
 import type { FindParams, FindResult } from '../types.js';
 import {
   executeDynamoDBOperation,
@@ -58,8 +57,8 @@ export async function handleFind(
   logger.debug('Shadow config loaded', {
     requestId,
     resource,
-    hasResources: !!shadowConfig.resources,
-    resourceNames: Object.keys(shadowConfig.resources || {}),
+    createdAtField: shadowConfig.createdAtField,
+    updatedAtField: shadowConfig.updatedAtField,
   });
 
   // ソート条件を正規化（デフォルト値を適用）
@@ -69,7 +68,7 @@ export async function handleFind(
     inputSort: params.sort,
   });
 
-  const sort = normalizeSort(shadowConfig as ShadowConfig, resource, params.sort);
+  const sort = normalizeSort(shadowConfig, resource, params.sort);
 
   logger.debug('Sort normalized', {
     requestId,
@@ -78,7 +77,7 @@ export async function handleFind(
   });
 
   // ソートフィールドを検証
-  validateSortField(shadowConfig as ShadowConfig, resource, sort);
+  validateSortField(shadowConfig, resource, sort);
 
   // ページネーション条件を正規化
   const { perPage, nextToken } = normalizePagination(params.pagination);
@@ -239,16 +238,8 @@ export async function handleFind(
   }
 
   // 通常のシャドーレコードクエリ（sort.field != 'id'の場合）
-  // シャドーフィールドの型情報を取得
-  const shadowSchema = getResourceSchema(shadowConfig, resource);
-  const sortFieldType = shadowSchema.sortableFields[sort.field]?.type;
-
-  if (!sortFieldType) {
-    throw new ConfigError(`Sort field type not found: ${sort.field}`, {
-      field: sort.field,
-      resource,
-    });
-  }
+  // 新しい実装: すべてのフィールドが自動的にシャドウ化されるため、
+  // 型情報の事前チェックは不要
 
   // Query最適化: ソートフィールドと一致するフィルター条件を検出
   // 要件: 12.7

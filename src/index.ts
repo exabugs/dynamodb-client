@@ -40,9 +40,7 @@ export {
   type DynamoQuery,
   generateShadowRecords,
   type ShadowRecord,
-  type ShadowSchema,
   getShadowConfig,
-  getResourceSchema,
   clearShadowConfigCache,
   type ShadowConfig,
 } from './server/index.js';

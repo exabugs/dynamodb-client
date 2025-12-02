@@ -25,37 +25,10 @@ export interface TimestampFields {
 export function getTimestampFields(): TimestampFields | null {
   const shadowConfig = getShadowConfig();
 
-  // database 設定が存在するか確認
-  if (!shadowConfig.database) {
-    // デフォルト値を返す
-    return {
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-    };
-  }
-
-  const { timestamps } = shadowConfig.database;
-
-  // timestamps 設定がない場合はデフォルト値を返す
-  if (!timestamps) {
-    return {
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-    };
-  }
-
-  // timestamps 設定がある場合はそれを使用
-  if (typeof timestamps === 'object') {
-    return {
-      createdAt: timestamps.createdAt,
-      updatedAt: timestamps.updatedAt,
-    };
-  }
-
-  // デフォルト値を返す
+  // 新しい設定形式: 環境変数ベース
   return {
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
+    createdAt: shadowConfig.createdAtField,
+    updatedAt: shadowConfig.updatedAtField,
   };
 }
 

@@ -19,7 +19,6 @@ import { handleInsertMany } from './operations/insertMany.js';
 import { handleInsertOne } from './operations/insertOne.js';
 import { handleUpdateMany } from './operations/updateMany.js';
 import { handleUpdateOne } from './operations/updateOne.js';
-import { getSchemaVersion, getShadowConfigHash } from './shadow/config.js';
 import type {
   ApiErrorResponse,
   ApiOperation,
@@ -46,19 +45,8 @@ const logger = createLogger({
   level: (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
 });
 
-// 起動時に設定情報をログ出力（コールドスタート時のみ実行される）
-try {
-  const schemaVersion = getSchemaVersion();
-  const configHash = getShadowConfigHash();
-  logger.info('Records Lambda started', {
-    schemaVersion,
-    configHash,
-  });
-} catch (error) {
-  logger.warn('Failed to load shadow config at startup', {
-    error: error instanceof Error ? error.message : String(error),
-  });
-}
+// 起動時にログ出力（コールドスタート時のみ実行される）
+logger.info('Records Lambda started with automatic shadow field detection');
 
 /**
  * CORS ヘッダー

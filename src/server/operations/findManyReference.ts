@@ -6,8 +6,7 @@
  */
 import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
-import { ConfigError, createLogger, getResourceSchema, getShadowConfig } from '../../index.js';
-import type { ShadowConfig } from '../shadow/index.js';
+import { createLogger, getShadowConfig } from '../../index.js';
 import type { FindManyReferenceParams, FindManyReferenceResult } from '../types.js';
 import {
   executeDynamoDBOperation,
@@ -53,10 +52,10 @@ export async function handleFindManyReference(
   const shadowConfig = getShadowConfig();
 
   // ソート条件を正規化（デフォルト値を適用）
-  const sort = normalizeSort(shadowConfig as ShadowConfig, resource, sortParam);
+  const sort = normalizeSort(shadowConfig, resource, sortParam);
 
   // ソートフィールドを検証
-  validateSortField(shadowConfig as ShadowConfig, resource, sort);
+  validateSortField(shadowConfig, resource, sort);
 
   // ページネーション条件を正規化
   const { perPage, nextToken } = normalizePagination(pagination);
@@ -64,16 +63,8 @@ export async function handleFindManyReference(
   const dbClient = getDBClient();
   const tableName = getTableName();
 
-  // シャドーフィールドの型情報を取得
-  const shadowSchema = getResourceSchema(shadowConfig, resource);
-  const sortFieldType = shadowSchema.sortableFields[sort.field]?.type;
-
-  if (!sortFieldType) {
-    throw new ConfigError(`Sort field type not found: ${sort.field}`, {
-      field: sort.field,
-      resource,
-    });
-  }
+  // 新しい実装: すべてのフィールドが自動的にシャドウ化されるため、
+  // 型情報の事前チェックは不要
 
   // シャドーSKのプレフィックスを生成
   const skPrefix = `${sort.field}#`;

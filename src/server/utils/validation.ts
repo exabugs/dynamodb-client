@@ -1,39 +1,27 @@
 /**
  * 入力検証ユーティリティ
  */
-import { InvalidFilterError } from '../../index.js';
-import { getDefaultSort, isValidShadowField } from '../shadow/index.js';
-import type { ShadowConfig } from '../shadow/index.js';
+import type { ShadowConfig } from '../shadow/config.js';
 import type { FindManyReferenceParams, FindParams } from '../types.js';
 
 /**
  * getList/getManyReferenceのソートフィールドを検証する
  *
- * @param config - シャドー設定
- * @param resource - リソース名
- * @param sort - ソート条件
- * @throws {InvalidFilterError} ソートフィールドが無効な場合
+ * 新しい実装: すべてのフィールドが自動的にシャドウ化されるため、検証は不要
+ *
+ * @param _config - シャドー設定（未使用）
+ * @param _resource - リソース名（未使用）
+ * @param _sort - ソート条件（未使用）
  */
 export function validateSortField(
-  config: ShadowConfig,
-  resource: string,
-  sort?: { field: string; order: 'ASC' | 'DESC' }
+  _config: ShadowConfig,
+  _resource: string,
+  _sort?: { field: string; order: 'ASC' | 'DESC' }
 ): void {
-  if (!sort) {
-    return;
-  }
-
-  const { field } = sort;
-
-  // idフィールドは常に有効（本体レコードとして存在）
-  if (field === 'id') {
-    return;
-  }
-
-  // シャドーフィールドとして有効かチェック
-  if (!isValidShadowField(config, resource, field)) {
-    throw new InvalidFilterError(`Invalid sort field: ${field}`, { field, resource });
-  }
+  // 新しい実装では、すべてのフィールドが自動的にシャドウ化されるため、
+  // ソートフィールドの検証は不要
+  // レコードにフィールドが存在しない場合は、クエリ結果に含まれないだけ
+  return;
 }
 
 /**
@@ -54,20 +42,25 @@ export function normalizePagination(
 /**
  * ソート条件を正規化する（デフォルト値を適用）
  *
+ * 新しい実装: デフォルトソートはupdatedAtフィールド（降順）
+ *
  * @param config - シャドー設定
- * @param resource - リソース名
+ * @param _resource - リソース名（未使用）
  * @param sort - ソート条件
  * @returns 正規化されたソート条件
  */
 export function normalizeSort(
   config: ShadowConfig,
-  resource: string,
+  _resource: string,
   sort?: { field: string; order: 'ASC' | 'DESC' }
 ): { field: string; order: 'ASC' | 'DESC' } {
   if (sort) {
     return sort;
   }
 
-  // デフォルトソートを取得
-  return getDefaultSort(config, resource);
+  // デフォルトソート: updatedAtフィールド（降順）
+  return {
+    field: config.updatedAtField,
+    order: 'DESC',
+  };
 }

@@ -9,11 +9,9 @@ import { TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import {
   createLogger,
   generateShadowRecords,
-  getResourceSchema,
   getShadowConfig,
   ulid,
 } from '../../index.js';
-import { getSchemaVersion, getShadowConfigHash } from '../shadow/config.js';
 import { generateMainRecordSK } from '../shadow/index.js';
 import type { InsertManyParams, InsertManyResult, OperationError } from '../types.js';
 import {
@@ -92,7 +90,6 @@ export async function handleInsertMany(
 
   // シャドー設定を取得（環境変数からキャッシュ付き）
   const shadowConfig = getShadowConfig();
-  const shadowSchema = getResourceSchema(shadowConfig, resource);
 
   const preparedRecords: PreparedRecord[] = [];
   const preparationFailedIds: string[] = [];
@@ -114,12 +111,8 @@ export async function handleInsertMany(
       // TTLを追加（リソースに応じて）
       fullRecordData = addTTL(resource, fullRecordData);
 
-      // 設定メタデータを追加（要件: 11.12）
-      fullRecordData.__configVersion = getSchemaVersion();
-      fullRecordData.__configHash = getShadowConfigHash();
-
-      // シャドーレコードを生成
-      const shadowRecords = generateShadowRecords(fullRecordData, shadowSchema);
+      // シャドーレコードを生成（自動フィールド検出）
+      const shadowRecords = generateShadowRecords(fullRecordData, resource, shadowConfig);
       const shadowKeys = shadowRecords.map((shadow) => shadow.SK);
 
       // メインレコードのSKを生成

@@ -14,16 +14,17 @@ export type {
 } from './types.js';
 
 // ジェネレーター関数と型のエクスポート
-export type { ShadowSchema, ShadowRecord } from './generator.js';
+export type { ShadowRecord } from './generator.js';
 export {
   escapeString,
-  formatNumber,
   formatDatetime,
   formatBoolean,
   formatFieldValue,
-  generateShadowSK,
   generateMainRecordSK,
   generateShadowRecords,
+  formatNumberWithOffset,
+  truncateString,
+  normalizeJson,
 } from './generator.js';
 
 // 差分計算関数のエクスポート
@@ -32,11 +33,11 @@ export { calculateShadowDiff, isDiffEmpty, mergeShadowDiffs } from './differ.js'
 // 設定管理関数のエクスポート
 export {
   getShadowConfig,
-  getResourceSchema,
-  getShadowConfigHash,
-  getSchemaVersion,
   clearShadowConfigCache,
-  getAllShadowFields,
-  isValidShadowField,
-  getDefaultSort,
 } from './config.js';
+
+// 型推論関数のエクスポート
+export {
+  inferFieldType,
+  extractShadowableFields,
+} from './typeInference.js';

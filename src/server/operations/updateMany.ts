@@ -9,7 +9,6 @@ import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import {
   createLogger,
   generateShadowRecords,
-  getResourceSchema,
   getShadowConfig,
 } from '../../index.js';
 import { calculateShadowDiff, generateMainRecordSK } from '../shadow/index.js';
@@ -167,7 +166,6 @@ export async function handleUpdateMany(
 
   // シャドー設定を取得（環境変数からキャッシュ付き）
   const shadowConfig = getShadowConfig();
-  const shadowSchema = getResourceSchema(shadowConfig, resource);
 
   const preparedRecords: PreparedUpdateRecord[] = [];
   const preparationFailedIds: string[] = [];
@@ -189,8 +187,8 @@ export async function handleUpdateMany(
         id,
       });
 
-      // 新しいシャドーレコードを生成
-      const newShadowRecords = generateShadowRecords(updatedData, shadowSchema);
+      // 新しいシャドーレコードを生成（自動フィールド検出）
+      const newShadowRecords = generateShadowRecords(updatedData, resource, shadowConfig);
       const newShadowKeys = newShadowRecords.map((shadow) => shadow.SK);
 
       // メインレコードのSKを生成

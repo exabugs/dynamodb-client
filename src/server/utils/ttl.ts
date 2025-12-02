@@ -2,7 +2,7 @@
  * TTL（Time To Live）ユーティリティ
  * DynamoDB TTL設定を管理
  */
-import { createLogger, getShadowConfig } from '../../index.js';
+import { createLogger } from '../../index.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 
@@ -14,20 +14,21 @@ const logger = createLogger({ service: 'records-lambda' });
  * @returns TTL（Unix timestamp、秒単位）、TTL不要の場合はundefined
  */
 export function calculateTTL(resource: string, createdAt: string): number | undefined {
-  // shadow.config.jsonからTTL設定を取得
-  const shadowConfig = getShadowConfig();
-  const resourceConfig = shadowConfig.resources[resource];
+  // 新しい実装: 環境変数ベースのTTL設定
+  // 環境変数から取得（例: ARTICLES_TTL_DAYS=30）
+  const envKey = `${resource.toUpperCase()}_TTL_DAYS`;
+  const ttlDaysStr = process.env[envKey];
 
-  if (!resourceConfig?.ttl) {
+  if (!ttlDaysStr) {
     // TTL設定がないリソースはundefinedを返す
     return undefined;
   }
 
-  const defaultDays = resourceConfig.ttl.days;
-
-  // 環境変数から上書き可能（後方互換性のため）
-  const envKey = `${resource.toUpperCase()}_TTL_DAYS`;
-  const ttlDays = parseInt(process.env[envKey] || String(defaultDays), 10);
+  const ttlDays = parseInt(ttlDaysStr, 10);
+  if (isNaN(ttlDays) || ttlDays <= 0) {
+    logger.warn('Invalid TTL_DAYS value', { resource, envKey, value: ttlDaysStr });
+    return undefined;
+  }
 
   // 作成日時からTTLを計算
   const createdAtMs = new Date(createdAt).getTime();

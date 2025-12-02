@@ -10,7 +10,6 @@ import {
   ItemNotFoundError,
   createLogger,
   generateShadowRecords,
-  getResourceSchema,
   getShadowConfig,
 } from '../../index.js';
 import { calculateShadowDiff, generateMainRecordSK, isDiffEmpty } from '../shadow/index.js';
@@ -139,10 +138,9 @@ export async function handleUpdateOne(
 
   // シャドー設定を取得（環境変数からキャッシュ付き）
   const shadowConfig = getShadowConfig();
-  const shadowSchema = getResourceSchema(shadowConfig, resource);
 
-  // 新しいシャドーレコードを生成
-  const newShadowRecords = generateShadowRecords(updatedData, shadowSchema);
+  // 新しいシャドーレコードを生成（自動フィールド検出）
+  const newShadowRecords = generateShadowRecords(updatedData, resource, shadowConfig);
   const newShadowKeys = newShadowRecords.map((shadow) => shadow.SK);
 
   // シャドー差分を計算
