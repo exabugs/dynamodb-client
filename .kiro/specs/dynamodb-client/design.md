@@ -1124,3 +1124,367 @@ describe('Shadow Config Metadata', () => {
 7. **テスト容易性**: HTTPクライアントなのでモックが簡単
 8. **設定変更追跡**: Dynamic Shadow Managementにより設定変更を追跡可能
 
+
+## 自動シャドウ化（v0.3.0以降）
+
+### 概要
+
+v0.3.0以降、シャドウレコードの生成が完全に自動化されました。各レコードは、そのレコードに実際に存在するプリミティブ型フィールドのみを自動的にシャドウ化します。
+
+### 設計原則
+
+1. **設定ファイル不要**: `shadow.config.json`の手動メンテナンスが不要
+2. **レコードごとに独立**: 各レコードが持つフィールドのみをシャドウ化
+3. **型に基づく自動判定**: フィールドの型を実行時に判定してシャドウ化
+4. **id フィールドの除外**: v0.3.6以降、`id`フィールドはシャドウ化しない
+
+### 自動シャドウ化のルール
+
+```typescript
+/**
+ * 自動シャドウ化の判定ロジック
+ */
+function shouldGenerateShadow(fieldName: string, value: any): boolean {
+  // 1. 内部メタデータフィールドは除外
+  if (fieldName.startsWith('__')) {
+    return false;
+  }
+  
+  // 2. id フィールドは除外（v0.3.6以降）
+  if (fieldName === 'id') {
+    return false;
+  }
+  
+  // 3. null/undefined は除外
+  if (value === null || value === undefined) {
+    return false;
+  }
+  
+  // 4. プリミティブ型と複合型をシャドウ化
+  const type = typeof value;
+  return (
+    type === 'string' ||
+    type === 'number' ||
+    type === 'boolean' ||
+    Array.isArray(value) ||
+    (type === 'object' && value instanceof Date) ||
+    (type === 'object' && !Array.isArray(value))
+  );
+}
+```
+
+### フィールド型の処理
+
+#### プリミティブ型
+
+| 型 | 処理 | 切り詰め |
+|---|---|---|
+| string | そのまま使用 | 100バイト（UTF-8） |
+| number | オフセット + ゼロパディング | なし |
+| boolean | "0" または "1" に変換 | なし |
+| datetime | ISO 8601形式 | なし |
+
+#### 複合型
+
+| 型 | 処理 | 切り詰め |
+|---|---|---|
+| array | JSON文字列化 | 200バイト（UTF-8） |
+| object | JSON文字列化 | 200バイト（UTF-8） |
+
+### 数値のオフセット方式
+
+負数を含む数値を文字列としてソート可能にするため、オフセット方式を採用：
+
+```typescript
+/**
+ * 数値のフォーマット
+ * 
+ * @param value - 数値（-10^20 ～ +10^20）
+ * @returns 20桁のゼロパディング文字列
+ */
+function formatNumber(value: number): string {
+  const OFFSET = 1e20; // 10^20
+  const PADDING = 20;
+  
+  if (value < -OFFSET || value > OFFSET) {
+    throw new Error(`Number out of range: ${value}`);
+  }
+  
+  const offsetValue = value + OFFSET;
+  return offsetValue.toString().padStart(PADDING, '0');
+}
+
+// 例:
+// -100 → "09999999999999999900"
+//    0 → "10000000000000000000"
+//  100 → "10000000000000000100"
+```
+
+### 文字列の切り詰め処理
+
+マルチバイト文字の境界を考慮した切り詰め：
+
+```typescript
+/**
+ * UTF-8バイト数を考慮した文字列切り詰め
+ * 
+ * @param str - 元の文字列
+ * @param maxBytes - 最大バイト数
+ * @returns 切り詰められた文字列
+ */
+function truncateString(str: string, maxBytes: number): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  
+  if (bytes.length <= maxBytes) {
+    return str;
+  }
+  
+  // マルチバイト文字の境界を考慮
+  let truncated = str;
+  while (encoder.encode(truncated).length > maxBytes) {
+    truncated = truncated.slice(0, -1);
+  }
+  
+  return truncated;
+}
+```
+
+### JSONフィールドの正規化
+
+レコード保存時にJSONフィールドの順序を正規化：
+
+```typescript
+/**
+ * JSONフィールドの正規化
+ * 
+ * 順序:
+ * 1. id（先頭）
+ * 2. その他のフィールド（アルファベット順）
+ * 3. createdAt（末尾）
+ * 4. updatedAt（末尾）
+ */
+function normalizeJson(obj: any): any {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(normalizeJson);
+  }
+  
+  const { id, createdAt, updatedAt, ...rest } = obj;
+  const sorted = Object.keys(rest)
+    .sort()
+    .reduce((acc, key) => {
+      acc[key] = normalizeJson(rest[key]);
+      return acc;
+    }, {} as any);
+  
+  return {
+    ...(id !== undefined && { id }),
+    ...sorted,
+    ...(createdAt !== undefined && { createdAt }),
+    ...(updatedAt !== undefined && { updatedAt }),
+  };
+}
+```
+
+### 環境変数による設定
+
+```bash
+# 文字列の最大バイト数（デフォルト: 100）
+SHADOW_STRING_MAX_BYTES=100
+
+# 数値のパディング桁数（デフォルト: 20）
+SHADOW_NUMBER_PADDING=20
+```
+
+### 後方互換性
+
+- 既存のレコードは更新時に自動的に新しい方式でシャドウレコードが生成される
+- 古いシャドウレコードは削除され、新しいシャドウレコードが作成される
+- クエリは新しいシャドウレコード形式を使用する
+
+## OSS化の設計
+
+### 概要
+
+dynamodb-clientライブラリは、ainews-pipelineから独立した汎用的なOSSライブラリとして設計されています。
+
+### パッケージ構造
+
+```
+@exabugs/dynamodb-client/
+├── src/                    # ソースコード
+│   ├── client/             # クライアント SDK
+│   ├── server/             # サーバー実装
+│   ├── shadows/            # シャドウ管理
+│   └── types.ts            # 共通型定義
+├── __tests__/              # テストコード
+├── docs/                   # ドキュメント
+│   ├── README.md           # メインドキュメント
+│   ├── API.md              # API リファレンス
+│   └── ARCHITECTURE.md     # アーキテクチャ
+├── terraform/              # Terraform モジュール（オプション）
+├── package.json
+├── tsconfig.json
+├── LICENSE                 # MIT ライセンス
+└── README.md
+```
+
+### npm公開設定
+
+```json
+// package.json
+{
+  "name": "@exabugs/dynamodb-client",
+  "version": "0.3.6",
+  "description": "DynamoDB Single-Table Design Client with MongoDB-like API",
+  "keywords": [
+    "dynamodb",
+    "single-table",
+    "mongodb",
+    "aws",
+    "client",
+    "shadow-records"
+  ],
+  "author": "exabugs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exabugs/dynamodb-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/exabugs/dynamodb-client/issues"
+  },
+  "homepage": "https://github.com/exabugs/dynamodb-client#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client/index.js",
+    "./server": "./dist/index.js",
+    "./shadows": "./dist/shadows/index.js",
+    "./types": "./dist/types.js"
+  },
+  "types": "./dist/index.d.ts"
+}
+```
+
+### CI/CD設定
+
+GitHub Actionsによる自動テスト・ビルド・公開：
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run lint
+
+  publish:
+    needs: test
+    if: github.event_name == 'push' && 
+        github.ref == 'refs/heads/main' && 
+        contains(github.event.head_commit.message, '[publish]')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### npm Trusted Publishing
+
+- npm Trusted Publishingを使用してセキュアに公開
+- CI Workflow (`.github/workflows/ci.yml`) のみがnpmへのパブリッシュを許可
+- `NPM_TOKEN`シークレットは不要（OIDCトークンで認証）
+
+### バージョニング戦略
+
+セマンティックバージョニング（SemVer）に従う：
+
+- **MAJOR**: 破壊的変更（例: 0.x.x → 1.0.0）
+- **MINOR**: 後方互換な機能追加（例: 0.3.x → 0.4.0）
+- **PATCH**: 後方互換なバグ修正（例: 0.3.5 → 0.3.6）
+
+### 国際化対応
+
+- すべてのドキュメントは英語で記述
+- JSDocコメントは英語で記述
+- エラーメッセージは英語で記述
+- コード内コメントは英語で記述
+
+### ライセンス
+
+MIT ライセンスを採用：
+
+```
+MIT License
+
+Copyright (c) 2024 exabugs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## まとめ
+
+DynamoDBクライアントライブラリは、以下の特徴を持つ汎用的なOSSライブラリです：
+
+1. **自動シャドウ化**: v0.3.0以降、設定ファイル不要で自動的にシャドウレコードを生成
+2. **型安全性**: TypeScript型定義がSingle Source of Truth
+3. **MongoDB風API**: 学習コストが低く、直感的なAPI
+4. **セキュリティ**: DynamoDB操作をLambda経由でのみ実行
+5. **OSS化**: npm公開可能な汎用的なライブラリ構造
+6. **CI/CD**: GitHub Actionsによる自動テスト・ビルド・公開
+7. **国際化**: 英語ドキュメントとエラーメッセージ
+8. **MITライセンス**: 商用利用可能なオープンソースライセンス
