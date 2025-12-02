@@ -1,7 +1,7 @@
 /**
  * シャドーフィールドの型定義
  */
-export type ShadowFieldType = 'string' | 'number' | 'datetime' | 'boolean';
+export type ShadowFieldType = 'string' | 'number' | 'datetime' | 'boolean' | 'array' | 'object';
 
 /**
  * シャドー設定のフィールド定義

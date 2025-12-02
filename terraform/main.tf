@@ -90,7 +90,7 @@ resource "aws_lambda_function" "records" {
 
   # ビルド成果物
   filename         = data.archive_file.lambda_records.output_path
-  source_code_hash = "${data.archive_file.lambda_records.output_base64sha256}-${base64sha256(var.shadow_config)}"
+  source_code_hash = data.archive_file.lambda_records.output_base64sha256
 
   # ランタイム設定
   runtime       = "nodejs22.x"
