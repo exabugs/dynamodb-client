@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2024-12-02
+
+### Changed
+
+- **Shadow Records**: Exclude `id` field from shadow record generation
+  - `id` field no longer generates a shadow record
+  - Main record (`SK = id#{ULID}`) is used for id-based sorting
+  - Reduces redundant shadow records and improves performance
+  - `find()` operation already optimized to use main records for id sorting
+
 ## [0.3.5] - 2024-12-02
 
 ### Changed

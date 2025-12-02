@@ -266,11 +266,11 @@ export function generateMainRecordSK(recordId: string): string {
  * const config = getShadowConfig();
  * const shadows = generateShadowRecords(record, 'articles', config);
  * // => [
- * //   { PK: 'articles', SK: 'id#01HQXYZ...#id#01HQXYZ...' },
  * //   { PK: 'articles', SK: 'title#Article#id#01HQXYZ...' },
  * //   { PK: 'articles', SK: 'viewCount#10000000000000000123#id#01HQXYZ...' },
  * //   { PK: 'articles', SK: 'tags#["aws","tech"]#id#01HQXYZ...' },
  * // ]
+ * // Note: 'id' field is excluded (main record SK = id#{ULID} already exists)
  * ```
  */
 export function generateShadowRecords(
@@ -282,6 +282,11 @@ export function generateShadowRecords(
 
   // レコードの各フィールドを処理
   for (const [fieldName, value] of Object.entries(record)) {
+    // id フィールドは除外（メインレコードのSKとして既に存在）
+    if (fieldName === 'id') {
+      continue;
+    }
+
     // __ プレフィックスは除外（内部メタデータ）
     if (fieldName.startsWith('__')) {
       continue;

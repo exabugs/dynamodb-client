@@ -166,10 +166,12 @@ describe('generateShadowRecords', () => {
 
     const shadows = generateShadowRecords(record, 'articles', mockConfig);
 
-    expect(shadows).toHaveLength(7); // 7つのフィールド
+    expect(shadows).toHaveLength(6); // 6つのフィールド（idを除く）
     expect(shadows.every((s) => s.PK === 'articles')).toBe(true);
     // シャドウレコードにはdataフィールドがない（IDはSKから抽出）
     expect(shadows.every((s) => s.SK.includes('#id#01HQXYZ123'))).toBe(true);
+    // idフィールドのシャドウレコードは生成されない
+    expect(shadows.find((s) => s.SK.startsWith('id#'))).toBeUndefined();
   });
 
   it('__プレフィックスのフィールドを除外する', () => {
@@ -182,7 +184,7 @@ describe('generateShadowRecords', () => {
 
     const shadows = generateShadowRecords(record, 'articles', mockConfig);
 
-    expect(shadows).toHaveLength(2); // id と title のみ
+    expect(shadows).toHaveLength(1); // title のみ（idは除外）
   });
 
   it('null/undefinedのフィールドを除外する', () => {
@@ -195,7 +197,7 @@ describe('generateShadowRecords', () => {
 
     const shadows = generateShadowRecords(record, 'articles', mockConfig);
 
-    expect(shadows).toHaveLength(2); // id と title のみ
+    expect(shadows).toHaveLength(1); // title のみ（idは除外、null/undefinedも除外）
   });
 
   it('シャドウキーが正しいフォーマットで生成される', () => {
