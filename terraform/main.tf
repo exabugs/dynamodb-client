@@ -110,8 +110,12 @@ resource "aws_lambda_function" "records" {
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
       COGNITO_CLIENT_ID    = var.cognito_client_id
       COGNITO_REGION       = var.region
-      SHADOW_CONFIG        = var.shadow_config
       LOG_LEVEL            = var.log_level
+      # シャドウ設定（環境変数ベース）
+      SHADOW_CREATED_AT_FIELD = var.shadow_created_at_field
+      SHADOW_UPDATED_AT_FIELD = var.shadow_updated_at_field
+      SHADOW_STRING_MAX_BYTES = var.shadow_string_max_bytes
+      SHADOW_NUMBER_PADDING   = var.shadow_number_padding
     }
   }
 

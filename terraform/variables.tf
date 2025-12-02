@@ -53,7 +53,37 @@ variable "log_level" {
   }
 }
 
-variable "shadow_config" {
-  description = "シャドー設定（base64エンコード済みJSON）"
+# シャドウ設定（環境変数ベース）
+variable "shadow_created_at_field" {
+  description = "作成日時フィールド名"
   type        = string
+  default     = "createdAt"
+}
+
+variable "shadow_updated_at_field" {
+  description = "更新日時フィールド名"
+  type        = string
+  default     = "updatedAt"
+}
+
+variable "shadow_string_max_bytes" {
+  description = "プリミティブ型の最大バイト数（array/objectは2倍）"
+  type        = number
+  default     = 100
+
+  validation {
+    condition     = var.shadow_string_max_bytes > 0
+    error_message = "shadow_string_max_bytes は正の整数である必要があります。"
+  }
+}
+
+variable "shadow_number_padding" {
+  description = "数値のパディング桁数"
+  type        = number
+  default     = 15
+
+  validation {
+    condition     = var.shadow_number_padding > 0 && var.shadow_number_padding <= 15
+    error_message = "shadow_number_padding は 1 から 15 の間である必要があります。"
+  }
 }
