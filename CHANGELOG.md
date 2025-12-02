@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-01-20
+
+### Added
+
+- **Shadow Configuration**: Automatic field detection for all record types
+  - Support for 6 field types: string, number, boolean, datetime, array, object
+  - Automatic shadow generation for all fields in each record
+  - Environment variable-based configuration (4 variables)
+  - Comprehensive test suite (275 tests)
+  - Updated documentation with new configuration guide
+
+### Changed
+
+- **Shadow Configuration**: Simplified configuration management
+  - Replaced JSON configuration files with environment variables
+  - `SHADOW_CREATED_AT_FIELD` (default: `createdAt`)
+  - `SHADOW_UPDATED_AT_FIELD` (default: `updatedAt`)
+  - `SHADOW_STRING_MAX_BYTES` (default: `100`)
+  - `SHADOW_NUMBER_PADDING` (default: `15`)
+  - Primitive types truncated at 100 bytes
+  - Complex types (array/object) truncated at 200 bytes
+  - Number range: -10^15 to +10^15
+
+### Removed
+
+- **Shadow Configuration**: Removed schema-based configuration
+  - No longer requires `shadow.config.json` files
+  - No longer requires schema definitions for shadow fields
+  - Removed `generate-shadow-config` script
+  - Records are now independent and self-contained
+
+### Breaking Changes
+
+- **Shadow Configuration**: Configuration method has changed
+  - Old: JSON configuration files with schema definitions
+  - New: Environment variables with automatic field detection
+  - Migration: Set environment variables and remove JSON config files
+  - All fields are now automatically shadowed (no schema required)
+
 ## [0.2.2] - 2024-12-01
 
 ### Added
