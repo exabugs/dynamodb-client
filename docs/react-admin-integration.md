@@ -309,24 +309,13 @@ return {
 
 ### 5. ソート可能フィールドの管理
 
-カスタム`Datagrid`を使用して、`shadow.config.json`に基づいて自動的に`sortable`プロパティを設定します：
+**Note**: v0.3.0以降、すべてのフィールドが自動的にソート可能になりました。設定ファイルは不要です。
+
+カスタム`Datagrid`を使用して、すべてのフィールドを`sortable`に設定できます：
 
 ```typescript
-import shadowConfig from '@example/api-types/shadow.config.json';
-
-function isSortableField(resource: string | undefined, field: string): boolean {
-  if (field === 'id') return true; // idは常にソート可能
-  if (!resource) return false;
-
-  const resourceConfig = (shadowConfig.resources as any)?.[resource];
-  if (!resourceConfig) return false;
-
-  return field in (resourceConfig.shadows || {});
-}
-
 export function Datagrid(props: RADatagridProps) {
   const { children, ...rest } = props;
-  const resource = useResourceContext();
 
   const decoratedChildren = React.Children.map(children, (child) => {
     if (!React.isValidElement(child)) return child;
@@ -334,7 +323,34 @@ export function Datagrid(props: RADatagridProps) {
     const source = (child.props as any)?.source as string | undefined;
     if (!source) return child;
 
-    const sortable = isSortableField(resource, source);
+    // v0.3.0+: すべてのフィールドがソート可能
+    const sortable = true;
+    return cloneElement(child, { sortable } as any);
+  });
+
+  return <RADatagrid {...rest}>{decoratedChildren}</RADatagrid>;
+}
+```
+
+または、特定のフィールドのみをソート可能にする場合：
+
+```typescript
+function isSortableField(field: string): boolean {
+  // id, createdAt, updatedAtなどの一般的なフィールドをソート可能に
+  const sortableFields = ['id', 'createdAt', 'updatedAt', 'name', 'title', 'status'];
+  return sortableFields.includes(field);
+}
+
+export function Datagrid(props: RADatagridProps) {
+  const { children, ...rest } = props;
+
+  const decoratedChildren = React.Children.map(children, (child) => {
+    if (!React.isValidElement(child)) return child;
+
+    const source = (child.props as any)?.source as string | undefined;
+    if (!source) return child;
+
+    const sortable = isSortableField(source);
     return cloneElement(child, { sortable } as any);
   });
 
