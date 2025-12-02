@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2024-12-02
+
+### Removed
+
+- **Metadata**: Removed internal metadata fields from records
+  - Removed `__shadowKeys` field (no longer needed with auto-shadow)
+  - Removed `__configVersion` field (no config file to track)
+  - Removed `__configHash` field (no config file to track)
+  - Records are now cleaner and contain only user data
+- **Terraform**: Removed `shadow_config` output from Terraform module
+  - No longer needed with environment variable-based configuration
+
 ## [0.3.3] - 2024-12-02
 
 ### Fixed

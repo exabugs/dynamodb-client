@@ -18,7 +18,6 @@ import {
   executeDynamoDBOperation,
   getDBClient,
   getTableName,
-  removeShadowKeys,
 } from '../utils/dynamodb.js';
 import { addCreateTimestamps } from '../utils/timestamps.js';
 import { addTTL } from '../utils/ttl.js';
@@ -70,12 +69,11 @@ export async function handleInsertOne(
 
   // シャドーレコードを生成（自動フィールド検出）
   const shadowRecords = generateShadowRecords(recordData, resource, shadowConfig);
-  const shadowKeys = shadowRecords.map((shadow) => shadow.SK);
 
   // メインレコードのSKを生成
   const mainSK = generateMainRecordSK(id);
 
-  // メインレコードを保存（__shadowKeysを含む）
+  // メインレコードを保存
   await executeDynamoDBOperation(
     () =>
       dbClient.send(
@@ -84,10 +82,7 @@ export async function handleInsertOne(
           Item: {
             PK: resource,
             SK: mainSK,
-            data: {
-              ...recordData,
-              __shadowKeys: shadowKeys,
-            },
+            data: recordData,
           },
         })
       ),
@@ -112,9 +107,9 @@ export async function handleInsertOne(
     requestId,
     resource,
     id,
-    shadowCount: shadowKeys.length,
+    shadowCount: shadowRecords.length,
   });
 
-  // __shadowKeysを除外してレスポンスを返す
-  return removeShadowKeys(recordData);
+  // レコードデータを返す
+  return recordData;
 }
