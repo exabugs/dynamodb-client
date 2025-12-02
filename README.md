@@ -295,16 +295,19 @@ const record = {
 };
 
 // Automatically generates shadow records:
-// - id#01HQXYZ123#id#01HQXYZ123
 // - title#Article#id#01HQXYZ123
 // - viewCount#1000000000000123#id#01HQXYZ123
 // - published#1#id#01HQXYZ123
 // - tags#["aws","tech"]#id#01HQXYZ123
 // - metadata#{"category":"tech"}#id#01HQXYZ123
+//
+// Note: 'id' field does NOT generate a shadow record
+// Main record (SK = id#01HQXYZ123) is used for id-based sorting
 ```
 
 ### Exclusion Rules
 
+- **`id` field is excluded** - Main record (`SK = id#{ULID}`) is used for id-based sorting
 - Fields starting with `__` are excluded (internal metadata)
 - `null` or `undefined` values are excluded
 

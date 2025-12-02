@@ -1,444 +1,311 @@
-# Shadow Config Documentation
+# Shadow Records Documentation
 
-This document explains the Shadow Config format and how to use it effectively.
+This document explains how shadow records work and how they enable efficient sorting and querying in DynamoDB Single-Table design.
 
 ## Overview
 
-Shadow Config defines how shadow records are generated for efficient sorting and querying in DynamoDB Single-Table design.
+Shadow records are automatically generated for all fields in your records, enabling efficient sorting without Global Secondary Indexes (GSIs). Since v0.3.0, shadow generation is fully automatic and requires no configuration files.
 
-## Configuration Format
+## How Shadow Records Work
 
-```json
-{
-  "$schemaVersion": "2.0",
-  "database": {
-    "name": "myapp",
-    "timestamps": {
-      "createdAt": "createdAt",
-      "updatedAt": "updatedAt"
-    }
-  },
-  "resources": {
-    "articles": {
-      "shadows": {
-        "title": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      },
-      "sortDefaults": {
-        "field": "updatedAt",
-        "order": "DESC"
-      }
-    }
-  }
-}
+### Main Record
+
+Every record has a main record with `SK = id#{ULID}`:
+
+```
+PK: articles
+SK: id#01HQXYZ123456789ABCDEFGH
+data: { id: '01HQXYZ...', title: 'Article', viewCount: 123, ... }
 ```
 
-## Field Types
+### Shadow Records
+
+For each field (except `id`), a shadow record is automatically created:
+
+```
+PK: articles
+SK: title#Article#id#01HQXYZ123456789ABCDEFGH
+
+PK: articles
+SK: viewCount#1000000000000123#id#01HQXYZ123456789ABCDEFGH
+```
+
+### Important: `id` Field Exclusion
+
+**The `id` field does NOT generate a shadow record.** The main record (`SK = id#{ULID}`) is used for id-based sorting.
+
+This design:
+- ✅ Reduces redundant shadow records
+- ✅ Improves write performance
+- ✅ Lowers storage costs
+- ✅ Main record already provides id-based sorting
+
+### Environment Variables
+
+Configure shadow generation behavior:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SHADOW_CREATED_AT_FIELD` | `createdAt` | Field name for creation timestamp |
+| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp |
+| `SHADOW_STRING_MAX_BYTES` | `100` | Max bytes for primitive types |
+| `SHADOW_NUMBER_PADDING` | `15` | Padding digits for numbers |
+
+## Supported Field Types
+
+Shadow records are automatically generated for all field types:
 
 ### String
 
-**Type**: `"string"`
+Text fields with case-sensitive sorting.
 
-**Description**: Text fields with case-sensitive sorting.
+**Examples**: `title`, `status`, `author`, `category`
 
-**Use cases**:
+**Sorting**: Lexicographic order (A-Z)
 
-- Names, titles, descriptions
-- Status values (draft, published, archived)
-- Categories, tags
-- User identifiers
+**Truncation**: 100 bytes max
 
-**Sorting behavior**:
-
-- Lexicographic (dictionary) order
-- Case-sensitive: "Apple" < "apple"
-- Numbers sorted as strings: "10" < "2"
-
-**Example**:
-
-```json
-{
-  "title": { "type": "string" },
-  "status": { "type": "string" },
-  "author": { "type": "string" }
-}
+```typescript
+// Sort by title (A-Z)
+const articles = await collection.find({}).sort({ title: 1 }).toArray();
 ```
 
-**Query example**:
+### Number
+
+Numeric fields with numeric sorting.
+
+**Examples**: `viewCount`, `price`, `rating`, `score`
+
+**Sorting**: Numeric order (2 < 10 < 100)
+
+**Range**: -10^15 to +10^15
+
+```typescript
+// Sort by view count (highest first)
+const popular = await collection.find({}).sort({ viewCount: -1 }).limit(10).toArray();
+```
+
+### Boolean
+
+Boolean fields.
+
+**Examples**: `published`, `featured`, `archived`
+
+**Sorting**: false (0) < true (1)
+
+```typescript
+// Sort by published status
+const articles = await collection.find({}).sort({ published: -1 }).toArray();
+```
+
+### Datetime
+
+ISO 8601 datetime strings with chronological sorting.
+
+**Examples**: `createdAt`, `updatedAt`, `publishedAt`, `expiresAt`
+
+**Format**: ISO 8601 (e.g., `"2024-01-15T10:30:00.000Z"`)
+
+**Sorting**: Chronological order
+
+```typescript
+// Sort by creation date (newest first)
+const recent = await collection.find({}).sort({ createdAt: -1 }).toArray();
+```
+
+### Array
+
+Arrays (JSON stringified).
+
+**Examples**: `tags`, `categories`, `authors`
+
+**Truncation**: 200 bytes max
+
+**Sorting**: Lexicographic order of JSON string
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  tags: ['tech', 'aws'],
+};
+// Shadow: tags#["aws","tech"]#id#01HQXYZ123
+```
+
+### Object
+
+Objects (JSON stringified).
+
+**Examples**: `metadata`, `settings`, `config`
+
+**Truncation**: 200 bytes max
+
+**Sorting**: Lexicographic order of JSON string
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  metadata: { category: 'tech', priority: 'high' },
+};
+// Shadow: metadata#{"category":"tech","priority":"high"}#id#01HQXYZ123
+```
+
+## Exclusion Rules
+
+The following fields are automatically excluded from shadow generation:
+
+### 1. `id` Field (v0.3.6+)
+
+**The `id` field does NOT generate a shadow record.**
+
+**Reason**: The main record (`SK = id#{ULID}`) already provides id-based sorting.
+
+**Benefits**:
+- Reduces redundant shadow records
+- Improves write performance
+- Lowers storage costs
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  title: 'Article',
+};
+
+// Generated records:
+// Main:   PK=articles, SK=id#01HQXYZ123
+// Shadow: PK=articles, SK=title#Article#id#01HQXYZ123
+// (No shadow for 'id' field)
+```
+
+### 2. Internal Metadata Fields
+
+Fields starting with `__` are excluded (internal metadata).
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  title: 'Article',
+  __internal: 'metadata', // Excluded
+};
+```
+
+### 3. Null/Undefined Values
+
+Fields with `null` or `undefined` values are excluded.
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  title: 'Article',
+  description: null, // Excluded
+};
+```
+
+## Automatic Shadow Generation Example
+
+```typescript
+const record = {
+  id: '01HQXYZ123',
+  title: 'Article Title',
+  status: 'published',
+  viewCount: 123,
+  published: true,
+  tags: ['tech', 'aws'],
+  metadata: { category: 'tech' },
+  createdAt: '2024-12-02T00:00:00Z',
+  updatedAt: '2024-12-02T12:00:00Z',
+};
+
+// Automatically generates:
+// Main record:
+//   PK: articles
+//   SK: id#01HQXYZ123
+//
+// Shadow records:
+//   PK: articles, SK: title#Article#Title#id#01HQXYZ123
+//   PK: articles, SK: status#published#id#01HQXYZ123
+//   PK: articles, SK: viewCount#1000000000000123#id#01HQXYZ123
+//   PK: articles, SK: published#1#id#01HQXYZ123
+//   PK: articles, SK: tags#["aws","tech"]#id#01HQXYZ123
+//   PK: articles, SK: metadata#{"category":"tech"}#id#01HQXYZ123
+//   PK: articles, SK: createdAt#2024-12-02T00:00:00.000Z#id#01HQXYZ123
+//   PK: articles, SK: updatedAt#2024-12-02T12:00:00.000Z#id#01HQXYZ123
+//
+// Note: No shadow for 'id' field (main record is used)
+```
+
+## Performance Considerations
+
+### Storage Calculation
+
+- 1 record = 1 main record + N shadow records
+- N = number of fields (excluding `id`, `__*`, null/undefined)
+- Example: 1000 articles with 8 fields = 9000 DynamoDB items
+
+### Write Cost
+
+- Each write creates/updates main record + all shadow records
+- Example: Insert 1 article with 8 fields = 9 write operations
+
+### Read Cost
+
+- Queries only read relevant shadow records
+- No additional cost compared to GSI-based sorting
+
+### Optimization Tips
+
+1. **Minimize fields**: Only include fields you need
+2. **Use appropriate types**: Number for numeric sorting, not string
+3. **Consider query patterns**: Design records based on how you'll query them
+4. **Monitor costs**: Use AWS Cost Explorer to track DynamoDB costs
+
+## Usage Examples
+
+### Basic Sorting
 
 ```typescript
 // Sort by title (A-Z)
 const articles = await collection.find({}).sort({ title: 1 }).toArray();
 
-// Filter by status
-const published = await collection.find({ status: 'published' }).toArray();
-```
-
-### Number
-
-**Type**: `"number"`
-
-**Description**: Numeric fields with numeric sorting.
-
-**Use cases**:
-
-- Counts (view count, like count)
-- Scores, ratings
-- Prices, amounts
-- Durations (in seconds)
-
-**Sorting behavior**:
-
-- Numeric order: 2 < 10 < 100
-- Supports negative numbers
-- Supports decimals
-
-**Example**:
-
-```json
-{
-  "viewCount": { "type": "number" },
-  "price": { "type": "number" },
-  "rating": { "type": "number" }
-}
-```
-
-**Query example**:
-
-```typescript
 // Sort by view count (highest first)
 const popular = await collection.find({}).sort({ viewCount: -1 }).limit(10).toArray();
 
-// Filter by price range
-const affordable = await collection.find({ price: { $lte: 100 } }).toArray();
-```
-
-### Datetime
-
-**Type**: `"datetime"`
-
-**Description**: ISO 8601 datetime strings with chronological sorting.
-
-**Use cases**:
-
-- Created/updated timestamps
-- Published dates
-- Due dates, expiration dates
-- Event timestamps
-
-**Format**: ISO 8601 string (e.g., `"2024-01-15T10:30:00.000Z"`)
-
-**Sorting behavior**:
-
-- Chronological order
-- Timezone-aware (UTC recommended)
-- Millisecond precision
-
-**Example**:
-
-```json
-{
-  "createdAt": { "type": "datetime" },
-  "updatedAt": { "type": "datetime" },
-  "publishedAt": { "type": "datetime" },
-  "expiresAt": { "type": "datetime" }
-}
-```
-
-**Query example**:
-
-```typescript
 // Sort by creation date (newest first)
 const recent = await collection.find({}).sort({ createdAt: -1 }).toArray();
-
-// Filter by date range
-const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-const recentArticles = await collection.find({ createdAt: { $gte: lastWeek } }).toArray();
 ```
 
-## Default Sort Configuration
-
-### Automatic Defaults
-
-If not specified, default sort is automatically determined:
-
-1. **If `updatedAt` field exists**: Sort by `updatedAt DESC` (most recent first)
-2. **Otherwise**: Sort by first sortable field `ASC`
-
-### Custom Defaults
-
-Specify custom default sort per resource:
-
-```json
-{
-  "resources": {
-    "articles": {
-      "sortDefaults": {
-        "field": "publishedAt",
-        "order": "DESC"
-      }
-    },
-    "tasks": {
-      "sortDefaults": {
-        "field": "dueDate",
-        "order": "ASC"
-      }
-    }
-  }
-}
-```
-
-**Sort orders**:
-
-- `"ASC"`: Ascending (A-Z, 0-9, oldest-newest)
-- `"DESC"`: Descending (Z-A, 9-0, newest-oldest)
-
-## TTL (Time-To-Live) Configuration
-
-### Overview
-
-TTL automatically deletes records after a specified time period.
-
-### Configuration
-
-```json
-{
-  "resources": {
-    "videos": {
-      "shadows": {
-        "expiresAt": { "type": "datetime" }
-      },
-      "ttl": {
-        "days": 30
-      }
-    }
-  }
-}
-```
-
-### Requirements
-
-1. **TTL field**: Must be a datetime field (typically `expiresAt`)
-2. **DynamoDB TTL**: Must be enabled on the table
-3. **Field value**: Must be a Unix timestamp (seconds since epoch)
-
-### DynamoDB Configuration
-
-Enable TTL in Terraform:
-
-```hcl
-resource "aws_dynamodb_table" "records" {
-  name = "myapp-records"
-
-  ttl {
-    enabled        = true
-    attribute_name = "expiresAt"
-  }
-}
-```
-
-### Usage
+### Filtering and Sorting
 
 ```typescript
-// Create record with expiration
-const video = await videos.insertOne({
-  title: 'Tutorial Video',
-  url: 'https://example.com/video.mp4',
-  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-});
+// Published articles, sorted by date
+const published = await collection
+  .find({ status: 'published' })
+  .sort({ publishedAt: -1 })
+  .toArray();
 
-// DynamoDB will automatically delete this record after expiresAt
+// High-priority tasks, sorted by due date
+const urgent = await collection
+  .find({ priority: 'high' })
+  .sort({ dueDate: 1 })
+  .toArray();
 ```
 
-### Behavior
+### Pagination
 
-- **Deletion timing**: Within 48 hours after expiration (not immediate)
-- **No cost**: TTL deletion is free
-- **No events**: Deletions don't trigger DynamoDB Streams
-- **Shadow records**: Automatically deleted with main record
+```typescript
+// First page
+const page1 = await collection
+  .find({})
+  .sort({ createdAt: -1 })
+  .limit(10)
+  .toArray();
 
-## Schema Version
-
-### Current Version
-
-`"$schemaVersion": "2.0"`
-
-### Version History
-
-- **2.0**: Current version with `shadows` object
-- **1.0**: Legacy version with `fields` object (deprecated)
-
-### Migration
-
-If using version 1.0, update to 2.0:
-
-```json
-// Version 1.0 (deprecated)
-{
-  "$schemaVersion": "1.0",
-  "resources": {
-    "articles": {
-      "fields": {
-        "title": { "type": "string" }
-      }
-    }
-  }
-}
-
-// Version 2.0 (current)
-{
-  "$schemaVersion": "2.0",
-  "resources": {
-    "articles": {
-      "shadows": {
-        "title": { "type": "string" }
-      }
-    }
-  }
-}
-```
-
-## Best Practices
-
-### Field Selection
-
-**Do**:
-
-- Mark fields as sortable only if you need to sort by them
-- Consider query patterns when choosing sortable fields
-- Use appropriate field types (number for numeric sorting)
-
-**Don't**:
-
-- Mark every field as sortable (increases storage cost)
-- Use string type for numeric values
-- Use number type for text values
-
-### Performance
-
-**Storage calculation**:
-
-- 1 record = 1 main record + N shadow records (N = number of sortable fields)
-- Example: 1000 articles with 8 sortable fields = 9000 DynamoDB items
-
-**Write cost**:
-
-- Each write operation creates/updates main record + all shadow records
-- Example: Insert 1 article with 8 sortable fields = 9 write operations
-
-**Read cost**:
-
-- Queries only read relevant shadow records
-- No additional cost compared to GSI-based sorting
-
-### Naming Conventions
-
-**Field names**:
-
-- Use camelCase: `createdAt`, `viewCount`, `publishedAt`
-- Be consistent across resources
-- Use descriptive names
-
-**Resource names**:
-
-- Use plural form: `articles`, `tasks`, `videos`
-- Use lowercase
-- Use hyphens for multi-word: `blog-posts`, `user-profiles`
-
-## Examples
-
-### Basic Configuration
-
-```json
-{
-  "$schemaVersion": "2.0",
-  "database": {
-    "name": "myapp",
-    "timestamps": {
-      "createdAt": "createdAt",
-      "updatedAt": "updatedAt"
-    }
-  },
-  "resources": {
-    "articles": {
-      "shadows": {
-        "title": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      }
-    }
-  }
-}
-```
-
-### Advanced Configuration
-
-```json
-{
-  "$schemaVersion": "2.0",
-  "database": {
-    "name": "myapp",
-    "timestamps": {
-      "createdAt": "createdAt",
-      "updatedAt": "updatedAt"
-    }
-  },
-  "resources": {
-    "articles": {
-      "shadows": {
-        "title": { "type": "string" },
-        "status": { "type": "string" },
-        "author": { "type": "string" },
-        "category": { "type": "string" },
-        "viewCount": { "type": "number" },
-        "publishedAt": { "type": "datetime" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      },
-      "sortDefaults": {
-        "field": "publishedAt",
-        "order": "DESC"
-      }
-    },
-    "tasks": {
-      "shadows": {
-        "title": { "type": "string" },
-        "status": { "type": "string" },
-        "priority": { "type": "string" },
-        "assignee": { "type": "string" },
-        "dueDate": { "type": "datetime" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      },
-      "sortDefaults": {
-        "field": "dueDate",
-        "order": "ASC"
-      }
-    },
-    "videos": {
-      "shadows": {
-        "title": { "type": "string" },
-        "duration": { "type": "number" },
-        "viewCount": { "type": "number" },
-        "expiresAt": { "type": "datetime" },
-        "createdAt": { "type": "datetime" },
-        "updatedAt": { "type": "datetime" }
-      },
-      "sortDefaults": {
-        "field": "createdAt",
-        "order": "DESC"
-      },
-      "ttl": {
-        "days": 30
-      }
-    }
-  }
-}
+// Second page
+const page2 = await collection
+  .find({})
+  .sort({ createdAt: -1 })
+  .skip(10)
+  .limit(10)
+  .toArray();
 ```
 
 ## Troubleshooting
@@ -449,10 +316,10 @@ If using version 1.0, update to 2.0:
 
 **Solutions**:
 
-1. Verify `SHADOW_CONFIG` environment variable is set
-2. Check config is properly base64-encoded
-3. Verify field names match schema definition
-4. Check Lambda logs for errors
+1. Check Lambda logs for errors
+2. Verify field values are not null/undefined
+3. Verify field names don't start with `__`
+4. Check DynamoDB table for shadow records
 
 ### Sorting Not Working
 
@@ -460,25 +327,36 @@ If using version 1.0, update to 2.0:
 
 **Solutions**:
 
-1. Verify field is marked as sortable in config
-2. Check field type matches data type
-3. Verify sort field exists in all records
-4. Check default sort configuration
+1. Verify sort field exists in all records
+2. Check field type matches data type (number vs string)
+3. Verify records have non-null values for the sort field
+4. Check Lambda logs for query errors
 
-### TTL Not Deleting Records
+### Missing Records in Sort Results
 
-**Problem**: Records are not deleted after expiration.
+**Problem**: Some records don't appear in sorted results.
 
-**Solutions**:
+**Reason**: Records without the sort field don't have shadow records for that field.
 
-1. Verify TTL is enabled on DynamoDB table
-2. Check `expiresAt` field is Unix timestamp (seconds)
-3. Wait up to 48 hours for deletion
-4. Verify field name matches TTL attribute name
+**Solution**: Ensure all records have the field you're sorting by, or filter for records with that field.
+
+## Version History
+
+### v0.3.6 (2024-12-02)
+
+- **Excluded `id` field from shadow generation**
+- Main record (`SK = id#{ULID}`) is used for id-based sorting
+- Reduces redundant shadow records and improves performance
+
+### v0.3.0 (2024-12-01)
+
+- **Automatic shadow generation** for all fields
+- No configuration files required
+- Environment variable-based configuration
+- Support for 6 field types: string, number, boolean, datetime, array, object
 
 ## See Also
 
-- [Basic Example](../examples/basic/) - Getting started with Shadow Config
-- [Advanced Example](../examples/advanced/) - Multiple resources and TTL
-- [Terraform Examples](../examples/terraform/) - Infrastructure setup
-- [API Reference](./API.md) - Client SDK documentation
+- [Architecture Documentation](./ARCHITECTURE.md) - System architecture
+- [Client Usage Guide](./CLIENT_USAGE.md) - Client SDK documentation
+- [Example Project](https://github.com/exabugs/dynamodb-client-example) - Complete working example
