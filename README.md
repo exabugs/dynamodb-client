@@ -126,9 +126,9 @@ graph TB
     C -->|HTTPS| D
     D -->|AWS SDK| E
 
-    style A fill:#61dafb,stroke:#333,stroke-width:2px
-    style B fill:#61dafb,stroke:#333,stroke-width:2px
-    style C fill:#61dafb,stroke:#333,stroke-width:2px
+    style A fill:#2563eb,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#2563eb,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#2563eb,stroke:#333,stroke-width:2px,color:#fff
     style D fill:#ff9900,stroke:#333,stroke-width:2px
     style E fill:#527fff,stroke:#333,stroke-width:2px
 ```
