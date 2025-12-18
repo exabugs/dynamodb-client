@@ -108,14 +108,14 @@
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "5.2.0",
-    "@aws-sdk/client-dynamodb": "3.929.0",
-    "@aws-sdk/credential-provider-node": "3.929.0",
-    "@aws-sdk/lib-dynamodb": "3.929.0",
+    "@aws-sdk/client-dynamodb": "3.946.0",
+    "@aws-sdk/credential-provider-node": "3.946.0",
+    "@aws-sdk/lib-dynamodb": "3.946.0",
     "@smithy/protocol-http": "5.3.5",
     "@smithy/signature-v4": "5.3.5",
     "@smithy/util-utf8": "4.2.0",
     "aws-jwt-verify": "5.1.1",
-    "ulid": "3.0.1"
+    "ulid": "3.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -125,7 +125,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^2.0.0",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.27.1",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
     "prettier": "^3.0.0",
