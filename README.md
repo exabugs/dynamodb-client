@@ -20,6 +20,24 @@
 
 ---
 
+## 📖 Overview
+
+**DynamoDB Client SDK** is a TypeScript-first library that brings MongoDB-like simplicity to AWS DynamoDB. Built for modern serverless applications, it provides a familiar API while leveraging DynamoDB's single-table design patterns for optimal performance and cost efficiency.
+
+### Why DynamoDB Client SDK?
+
+- **🎯 Familiar API**: Use MongoDB-style queries with DynamoDB's power
+- **⚡ Single-Table Design**: Optimized data modeling without the complexity
+- **🔄 Shadow Records**: Efficient sorting without expensive Global Secondary Indexes
+- **🛡️ Type Safety**: Full TypeScript support with compile-time validation
+- **🚀 Serverless Ready**: Built for AWS Lambda with ARM64 optimization
+- **🎨 Admin UI**: Integrated react-admin interface for content management
+- **🏗️ Infrastructure**: Complete Terraform modules for production deployment
+
+Perfect for building scalable web applications, content management systems, and serverless APIs that need the performance of DynamoDB with the developer experience of MongoDB.
+
+---
+
 ## ✨ Features
 
 <table>
