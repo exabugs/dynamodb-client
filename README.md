@@ -159,32 +159,23 @@ This example includes:
 ### Quick Example
 
 ```typescript
-// 1. Define schema
-export const MySchema: SchemaRegistryConfig = {
-  database: {
-    name: 'myapp',
-    timestamps: {
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-    },
-  },
-  resources: {
-    articles: {
-      resource: 'articles',
-      type: {} as Article,
-      shadows: { sortableFields: { title: { type: 'string' } } },
-    },
-  },
-};
+// 1. Define your data types
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // 2. Deploy with Terraform (see dynamodb-client-example)
 // terraform apply
 
 // 3. Use the client
 const client = new DynamoClient(FUNCTION_URL);
-const articles = client.db().collection('articles');
+const articles = client.db().collection<Article>('articles');
 
-await articles.insertOne({ title: 'Hello DynamoDB' });
+await articles.insertOne({ title: 'Hello DynamoDB', content: 'Getting started...' });
 const article = await articles.findOne({ title: 'Hello DynamoDB' });
 ```
 
