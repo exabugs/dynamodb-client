@@ -17,36 +17,36 @@
  */
 
 /**
- * シャドー設定（簡素化版）
+ * Shadow configuration (v0.3.x environment variable-based)
  */
 export interface ShadowConfig {
-  /** タイムスタンプフィールド名 */
+  /** Timestamp field names */
   createdAtField: string;
   updatedAtField: string;
-  /** プリミティブ型の最大バイト数（array/objectは2倍） */
+  /** Maximum bytes for primitive types (array/object use 2x) */
   stringMaxBytes: number;
-  /** 数値のパディング桁数 */
+  /** Number padding digits */
   numberPadding: number;
 }
 
 /**
- * グローバル変数にキャッシュ（Lambda実行環境で再利用）
+ * Global cache (reused across Lambda invocations)
  */
 let cachedShadowConfig: ShadowConfig | null = null;
 
 /**
- * シャドー設定を取得（環境変数から）
+ * Get shadow configuration from environment variables
  *
- * 環境変数から設定を読み込み、グローバル変数にキャッシュします。
- * 初回呼び出し時のみ環境変数を読み込み、以降はキャッシュを使用。
+ * Loads configuration from environment variables and caches it globally.
+ * Only reads environment variables on first call, uses cache thereafter.
  *
- * @returns シャドー設定
- * @throws 環境変数が不正な値の場合
+ * @returns Shadow configuration
+ * @throws If environment variables contain invalid values
  *
  * @example
  * ```typescript
  * const config = getShadowConfig();
- * // => { createdAtField: 'createdAt', updatedAtField: 'updatedAt', stringMaxBytes: 100, numberPadding: 20 }
+ * // => { createdAtField: 'createdAt', updatedAtField: 'updatedAt', stringMaxBytes: 100, numberPadding: 15 }
  * ```
  */
 export function getShadowConfig(): ShadowConfig {
@@ -71,10 +71,10 @@ export function getShadowConfig(): ShadowConfig {
 }
 
 /**
- * キャッシュをクリアする（テスト用）
+ * Clear cache (for testing only)
  *
- * 本番環境では使用しないこと。
- * テスト環境でのみ、テスト間でキャッシュをクリアするために使用。
+ * Do not use in production.
+ * Only used in test environments to clear cache between tests.
  */
 export function clearShadowConfigCache(): void {
   cachedShadowConfig = null;

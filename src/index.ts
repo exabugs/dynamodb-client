@@ -42,5 +42,5 @@ export {
   type ShadowRecord,
   getShadowConfig,
   clearShadowConfigCache,
-  type ShadowConfig,
+  type ShadowConfig,  // v0.3.x environment variable-based configuration
 } from './server/index.js';

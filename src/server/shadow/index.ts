@@ -8,10 +8,11 @@
 export type {
   ShadowFieldType,
   ShadowFieldConfig,
-  ResourceShadowConfig,
-  ShadowConfig,
   ShadowDiff,
 } from './types.js';
+
+// v0.3.x configuration types
+export type { ShadowConfig } from './config.js';
 
 // ジェネレーター関数と型のエクスポート
 export type { ShadowRecord } from './generator.js';

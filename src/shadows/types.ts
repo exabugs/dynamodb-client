@@ -10,31 +10,8 @@ export interface ShadowFieldConfig {
   type: ShadowFieldType;
 }
 
-/**
- * Resource-specific shadow configuration
- */
-export interface ResourceShadowConfig {
-  sortDefaults: {
-    field: string;
-    order: 'ASC' | 'DESC';
-  };
-  shadows: {
-    [fieldName: string]: ShadowFieldConfig;
-  };
-  ttl?: {
-    days: number;
-  };
-}
-
-/**
- * Complete shadow configuration structure (shadow.config.json)
- */
-export interface ShadowConfig {
-  $schemaVersion: string;
-  resources: {
-    [resourceName: string]: ResourceShadowConfig;
-  };
-}
+// Legacy shadow configuration types removed in v0.3.x
+// Use environment variables for configuration instead
 
 /**
  * Result of shadow difference calculation

@@ -16,11 +16,7 @@ export type {
   ShadowDiff 
 } from './types.js';
 
-// Legacy types (for backward compatibility)
-export type { 
-  ResourceShadowConfig, 
-  ShadowConfig 
-} from './types.js';
+// Legacy types removed in v0.3.x - use environment variables for configuration
 
 // Generator functions export
 export {
