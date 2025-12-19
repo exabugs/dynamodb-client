@@ -1,12 +1,17 @@
 /**
- * シャドー設定のフィールド定義
+ * Shadow field types supported by the automatic shadow generation system
+ */
+export type ShadowFieldType = 'string' | 'number' | 'datetime' | 'boolean' | 'array' | 'object';
+
+/**
+ * Shadow field configuration
  */
 export interface ShadowFieldConfig {
-  type: 'string' | 'number' | 'datetime';
+  type: ShadowFieldType;
 }
 
 /**
- * リソースごとのシャドー設定
+ * Resource-specific shadow configuration
  */
 export interface ResourceShadowConfig {
   sortDefaults: {
@@ -22,7 +27,7 @@ export interface ResourceShadowConfig {
 }
 
 /**
- * shadow.config.jsonの全体構造
+ * Complete shadow configuration structure (shadow.config.json)
  */
 export interface ShadowConfig {
   $schemaVersion: string;
@@ -32,11 +37,11 @@ export interface ShadowConfig {
 }
 
 /**
- * シャドー差分計算の結果
+ * Result of shadow difference calculation
  */
 export interface ShadowDiff {
-  /** 削除すべきシャドーSKのリスト */
+  /** List of shadow SKs to delete */
   toDelete: string[];
-  /** 追加すべきシャドーSKのリスト */
+  /** List of shadow SKs to add */
   toAdd: string[];
 }

@@ -224,22 +224,34 @@ const diff = calculateShadowDiff(oldKeys, newKeys);
 // }
 ```
 
-#### 設定ファイル読み込み
+#### 設定管理
+
+v0.3.x以降、shadow.config.jsonファイルは不要になりました。すべてのフィールドが自動的にシャドウ化されます。
+
+環境変数で動作をカスタマイズできます：
 
 ```typescript
-import { getAllShadowFields, loadShadowConfig } from '@exabugs/dynamodb-client/shadows';
+// 環境変数（デフォルト値）
+process.env.SHADOW_CREATED_AT_FIELD = 'createdAt';  // 作成日時フィールド名
+process.env.SHADOW_UPDATED_AT_FIELD = 'updatedAt';  // 更新日時フィールド名
+process.env.SHADOW_STRING_MAX_BYTES = '100';        // 文字列の最大バイト数
+process.env.SHADOW_NUMBER_PADDING = '15';           // 数値のパディング桁数
+```
 
-// shadow.config.jsonを読み込む
-const config = await loadShadowConfig('./shadow.config.json');
+シャドウレコードの生成例：
 
-// リソースの全シャドーフィールドを取得
-const fields = getAllShadowFields(config, 'articles');
-// => {
-//   id: { type: 'string' },
-//   name: { type: 'string' },
-//   createdAt: { type: 'datetime' },
-//   updatedAt: { type: 'datetime' }
-// }
+```typescript
+import { generateShadowSK } from '@exabugs/dynamodb-client/shadows';
+
+// 各フィールドタイプのシャドウSK生成
+const nameSK = generateShadowSK('name', 'Tech News', '01HZXY123', 'string');
+// => 'name#Tech#News#id#01HZXY123'
+
+const prioritySK = generateShadowSK('priority', 123, '01HZXY123', 'number');
+// => 'priority#00000000000000000123#id#01HZXY123'
+
+const dateSK = generateShadowSK('createdAt', '2025-11-12T10:00:00.000Z', '01HZXY123', 'datetime');
+// => 'createdAt#2025-11-12T10:00:00.000Z#id#01HZXY123'
 ```
 
 ### エスケープルール

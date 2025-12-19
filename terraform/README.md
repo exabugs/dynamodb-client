@@ -30,8 +30,8 @@ module "lambda_records" {
   # Cognito設定
   cognito_user_pool_id = module.cognito.user_pool_id
 
-  # シャドウ設定（base64エンコード）
-  shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
+  # シャドウ設定（v0.3.x以降は不要、レガシー互換性のため残存）
+  # shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 
   # ログ設定
   log_retention_days = 7
@@ -56,8 +56,8 @@ module "lambda_records" {
   # Cognito設定
   cognito_user_pool_id = module.cognito.user_pool_id
 
-  # シャドウ設定（base64エンコード）
-  shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
+  # シャドウ設定（v0.3.x以降は不要、レガシー互換性のため残存）
+  # shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 }
 ```
 
@@ -73,7 +73,7 @@ module "lambda_records" {
 | `dynamodb_table_name`  | string | DynamoDBテーブル名               |
 | `dynamodb_table_arn`   | string | DynamoDBテーブルARN              |
 | `cognito_user_pool_id` | string | Cognito User Pool ID（認証用）   |
-| `shadow_config`        | string | シャドウ設定（base64エンコード） |
+| `shadow_config`        | string | シャドウ設定（v0.3.x以降は不要） |
 
 ### オプション変数
 
@@ -93,7 +93,7 @@ module "lambda_records" {
 | `function_url`   | Lambda Function URL              |
 | `log_group_name` | CloudWatch Logsロググループ名    |
 | `role_arn`       | Lambda実行ロールARN              |
-| `shadow_config`  | シャドウ設定（base64エンコード） |
+| `shadow_config`  | シャドウ設定（v0.3.x以降は不要） |
 
 ## 要件
 
@@ -133,7 +133,8 @@ module "lambda_records" {
 Terraformでは、シャドウ設定をbase64エンコードして渡します：
 
 ```hcl
-shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
+# v0.3.x以降は不要（環境変数で自動設定）
+# shadow_config = base64encode(file("${path.root}/../packages/api-types/shadow.config.json"))
 ```
 
 ## IAMポリシー

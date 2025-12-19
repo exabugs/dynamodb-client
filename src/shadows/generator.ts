@@ -1,26 +1,26 @@
-import type { ShadowFieldType } from './schema.js';
+import type { ShadowFieldType } from './types.js';
 
 /**
- * 文字列値をエスケープする
- * ルール: # → ##, スペース → #
+ * Escape string values for shadow SK generation
+ * Rules: # → ##, space → #
  *
- * @param value - エスケープする文字列
- * @returns エスケープされた文字列
+ * @param value - String to escape
+ * @returns Escaped string
  */
 export function escapeString(value: string): string {
   return value
-    .replace(/#/g, '##') // # を ## に置換
-    .replace(/ /g, '#'); // スペースを # に置換
+    .replace(/#/g, '##') // Replace # with ##
+    .replace(/ /g, '#'); // Replace space with #
 }
 
 /**
- * 数値を20桁のゼロ埋め文字列に変換する
+ * Convert number to 20-digit zero-padded string
  *
- * @param value - 変換する数値（null/undefinedも許容）
- * @returns 20桁のゼロ埋め文字列
+ * @param value - Number to convert (null/undefined allowed)
+ * @returns 20-digit zero-padded string
  */
 export function formatNumber(value: number | null | undefined): string {
-  // null/undefined は空文字を返す
+  // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
   }
@@ -29,20 +29,20 @@ export function formatNumber(value: number | null | undefined): string {
     throw new Error(`Invalid number value: ${value}`);
   }
 
-  // 負の数値は0として扱う（または別のエラーハンドリング）
+  // Treat negative numbers as 0
   const normalized = Math.max(0, Math.floor(value));
 
   return normalized.toString().padStart(20, '0');
 }
 
 /**
- * 日時をUTC ISO 8601形式にフォーマットする
+ * Format datetime to UTC ISO 8601 format
  *
- * @param value - 日時文字列またはDateオブジェクト（null/undefinedも許容）
- * @returns UTC ISO 8601形式の文字列
+ * @param value - Datetime string or Date object (null/undefined allowed)
+ * @returns UTC ISO 8601 format string
  */
 export function formatDatetime(value: string | Date | null | undefined): string {
-  // null/undefined は空文字を返す
+  // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
   }
@@ -57,13 +57,13 @@ export function formatDatetime(value: string | Date | null | undefined): string 
 }
 
 /**
- * boolean値をフォーマットする
+ * Format boolean value
  *
- * @param value - boolean値（null/undefinedも許容）
- * @returns 'true' または 'false' または空文字
+ * @param value - Boolean value (null/undefined allowed)
+ * @returns 'true' or 'false' or empty string
  */
 export function formatBoolean(value: boolean | null | undefined): string {
-  // null/undefined は空文字を返す
+  // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
   }
@@ -72,13 +72,13 @@ export function formatBoolean(value: boolean | null | undefined): string {
 }
 
 /**
- * 配列をJSON文字列にフォーマットする
+ * Format array to JSON string
  *
- * @param value - 配列（null/undefinedも許容）
- * @returns JSON文字列または空文字
+ * @param value - Array (null/undefined allowed)
+ * @returns JSON string or empty string
  */
 export function formatArray(value: any[] | null | undefined): string {
-  // null/undefined は空文字を返す
+  // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
   }
@@ -91,13 +91,13 @@ export function formatArray(value: any[] | null | undefined): string {
 }
 
 /**
- * オブジェクトをJSON文字列にフォーマットする
+ * Format object to JSON string
  *
- * @param value - オブジェクト（null/undefinedも許容）
- * @returns JSON文字列または空文字
+ * @param value - Object (null/undefined allowed)
+ * @returns JSON string or empty string
  */
 export function formatObject(value: object | null | undefined): string {
-  // null/undefined は空文字を返す
+  // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
   }
@@ -110,11 +110,11 @@ export function formatObject(value: object | null | undefined): string {
 }
 
 /**
- * フィールド値を型に応じてフォーマットする
+ * Format field value according to its type
  *
- * @param type - フィールドの型
- * @param value - フォーマットする値（null/undefinedも許容）
- * @returns フォーマットされた文字列
+ * @param type - Field type
+ * @param value - Value to format (null/undefined allowed)
+ * @returns Formatted string
  */
 export function formatFieldValue(
   type: ShadowFieldType,
@@ -122,7 +122,7 @@ export function formatFieldValue(
 ): string {
   switch (type) {
     case 'string':
-      // 文字列型の場合、null/undefinedは空文字として扱う
+      // For string type, treat null/undefined as empty string
       if (value === null || value === undefined) {
         return '';
       }
@@ -143,14 +143,14 @@ export function formatFieldValue(
 }
 
 /**
- * シャドーSKを生成する
- * フォーマット: {fieldName}#{formattedValue}#id#{recordId}
+ * Generate shadow SK
+ * Format: {fieldName}#{formattedValue}#id#{recordId}
  *
- * @param fieldName - フィールド名
- * @param value - フィールド値
- * @param recordId - レコードID（ULID）
- * @param type - フィールドの型（デフォルト: 'string'）
- * @returns 生成されたシャドーSK
+ * @param fieldName - Field name
+ * @param value - Field value
+ * @param recordId - Record ID (ULID)
+ * @param type - Field type (default: 'string')
+ * @returns Generated shadow SK
  *
  * @example
  * generateShadowSK('name', 'Tech News', '01HZXY123', 'string')
@@ -187,11 +187,11 @@ export function generateShadowSK(
 }
 
 /**
- * レコードIDからメインレコードのSKを生成する
- * フォーマット: id#{recordId}
+ * Generate main record SK from record ID
+ * Format: id#{recordId}
  *
- * @param recordId - レコードID（ULID）
- * @returns メインレコードのSK
+ * @param recordId - Record ID (ULID)
+ * @returns Main record SK
  */
 export function generateMainRecordSK(recordId: string): string {
   return `id#${recordId}`;

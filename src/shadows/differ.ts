@@ -1,14 +1,14 @@
 import type { ShadowDiff } from './types.js';
 
 /**
- * 旧シャドーキーと新シャドーキーの差分を計算する
+ * Calculate difference between old and new shadow keys
  *
- * この関数は、レコード更新時に既存のシャドーレコードと新しく生成すべき
- * シャドーレコードを比較し、削除すべきものと追加すべきものを特定します。
+ * This function compares existing shadow records with newly generated ones
+ * during record updates, identifying which ones should be deleted and added.
  *
- * @param oldShadowKeys - 既存のシャドーSKの配列
- * @param newShadowKeys - 新しく生成されたシャドーSKの配列
- * @returns 削除すべきSKと追加すべきSKのリスト
+ * @param oldShadowKeys - Array of existing shadow SKs
+ * @param newShadowKeys - Array of newly generated shadow SKs
+ * @returns List of SKs to delete and add
  *
  * @example
  * const oldKeys = [
@@ -26,14 +26,14 @@ import type { ShadowDiff } from './types.js';
  * // }
  */
 export function calculateShadowDiff(oldShadowKeys: string[], newShadowKeys: string[]): ShadowDiff {
-  // Set を使用して効率的な差分計算を行う
+  // Use Set for efficient difference calculation
   const oldSet = new Set(oldShadowKeys);
   const newSet = new Set(newShadowKeys);
 
-  // 削除すべきキー: 旧キーに存在するが新キーに存在しない
+  // Keys to delete: exist in old but not in new
   const toDelete = oldShadowKeys.filter((key) => !newSet.has(key));
 
-  // 追加すべきキー: 新キーに存在するが旧キーに存在しない
+  // Keys to add: exist in new but not in old
   const toAdd = newShadowKeys.filter((key) => !oldSet.has(key));
 
   return {
@@ -43,20 +43,20 @@ export function calculateShadowDiff(oldShadowKeys: string[], newShadowKeys: stri
 }
 
 /**
- * シャドー差分が空かどうかを判定する
+ * Check if shadow difference is empty
  *
- * @param diff - シャドー差分オブジェクト
- * @returns 差分が空の場合true
+ * @param diff - Shadow difference object
+ * @returns True if difference is empty
  */
 export function isDiffEmpty(diff: ShadowDiff): boolean {
   return diff.toDelete.length === 0 && diff.toAdd.length === 0;
 }
 
 /**
- * 複数のシャドー差分をマージする
+ * Merge multiple shadow differences
  *
- * @param diffs - マージするシャドー差分の配列
- * @returns マージされたシャドー差分
+ * @param diffs - Array of shadow differences to merge
+ * @returns Merged shadow difference
  */
 export function mergeShadowDiffs(diffs: ShadowDiff[]): ShadowDiff {
   const allToDelete = new Set<string>();

@@ -1,40 +1,42 @@
 /**
- * @exabugs/dynamodb-client/shadows - シャドー管理ライブラリ
+ * @exabugs/dynamodb-client/shadows - Shadow management library
  *
- * DynamoDB Single-Table設計における動的シャドーレコード管理を提供します。
+ * Provides dynamic shadow record management for DynamoDB Single-Table design.
  *
- * 主な機能:
- * - シャドーSK生成（string/number/datetime対応）
- * - シャドー差分計算（旧影と新影の比較）
- * - shadow.config.json読み込みと検証
+ * Main features:
+ * - Shadow SK generation (supports string/number/datetime/boolean/array/object)
+ * - Shadow difference calculation (comparing old and new shadows)
+ * - Configuration management utilities (for legacy compatibility)
  */
 
-// 型定義のエクスポート
-export type { ShadowFieldConfig, ResourceShadowConfig, ShadowConfig, ShadowDiff } from './types.js';
+// Type definitions export
+export type { 
+  ShadowFieldType, 
+  ShadowFieldConfig, 
+  ShadowDiff 
+} from './types.js';
 
-// スキーマ定義のエクスポート
-export type { ShadowFieldType } from './schema.js';
+// Legacy types (for backward compatibility)
+export type { 
+  ResourceShadowConfig, 
+  ShadowConfig 
+} from './types.js';
 
-// ジェネレーター関数のエクスポート
+// Generator functions export
 export {
   escapeString,
   formatNumber,
   formatDatetime,
   formatBoolean,
+  formatArray,
+  formatObject,
   formatFieldValue,
   generateShadowSK,
   generateMainRecordSK,
 } from './generator.js';
 
-// 差分計算関数のエクスポート
+// Difference calculation functions export
 export { calculateShadowDiff, isDiffEmpty, mergeShadowDiffs } from './differ.js';
 
-// 設定管理関数のエクスポート
-export {
-  loadShadowConfig,
-  getResourceConfig,
-  getAllShadowFields,
-  isValidShadowField,
-  getDefaultSort,
-  getConfigPathFromEnv,
-} from './config.js';
+// Note: Configuration management functions removed in v0.3.x
+// Use environment variables for configuration instead
