@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7] - 2024-12-19
+
+### Removed
+
+- **BREAKING CHANGE**: Complete removal of legacy shadow configuration support
+  - Removed `LegacyShadowConfig` and `ResourceShadowConfig` types from shadows module
+  - Removed duplicate shadow configuration types from server module
+  - Removed all shadow.config.json file support
+  - Only v0.3.x environment variable-based configuration is now supported
+
+### Changed
+
+- Simplified type exports to only include v0.3.x specification types
+- Updated documentation to reflect complete v0.3.x migration
+- Consolidated shadow configuration to single source (environment variables)
+
+### Migration Guide
+
+- Replace any usage of `ResourceShadowConfig` or `LegacyShadowConfig` with environment variables
+- Use `SHADOW_CREATED_AT_FIELD`, `SHADOW_UPDATED_AT_FIELD`, `SHADOW_STRING_MAX_BYTES`, `SHADOW_NUMBER_PADDING`
+- Remove any shadow.config.json files from your project
+
 ## [0.3.6] - 2024-12-02
 
 ### Changed
