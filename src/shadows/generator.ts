@@ -72,6 +72,44 @@ export function formatBoolean(value: boolean | null | undefined): string {
 }
 
 /**
+ * 配列をJSON文字列にフォーマットする
+ *
+ * @param value - 配列（null/undefinedも許容）
+ * @returns JSON文字列または空文字
+ */
+export function formatArray(value: any[] | null | undefined): string {
+  // null/undefined は空文字を返す
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`Invalid array value: ${value}`);
+  }
+
+  return JSON.stringify(value);
+}
+
+/**
+ * オブジェクトをJSON文字列にフォーマットする
+ *
+ * @param value - オブジェクト（null/undefinedも許容）
+ * @returns JSON文字列または空文字
+ */
+export function formatObject(value: object | null | undefined): string {
+  // null/undefined は空文字を返す
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`Invalid object value: ${value}`);
+  }
+
+  return JSON.stringify(value);
+}
+
+/**
  * フィールド値を型に応じてフォーマットする
  *
  * @param type - フィールドの型
@@ -80,7 +118,7 @@ export function formatBoolean(value: boolean | null | undefined): string {
  */
 export function formatFieldValue(
   type: ShadowFieldType,
-  value: string | number | Date | boolean | null | undefined
+  value: any
 ): string {
   switch (type) {
     case 'string':
@@ -95,6 +133,10 @@ export function formatFieldValue(
       return formatDatetime(value as string | Date | null | undefined);
     case 'boolean':
       return formatBoolean(value as boolean | null | undefined);
+    case 'array':
+      return formatArray(value as any[] | null | undefined);
+    case 'object':
+      return formatObject(value as object | null | undefined);
     default:
       throw new Error(`Unknown shadow field type: ${type}`);
   }
@@ -125,10 +167,18 @@ export function formatFieldValue(
  * @example
  * generateShadowSK('isPublished', true, '01HZXY123', 'boolean')
  * // => 'isPublished#true#id#01HZXY123'
+ *
+ * @example
+ * generateShadowSK('tags', ['tech', 'aws'], '01HZXY123', 'array')
+ * // => 'tags#["tech","aws"]#id#01HZXY123'
+ *
+ * @example
+ * generateShadowSK('metadata', { category: 'tech' }, '01HZXY123', 'object')
+ * // => 'metadata#{"category":"tech"}#id#01HZXY123'
  */
 export function generateShadowSK(
   fieldName: string,
-  value: string | number | Date | boolean,
+  value: any,
   recordId: string,
   type: ShadowFieldType = 'string'
 ): string {

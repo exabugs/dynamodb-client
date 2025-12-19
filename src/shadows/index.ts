@@ -13,12 +13,7 @@
 export type { ShadowFieldConfig, ResourceShadowConfig, ShadowConfig, ShadowDiff } from './types.js';
 
 // スキーマ定義のエクスポート
-export type {
-  ShadowFieldType,
-  ShadowFieldDefinition,
-  ResourceSchema,
-  SchemaRegistryConfig,
-} from './schema.js';
+export type { ShadowFieldType } from './schema.js';
 
 // ジェネレーター関数のエクスポート
 export {
