@@ -6,27 +6,14 @@
  *
  * 要件: 13.12
  */
-import { createLogger } from '../../index.js';
+import { 
+  createLogger,
+  LAMBDA_TIMEOUT_MS,
+  LARGE_BATCH_WARNING_THRESHOLD,
+  TIMEOUT_RISK_THRESHOLD
+} from '../../shared/index.js';
 
 const logger = createLogger({ service: 'records-lambda' });
-
-/**
- * Lambda実行時間制限（ミリ秒）
- * AWS Lambdaの最大実行時間は15分（900秒）
- */
-export const LAMBDA_TIMEOUT_MS = 15 * 60 * 1000; // 15分
-
-/**
- * 警告を出すレコード数の閾値
- * この数を超えるとタイムアウトリスクの警告を出力
- */
-export const LARGE_BATCH_WARNING_THRESHOLD = 1000;
-
-/**
- * タイムアウトリスク判定の閾値（残り時間の割合）
- * 残り時間がこの割合未満になると高リスクと判定
- */
-export const TIMEOUT_RISK_THRESHOLD = 0.2; // 20%
 
 /**
  * バルク操作のタイムアウトリスク情報

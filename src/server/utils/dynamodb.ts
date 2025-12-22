@@ -3,7 +3,7 @@
  */
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-import { ConfigError, createDynamoDBClient, createLogger } from '../../index.js';
+import { ConfigError, createDynamoDBClient, createLogger } from '../../shared/index.js';
 
 // ロガーインスタンス
 const logger = createLogger({ service: 'records-lambda' });

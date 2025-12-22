@@ -11,7 +11,7 @@ import type {
   InsertOneResult,
   UpdateOperators,
   UpdateResult,
-} from '../types.js';
+} from '../shared/index.js';
 import type { ClientOptions } from './DynamoClient.js';
 import { FindCursor } from './FindCursor.js';
 

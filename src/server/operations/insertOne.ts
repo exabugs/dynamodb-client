@@ -6,12 +6,8 @@
  */
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 
-import {
-  createLogger,
-  generateShadowRecords,
-  getShadowConfig,
-  ulid,
-} from '../../index.js';
+import { createLogger, ulid } from '../../shared/index.js';
+import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
 import type { InsertOneParams, InsertOneResult } from '../types.js';
 import {

@@ -11,7 +11,7 @@ import {
   VersionConflictError,
   getErrorClass,
   isAppError,
-} from '../src/errors.js';
+} from '../src/shared/index.js';
 
 describe('ErrorCode', () => {
   it('すべてのエラーコードが定義されていること', () => {

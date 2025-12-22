@@ -52,7 +52,7 @@
 import { DataProvider } from 'react-admin';
 
 import { DynamoClient } from '../../client/index.cognito.js';
-import type { Filter } from '../../types.js';
+import type { Filter } from '../../shared/index.js';
 import type { DataProviderOptions } from './types.js';
 
 /**

@@ -6,7 +6,7 @@
  */
 import { GetCommand } from '@aws-sdk/lib-dynamodb';
 
-import { ItemNotFoundError, createLogger } from '../../index.js';
+import { ItemNotFoundError, createLogger } from '../../shared/index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
 import type { FindOneParams, FindOneResult } from '../types.js';
 import {

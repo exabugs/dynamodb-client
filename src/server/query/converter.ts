@@ -5,7 +5,7 @@
  *
  * 要件: 8.5
  */
-import type { Filter, FilterOperators } from '../../types.js';
+import type { Filter, FilterOperators } from '../../shared/index.js';
 
 /**
  * DynamoDB比較演算子

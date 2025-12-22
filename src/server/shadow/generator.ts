@@ -1,6 +1,12 @@
-import type { ShadowFieldType } from './types.js';
+import type { ShadowFieldType } from '../../shadows/index.js';
 import type { ShadowConfig } from './config.js';
 import { inferFieldType } from './typeInference.js';
+import {
+  escapeString as shadowsEscapeString,
+  formatDatetime as shadowsFormatDatetime,
+  formatBoolean as shadowsFormatBoolean,
+  generateMainRecordSK as shadowsGenerateMainRecordSK,
+} from '../../shadows/index.js';
 
 
 
@@ -103,9 +109,7 @@ export function truncateString(value: string, maxBytes: number): string {
  * @returns エスケープされた文字列
  */
 export function escapeString(value: string): string {
-  return value
-    .replace(/#/g, '##') // # を ## に置換
-    .replace(/ /g, '#'); // スペースを # に置換
+  return shadowsEscapeString(value);
 }
 
 /**
@@ -156,18 +160,7 @@ export function formatNumberWithOffset(value: number, padding: number): string {
  * @returns UTC ISO 8601形式の文字列
  */
 export function formatDatetime(value: string | Date | null | undefined): string {
-  // null/undefined は空文字を返す
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  const date = typeof value === 'string' ? new Date(value) : value;
-
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid datetime value: ${value}`);
-  }
-
-  return date.toISOString();
+  return shadowsFormatDatetime(value);
 }
 
 /**
@@ -177,10 +170,7 @@ export function formatDatetime(value: string | Date | null | undefined): string 
  * @returns "0"（false）、"1"（true）、または空文字（null/undefined）
  */
 export function formatBoolean(value: boolean | null | undefined): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  return value ? '1' : '0';
+  return shadowsFormatBoolean(value);
 }
 
 /**
@@ -204,6 +194,7 @@ export function formatFieldValue(
   value: unknown,
   config: ShadowConfig
 ): string {
+  // shadows層の基本実装を使用し、server層固有の設定を適用
   switch (type) {
     case 'string': {
       if (value === null || value === undefined) {
@@ -241,7 +232,7 @@ export function formatFieldValue(
  * @returns メインレコードのSK
  */
 export function generateMainRecordSK(recordId: string): string {
-  return `id#${recordId}`;
+  return shadowsGenerateMainRecordSK(recordId);
 }
 
 /**
@@ -303,10 +294,10 @@ export function generateShadowRecords(
       continue;
     }
 
-    // フィールド値をフォーマット
+    // server層固有の設定を適用してフィールド値をフォーマット
     const formattedValue = formatFieldValue(type, value, config);
 
-    // シャドウキーを生成
+    // シャドウキーを生成（server層固有の形式）
     const sk = `${fieldName}#${formattedValue}#id#${record.id}`;
 
     shadows.push({

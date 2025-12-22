@@ -7,19 +7,12 @@
  *
  * 要件: 13.1, 13.2, 13.7, 13.8, 13.9
  */
-import { createLogger } from '../../index.js';
+import { 
+  createLogger,
+  DYNAMODB_TRANSACT_WRITE_MAX_ITEMS
+} from '../../shared/index.js';
 
 const logger = createLogger({ service: 'records-lambda' });
-
-/**
- * DynamoDB TransactWriteItemsの最大アイテム数制限
- *
- * DynamoDBのTransactWriteItemsは最大100アイテムまでしか処理できない。
- * この制限を超える場合は、複数のトランザクションに分割する必要がある。
- *
- * 参考: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html
- */
-export const DYNAMODB_TRANSACT_WRITE_MAX_ITEMS = 100;
 
 /**
  * チャンク分割結果

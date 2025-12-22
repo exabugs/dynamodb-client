@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeTime, ulid, ulidWithTime } from '../src/ulid.js';
+import { decodeTime, ulid, ulidWithTime } from '../src/shared/index.js';
 
 describe('ulid', () => {
   it('ULIDを生成できること', () => {

@@ -1,4 +1,4 @@
-import type { Filter, FindOptions } from '../types.js';
+import type { Filter, FindOptions } from '../shared/index.js';
 import type { AuthHeadersGetter } from './Collection.js';
 import type { ClientOptions } from './DynamoClient.js';
 

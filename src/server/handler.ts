@@ -6,8 +6,7 @@
  */
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
-import { isAppError } from '../errors.js';
-import { createLogger } from '../logger.js';
+import { isAppError, createLogger } from '../shared/index.js';
 import { handleDeleteMany } from './operations/deleteMany.js';
 import { handleDeleteOne } from './operations/deleteOne.js';
 import { handleFind } from './operations/find.js';

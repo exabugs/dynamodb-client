@@ -1,4 +1,11 @@
 /**
+ * 構造化ロガー
+ * 
+ * JSON形式で構造化されたログを出力するロガーを提供します。
+ * CloudWatch Logsで解析可能な形式でログを出力します。
+ */
+
+/**
  * ログレベル
  */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -51,7 +58,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 /**
  * JSON形式で構造化ログを出力するロガーを作成する
  *
- * このロガーは、要件10.1に従い、CloudWatch Logsで解析可能なJSON形式でログを出力する。
+ * このロガーは、CloudWatch Logsで解析可能なJSON形式でログを出力する。
  * 各ログエントリには、タイムスタンプ、レベル、メッセージ、およびオプションのメタデータが含まれる。
  *
  * @param config - ロガー設定オプション

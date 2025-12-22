@@ -6,7 +6,8 @@
  */
 import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
-import { createLogger, getShadowConfig } from '../../index.js';
+import { createLogger } from '../../shared/index.js';
+import { getShadowConfig } from '../shadow/index.js';
 import type { FindManyReferenceParams, FindManyReferenceResult } from '../types.js';
 import {
   executeDynamoDBOperation,
