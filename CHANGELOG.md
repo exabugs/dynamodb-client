@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-12-23
+
+### Changed
+
+- **Architecture**: Major architecture refactoring for improved maintainability
+  - Extracted shared modules to `src/shared/` directory structure
+  - Organized dependencies and eliminated circular dependencies
+  - Split large functions into modular components following single responsibility principle
+  - Improved code organization with clear 5-layer architecture: integrations → client → server → shadows → shared
+
+### Improved
+
+- **Code Quality**: Enhanced maintainability and readability
+  - Split `handleFind` function (429 lines) into focused, testable modules
+  - Created unified error hierarchy and common utilities
+  - Standardized import paths and reduced code duplication
+  - Added architecture documentation and dependency validation tests
+
+### Technical
+
+- **Dependencies**: Established clear dependency direction without circular references
+- **Testing**: All 266 tests continue to pass with improved architecture
+- **Documentation**: Added comprehensive architecture documentation
+
 ## [0.3.7] - 2024-12-19
 
 ### Removed
