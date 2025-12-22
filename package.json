@@ -104,6 +104,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
+    "analyze-functions": "node scripts/find-large-functions.js",
     "prepublishOnly": "npm run build && npm run test:unit"
   },
   "dependencies": {
