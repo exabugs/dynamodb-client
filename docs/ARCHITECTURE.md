@@ -1,343 +1,195 @@
-# @ainews/core アーキテクチャ
+# アーキテクチャドキュメント
 
-## コード共通化戦略
+## 概要
 
-**依存性注入（Dependency Injection）パターン**を使用して、認証ハンドラーのみを外部から注入し、ビジネスロジックは100%共通化しています。
+このドキュメントは、`@exabugs/dynamodb-client` の内部アーキテクチャと依存関係を説明します。
 
-### ディレクトリ構造
+## 層構造
 
-```
-packages/core/src/client/
-├── Collection.ts                  # コレクション（共通実装）★
-├── Database.ts                    # データベース（共通実装）★
-├── DynamoClient.ts                # クライアント（共通実装）★
-├── FindCursor.ts                  # カーソル（共通実装）★
-├── aws-sigv4.ts                   # AWS署名（Node.js専用）
-├── index.ts                       # 共通エクスポート
-├── index.iam.ts                   # IAM認証用エントリーポイント
-├── index.cognito.ts               # Cognito認証用エントリーポイント
-└── index.token.ts                 # Token認証用エントリーポイント
-```
-
-★ = 完全に共通化されたファイル（環境別の重複なし）
-
-### 依存性注入パターン
-
-#### 1. 認証ハンドラーの型定義
-
-```typescript
-// Collection.ts
-export type AuthHeadersGetter = (
-  endpoint: string,
-  body: string,
-  authOptions?: any
-) => Promise<Record<string, string>>;
-```
-
-#### 2. 共通実装（Collection.ts - 199行）
-
-```typescript
-export class Collection<TSchema = any, TAuthOptions = any> {
-  constructor(
-    private endpoint: string,
-    private databaseName: string,
-    private collectionName: string,
-    private authToken: string | undefined,
-    private authOptions: TAuthOptions | undefined,
-    private clientOptions: ClientOptions | undefined,
-    private getAuthHeaders: AuthHeadersGetter // ★ 認証ハンドラーを注入
-  ) {}
-
-  private async request(operation: string, params: any) {
-    // ★ 注入された認証ハンドラーを使用
-    const authHeaders = await this.getAuthHeaders(this.endpoint, requestBody, this.authOptions);
-    // ... 共通ビジネスロジック（100%共通）
-  }
-
-  // find, findOne, insertOne, updateOne, deleteOne など
-  // すべてのCRUD操作が100%共通
-}
-```
-
-#### 3. IAM認証用エントリーポイント（index.iam.ts - 約50行）
-
-```typescript
-import {
-  type ClientOptions as BaseClientOptions,
-  DynamoClient as BaseDynamoClient,
-} from './DynamoClient.js';
-import { signRequest } from './aws-sigv4.js';
-
-export { Database } from './Database.js';
-export { Collection } from './Collection.js';
-export { FindCursor } from './FindCursor.js';
-
-export interface IAMAuthOptions {
-  region: string;
-}
-
-export interface ClientOptions extends Omit<BaseClientOptions<IAMAuthOptions>, 'auth'> {
-  auth: IAMAuthOptions;
-}
-
-export class DynamoClient extends BaseDynamoClient<IAMAuthOptions> {
-  constructor(endpoint: string, options: ClientOptions) {
-    // ★ IAM認証ハンドラーを注入
-    super(endpoint, options, async (url: string, body: string, auth?: IAMAuthOptions) => {
-      if (!auth) {
-        throw new Error('IAM auth options are required');
-      }
-      return await signRequest(url, body, auth.region);
-    });
-  }
-}
-```
-
-#### 4. Cognito認証用エントリーポイント（index.cognito.ts - 約40行）
-
-```typescript
-import {
-  type ClientOptions as BaseClientOptions,
-  DynamoClient as BaseDynamoClient,
-} from './DynamoClient.js';
-
-export { Database } from './Database.js';
-export { Collection } from './Collection.js';
-export { FindCursor } from './FindCursor.js';
-
-export interface CognitoAuthOptions {
-  getToken: () => Promise<string>;
-}
-
-export interface ClientOptions extends Omit<BaseClientOptions<CognitoAuthOptions>, 'auth'> {
-  auth: CognitoAuthOptions;
-}
-
-export class DynamoClient extends BaseDynamoClient<CognitoAuthOptions> {
-  constructor(endpoint: string, options: ClientOptions) {
-    // ★ Cognito認証ハンドラーを注入
-    super(endpoint, options, async (_url: string, _body: string, auth?: CognitoAuthOptions) => {
-      if (!auth) {
-        throw new Error('Cognito auth options are required');
-      }
-      const token = await auth.getToken();
-      return {
-        Authorization: `Bearer ${token}`,
-      };
-    });
-  }
-}
-```
-
-#### 5. Token認証用エントリーポイント（index.token.ts - 約40行）
-
-```typescript
-import {
-  type ClientOptions as BaseClientOptions,
-  DynamoClient as BaseDynamoClient,
-} from './DynamoClient.js';
-
-export { Database } from './Database.js';
-export { Collection } from './Collection.js';
-export { FindCursor } from './FindCursor.js';
-
-export interface TokenAuthOptions {
-  token: string;
-}
-
-export interface ClientOptions extends Omit<BaseClientOptions<TokenAuthOptions>, 'auth'> {
-  auth: TokenAuthOptions;
-}
-
-export class DynamoClient extends BaseDynamoClient<TokenAuthOptions> {
-  constructor(endpoint: string, options: ClientOptions) {
-    // ★ Token認証ハンドラーを注入
-    super(endpoint, options, async (_url: string, _body: string, auth?: TokenAuthOptions) => {
-      if (!auth) {
-        throw new Error('Token auth options are required');
-      }
-      return {
-        Authorization: `Bearer ${auth.token}`,
-      };
-    });
-  }
-}
-```
-
-### 認証ハンドラーの実装
-
-認証ハンドラーは各エントリーポイントに直接実装されています。共通のビジネスロジック（Collection.ts、Database.ts、DynamoClient.ts）は、認証ハンドラーを関数として受け取り、依存性注入パターンで実装されています。
-
-#### IAM認証（index.iam.ts）
-
-```typescript
-async (url: string, body: string, auth?: IAMAuthOptions) => {
-  if (!auth) {
-    throw new Error('IAM auth options are required');
-  }
-  return await signRequest(url, body, auth.region);
-};
-```
-
-#### Cognito認証（index.cognito.ts）
-
-```typescript
-async (_url: string, _body: string, auth?: CognitoAuthOptions) => {
-  if (!auth) {
-    throw new Error('Cognito auth options are required');
-  }
-  const token = await auth.getToken();
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
-```
-
-#### Token認証（index.token.ts）
-
-```typescript
-async (_url: string, _body: string, auth?: TokenAuthOptions) => {
-  if (!auth) {
-    throw new Error('Token auth options are required');
-  }
-  return {
-    Authorization: `Bearer ${auth.token}`,
-  };
-};
-```
-
-### パッケージエクスポート
-
-#### IAM認証（Node.js専用）
-
-```typescript
-import { DynamoClient } from '@ainews/core/client/iam';
-
-const client = new DynamoClient(FUNCTION_URL, {
-  auth: {
-    region: 'ap-northeast-1',
-  },
-});
-```
-
-#### Cognito認証（Node.js/ブラウザ）
-
-```typescript
-import { DynamoClient } from '@ainews/core/client/cognito';
-
-const client = new DynamoClient(FUNCTION_URL, {
-  auth: {
-    getToken: async () => {
-      // トークン取得ロジック
-      return token;
-    },
-  },
-});
-```
-
-#### Token認証（Node.js/ブラウザ）
-
-```typescript
-import { DynamoClient } from '@ainews/core/client/token';
-
-const client = new DynamoClient(FUNCTION_URL, {
-  auth: {
-    token: 'your-static-token',
-  },
-});
-```
-
-### 型システム
-
-```typescript
-// IAM認証（Node.js専用）
-interface IAMAuthOptions {
-  region: string;
-}
-
-// Cognito認証（Node.js/ブラウザ）
-interface CognitoAuthOptions {
-  getToken: () => Promise<string>;
-}
-
-// Token認証（Node.js/ブラウザ）
-interface TokenAuthOptions {
-  token: string;
-}
-```
-
-### ビルド成果物
-
-#### 共通ファイル（環境共通）
+プロジェクトは以下の5つの層で構成されています：
 
 ```
-dist/client/
-├── Collection.js               # 共通実装（約250行）
-├── Database.js                 # 共通実装（約60行）
-├── DynamoClient.ts             # 共通実装（約100行）
-└── FindCursor.js               # 共通実装（約150行）
+integrations/  (最上位層)
+    ↓
+client/        (クライアント層)
+    ↓
+server/        (サーバー層)
+    ↓
+shadows/       (シャドウ管理層)
+    ↓
+shared/        (共通基盤層)
 ```
 
-#### 認証別エントリーポイント
+### 1. shared/ (共通基盤層)
+
+**責任**: プロジェクト全体で使用される共通機能を提供
+
+**含まれるもの**:
+- 型定義 (`types/`)
+- エラークラス (`errors/`)
+- ユーティリティ (`utils/`)
+- 定数 (`constants/`)
+
+**依存関係**: なし（最下位層）
+
+**エクスポート**:
+- 共通型定義（Filter, UpdateOperators, etc.）
+- エラークラス（AppError, ValidationError, etc.）
+- ユーティリティ（createLogger, ulid, validation）
+- 定数（HTTP_STATUS, DYNAMODB_LIMITS, etc.）
+
+### 2. shadows/ (シャドウ管理層)
+
+**責任**: DynamoDB Single-Table設計のシャドウレコード管理
+
+**含まれるもの**:
+- シャドウレコード生成 (`generator.ts`)
+- シャドウ差分計算 (`differ.ts`)
+- 型定義 (`types.ts`)
+
+**依存関係**: 
+- `shared/` のみ
+
+**エクスポート**:
+- シャドウ生成関数（generateShadowSK, formatFieldValue, etc.）
+- 差分計算関数（calculateShadowDiff, isDiffEmpty, etc.）
+- 型定義（ShadowFieldType, ShadowFieldConfig, etc.）
+
+### 3. server/ (サーバー層)
+
+**責任**: Lambda関数でのサーバーサイド処理
+
+**含まれるもの**:
+- CRUD操作 (`operations/`)
+- クエリ処理 (`query/`)
+- シャドウ統合 (`shadow/`)
+- ユーティリティ (`utils/`)
+
+**依存関係**: 
+- `shared/`
+- `shadows/`（シャドウレコード生成のため）
+
+**エクスポート**:
+- CRUD操作ハンドラー
+- クエリ変換関数
+- シャドウ設定管理
+
+### 4. client/ (クライアント層)
+
+**責任**: ブラウザ・Node.jsでのクライアントサイド処理
+
+**含まれるもの**:
+- Database クラス
+- Collection クラス
+- FindCursor クラス
+- 認証ハンドラー（IAM, Cognito, Token）
+
+**依存関係**: 
+- `shared/` のみ
+
+**エクスポート**:
+- Database, Collection クラス
+- 認証別エントリーポイント
+
+### 5. integrations/ (最上位層)
+
+**責任**: 外部ライブラリとの統合
+
+**含まれるもの**:
+- react-admin DataProvider
+
+**依存関係**: 
+- `shared/`
+- `client/`
+
+**エクスポート**:
+- react-admin用DataProvider
+
+## 依存関係の原則
+
+### 1. 一方向依存
+
+すべての依存関係は一方向です：
 
 ```
-dist/client/
-├── index.js                    # 共通エクスポート
-├── index.iam.js                # IAM認証用（約50行）
-├── index.cognito.js            # Cognito認証用（約40行）
-└── index.token.js              # Token認証用（約40行）
+integrations → client → server → shadows → shared
 ```
 
-#### AWS署名（Node.js専用）
+### 2. 層の分離
+
+- 各層は明確な責任を持つ
+- 上位層は下位層に依存できるが、逆は禁止
+- 同一層内での循環依存は禁止
+
+### 3. 共通基盤の活用
+
+- すべての層は `shared/` を使用可能
+- 共通機能は `shared/` に集約
+
+## ファイル構成
 
 ```
-dist/client/
-└── aws-sigv4.js                # AWS Signature V4実装
+src/
+├── shared/           # 共通基盤層
+│   ├── types/        # 型定義
+│   ├── errors/       # エラークラス
+│   ├── utils/        # ユーティリティ
+│   ├── constants/    # 定数
+│   └── index.ts      # メインエクスポート
+├── shadows/          # シャドウ管理層
+│   ├── generator.ts  # シャドウ生成
+│   ├── differ.ts     # 差分計算
+│   ├── types.ts      # 型定義
+│   └── index.ts      # エクスポート
+├── server/           # サーバー層
+│   ├── operations/   # CRUD操作
+│   ├── query/        # クエリ処理
+│   ├── shadow/       # シャドウ統合
+│   ├── utils/        # ユーティリティ
+│   ├── handler.ts    # Lambdaハンドラー
+│   └── index.ts      # エクスポート
+├── client/           # クライアント層
+│   ├── Database.ts   # Databaseクラス
+│   ├── Collection.ts # Collectionクラス
+│   ├── FindCursor.ts # FindCursorクラス
+│   ├── index.*.ts    # 認証別エントリー
+│   └── index.ts      # 共通エクスポート
+├── integrations/     # 最上位層
+│   └── react-admin/  # react-admin統合
+└── index.ts          # プロジェクトメインエクスポート
 ```
 
-### コード共通化の効果
+## 循環依存の検証
 
-| ファイル                 | 行数        | 共通化率 | 備考         |
-| ------------------------ | ----------- | -------- | ------------ |
-| Collection.ts            | 約250行     | 100%     | 完全共通     |
-| Database.ts              | 約60行      | 100%     | 完全共通     |
-| DynamoClient.ts          | 約100行     | 100%     | 完全共通     |
-| FindCursor.ts            | 約150行     | 100%     | 完全共通     |
-| **ビジネスロジック合計** | **約560行** | **100%** | **完全共通** |
-| index.iam.ts             | 約50行      | 局所化   | IAM認証      |
-| index.cognito.ts         | 約40行      | 局所化   | Cognito認証  |
-| index.token.ts           | 約40行      | 局所化   | Token認証    |
-| **認証別コード合計**     | **約130行** | -        | 約19%        |
+現在、循環依存は存在しません。以下の方法で検証できます：
 
-**結論**: 約560行のビジネスロジックが100%共通化され、認証別のコードは約130行（約19%）のみです。
+```bash
+# 依存関係の可視化（madgeが必要）
+npx madge --circular src/
 
-### 利点
+# TypeScriptコンパイラによる検証
+npx tsc --noEmit
+```
 
-1. **完全な共通化**: ビジネスロジックに重複コードが一切ない
-2. **保守性**: バグ修正や機能追加が1箇所で済む
-3. **一貫性**: Node.js版とブラウザ版で動作が完全に一致
-4. **型安全性**: 環境に応じた型チェックが可能
-5. **テスト容易性**: 共通ロジックのテストは1回で済む
-6. **依存性の明示**: 認証ハンドラーが明示的に注入される
+## 今後の拡張指針
 
-### トレードオフ
+### 新しい層の追加
 
-- **コンストラクタの複雑化**: 認証ハンドラーを引数として渡す必要がある
-  - → ラッパークラスで隠蔽することで解決
-- **型パラメータの追加**: `TAuthOptions` ジェネリクスが必要
-  - → 型推論により、ユーザーコードでは意識不要
+新しい層を追加する場合は、以下の原則に従ってください：
 
-### 設計パターン
+1. **明確な責任**: 層の責任を明確に定義
+2. **一方向依存**: 既存の依存関係を壊さない
+3. **適切な配置**: 依存関係の順序に従って配置
 
-この実装は以下の設計パターンを組み合わせています：
+### 機能の追加
 
-1. **依存性注入（Dependency Injection）**: 認証ハンドラーを外部から注入
-2. **ストラテジーパターン（Strategy Pattern）**: 認証方式を切り替え可能
-3. **ファサードパターン（Facade Pattern）**: ラッパークラスで複雑さを隠蔽
-4. **テンプレートメソッドパターン（Template Method Pattern）**: 共通ロジックを基底クラスに実装
+新しい機能を追加する場合は、以下を確認してください：
 
-### まとめ
+1. **適切な層**: 機能が属する層を正しく選択
+2. **依存関係**: 不要な依存関係を作らない
+3. **共通化**: 共通機能は `shared/` に配置
 
-依存性注入パターンにより、**ビジネスロジックの完全な共通化**を実現しました。認証別のコードは各エントリーポイントの約130行のみで、約560行のビジネスロジックは共通ファイル（Collection.ts、Database.ts、DynamoClient.ts、FindCursor.ts）で管理されています。
+## 参考
 
-各認証方式のエントリーポイント（index.iam.ts、index.cognito.ts、index.token.ts）は、認証ハンドラーを無名関数として直接実装し、BaseDynamoClientのコンストラクタに注入します。これにより、認証ロジックの局所化とビジネスロジックの完全な共通化を両立しています。
+- [設計ドキュメント](../specs/dynamodb-client/design.md)
+- [要件ドキュメント](../specs/dynamodb-client/requirements.md)
