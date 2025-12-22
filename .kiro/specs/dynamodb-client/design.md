@@ -1488,3 +1488,590 @@ DynamoDBクライアントライブラリは、以下の特徴を持つ汎用的
 6. **CI/CD**: GitHub Actionsによる自動テスト・ビルド・公開
 7. **国際化**: 英語ドキュメントとエラーメッセージ
 8. **MITライセンス**: 商用利用可能なオープンソースライセンス
+
+## アーキテクチャリファクタリング設計
+
+### 概要
+
+コードベースの保守性と拡張性を向上させるため、以下の原則に基づいてアーキテクチャをリファクタリングします。
+
+### 設計原則
+
+#### 1. 単一責任の原則（Single Responsibility Principle）
+
+各モジュール・クラス・関数は1つの責任のみを持つ：
+
+```
+src/
+├── client/                    # クライアントSDK（責任：HTTPクライアント）
+│   ├── core/                  # コアロジック
+│   │   ├── DynamoClient.ts    # 接続管理
+│   │   ├── Database.ts        # データベース操作
+│   │   └── Collection.ts      # コレクション操作
+│   ├── query/                 # クエリ構築
+│   │   ├── FilterBuilder.ts   # フィルタ構築
+│   │   ├── SortBuilder.ts     # ソート構築
+│   │   └── FindCursor.ts      # カーソル管理
+│   ├── auth/                  # 認証処理
+│   │   ├── IAMAuth.ts         # IAM認証
+│   │   ├── CognitoAuth.ts     # Cognito認証
+│   │   └── TokenAuth.ts       # Token認証
+│   └── utils/                 # クライアント用ユーティリティ
+│       ├── http.ts            # HTTP通信
+│       └── validation.ts      # バリデーション
+├── server/                    # サーバーサイド実装（責任：DynamoDB操作）
+│   ├── handlers/              # リクエストハンドラー
+│   │   ├── handler.ts         # メインハンドラー
+│   │   └── middleware.ts      # ミドルウェア
+│   ├── operations/            # CRUD操作
+│   │   ├── create.ts          # 作成操作
+│   │   ├── read.ts            # 読み取り操作
+│   │   ├── update.ts          # 更新操作
+│   │   └── delete.ts          # 削除操作
+│   ├── query/                 # クエリ変換
+│   │   ├── converter.ts       # フィルタ変換
+│   │   └── optimizer.ts       # クエリ最適化
+│   ├── shadow/                # シャドウ管理
+│   │   ├── generator.ts       # シャドウ生成
+│   │   ├── differ.ts          # 差分計算
+│   │   └── manager.ts         # シャドウ管理
+│   └── utils/                 # サーバー用ユーティリティ
+│       ├── dynamodb.ts        # DynamoDB操作
+│       ├── validation.ts      # バリデーション
+│       └── config.ts          # 設定管理
+├── shadows/                   # シャドウ管理パッケージ（責任：シャドウロジック）
+│   ├── core/                  # コアロジック
+│   │   ├── generator.ts       # SK生成
+│   │   ├── differ.ts          # 差分計算
+│   │   └── formatter.ts       # 値フォーマット
+│   ├── config/                # 設定管理
+│   │   ├── loader.ts          # 設定読み込み
+│   │   └── validator.ts       # 設定検証
+│   └── utils/                 # シャドウ用ユーティリティ
+│       ├── escape.ts          # エスケープ処理
+│       └── truncate.ts        # 切り詰め処理
+├── shared/                    # 共通モジュール（責任：共通ロジック）
+│   ├── types/                 # 型定義
+│   │   ├── client.ts          # クライアント型
+│   │   ├── server.ts          # サーバー型
+│   │   └── common.ts          # 共通型
+│   ├── errors/                # エラー定義
+│   │   ├── ClientError.ts     # クライアントエラー
+│   │   ├── ServerError.ts     # サーバーエラー
+│   │   └── ValidationError.ts # バリデーションエラー
+│   ├── constants/             # 定数定義
+│   │   ├── http.ts            # HTTP定数
+│   │   └── dynamodb.ts        # DynamoDB定数
+│   └── utils/                 # 共通ユーティリティ
+│       ├── logger.ts          # ログ出力
+│       ├── ulid.ts            # ID生成
+│       └── validation.ts      # 共通バリデーション
+└── integrations/              # 外部統合（責任：外部ライブラリ統合）
+    └── react-admin/           # react-admin統合
+        ├── dataProvider.ts    # データプロバイダー
+        └── authProvider.ts    # 認証プロバイダー
+```
+
+#### 2. 依存関係の整理
+
+依存方向を一方向に整理：
+
+```
+┌─────────────────┐
+│  integrations/  │ (最上位層)
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│    client/      │ (クライアント層)
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│    server/      │ (サーバー層)
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│   shadows/      │ (シャドウ層)
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│    shared/      │ (共通層・最下位層)
+└─────────────────┘
+```
+
+**ルール**:
+- 上位層は下位層に依存可能
+- 下位層は上位層に依存禁止
+- 同一層内での循環依存禁止
+
+#### 3. 関数の分割基準
+
+**分割対象**:
+- 50行を超える関数
+- 複数の責任を持つ関数
+- 複雑な条件分岐を持つ関数
+
+**分割例**:
+
+```typescript
+// ❌ 悪い例: 複数の責任を持つ大きな関数
+async function processRecord(record: any, config: ShadowConfig): Promise<void> {
+  // バリデーション (責任1)
+  if (!record.id) throw new Error('ID is required');
+  if (!record.name) throw new Error('Name is required');
+  
+  // タイムスタンプ追加 (責任2)
+  record.createdAt = new Date().toISOString();
+  record.updatedAt = record.createdAt;
+  
+  // シャドウレコード生成 (責任3)
+  const shadows = [];
+  for (const [field, fieldConfig] of Object.entries(config.sortableFields)) {
+    const value = record[field];
+    if (value !== undefined) {
+      const sk = `${field}#${formatValue(value, fieldConfig.type)}#id#${record.id}`;
+      shadows.push({ PK: config.resource, SK: sk, data: { id: record.id } });
+    }
+  }
+  
+  // DynamoDB保存 (責任4)
+  await dynamoClient.transactWrite({
+    TransactItems: [
+      { Put: { TableName: TABLE_NAME, Item: record } },
+      ...shadows.map(shadow => ({ Put: { TableName: TABLE_NAME, Item: shadow } }))
+    ]
+  }).promise();
+}
+
+// ✅ 良い例: 責任ごとに分割された関数
+async function processRecord(record: any, config: ShadowConfig): Promise<void> {
+  const validatedRecord = validateRecord(record);
+  const timestampedRecord = addTimestamps(validatedRecord);
+  const shadows = generateShadowRecords(timestampedRecord, config);
+  await saveRecordWithShadows(timestampedRecord, shadows);
+}
+
+function validateRecord(record: any): any {
+  if (!record.id) throw new ValidationError('ID is required');
+  if (!record.name) throw new ValidationError('Name is required');
+  return record;
+}
+
+function addTimestamps(record: any): any {
+  const now = new Date().toISOString();
+  return { ...record, createdAt: now, updatedAt: now };
+}
+
+function generateShadowRecords(record: any, config: ShadowConfig): ShadowRecord[] {
+  // シャドウレコード生成ロジック
+}
+
+async function saveRecordWithShadows(record: any, shadows: ShadowRecord[]): Promise<void> {
+  // DynamoDB保存ロジック
+}
+```
+
+#### 4. 共通ロジックの抽出
+
+**抽出対象**:
+- 3回以上繰り返されるロジック
+- 複数のモジュールで使用される処理
+- 設定値やマジックナンバー
+
+**抽出例**:
+
+```typescript
+// ❌ 悪い例: 重複したロジック
+// client/Collection.ts
+const timeout = 15 * 60 * 1000; // 15分
+
+// server/operations/create.ts  
+const timeout = 15 * 60 * 1000; // 15分
+
+// server/operations/update.ts
+const timeout = 15 * 60 * 1000; // 15分
+
+// ✅ 良い例: 共通定数として抽出
+// shared/constants/http.ts
+export const HTTP_TIMEOUT_MS = 15 * 60 * 1000; // 15分
+export const BATCH_SIZE = 100;
+export const MAX_RETRIES = 3;
+
+// 使用箇所
+import { HTTP_TIMEOUT_MS } from '../../shared/constants/http.js';
+```
+
+#### 5. エラーハンドリングの統一
+
+**統一されたエラー階層**:
+
+```typescript
+// shared/errors/BaseError.ts
+export abstract class BaseError extends Error {
+  abstract readonly code: string;
+  abstract readonly statusCode: number;
+  
+  constructor(message: string, public readonly context?: any) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+// shared/errors/ClientError.ts
+export class ClientError extends BaseError {
+  readonly code = 'CLIENT_ERROR';
+  readonly statusCode = 400;
+}
+
+// shared/errors/ValidationError.ts
+export class ValidationError extends ClientError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly statusCode = 400;
+}
+
+// shared/errors/ServerError.ts
+export class ServerError extends BaseError {
+  readonly code = 'SERVER_ERROR';
+  readonly statusCode = 500;
+}
+```
+
+**統一されたエラーハンドリングパターン**:
+
+```typescript
+// shared/utils/errorHandler.ts
+export function handleError(error: unknown): BaseError {
+  if (error instanceof BaseError) {
+    return error;
+  }
+  
+  if (error instanceof Error) {
+    return new ServerError(error.message, { originalError: error });
+  }
+  
+  return new ServerError('Unknown error occurred', { originalError: error });
+}
+
+// 使用例
+try {
+  await someOperation();
+} catch (error) {
+  const handledError = handleError(error);
+  logger.error(handledError.message, {
+    code: handledError.code,
+    context: handledError.context
+  });
+  throw handledError;
+}
+```
+
+#### 6. ログ出力の構造化
+
+**統一されたログ形式**:
+
+```typescript
+// shared/utils/logger.ts
+export interface LogContext {
+  requestId?: string;
+  userId?: string;
+  operation?: string;
+  resource?: string;
+  [key: string]: any;
+}
+
+export class Logger {
+  info(message: string, context?: LogContext): void {
+    console.log(JSON.stringify({
+      level: 'info',
+      timestamp: new Date().toISOString(),
+      message,
+      ...context
+    }));
+  }
+  
+  error(message: string, context?: LogContext): void {
+    console.error(JSON.stringify({
+      level: 'error',
+      timestamp: new Date().toISOString(),
+      message,
+      ...context
+    }));
+  }
+}
+
+// 使用例
+const logger = new Logger();
+logger.info('Record created successfully', {
+  requestId: 'req-123',
+  operation: 'createRecord',
+  resource: 'articles',
+  recordId: 'art-456'
+});
+```
+
+### リファクタリング計画
+
+#### フェーズ1: 共通モジュールの抽出
+
+1. `shared/` ディレクトリの作成
+2. 共通型定義の移動
+3. 共通エラークラスの作成
+4. 共通ユーティリティの抽出
+
+#### フェーズ2: 依存関係の整理
+
+1. 循環依存の特定と解消
+2. 依存方向の一方向化
+3. インターフェースの分離
+
+#### フェーズ3: 関数の分割
+
+1. 50行を超える関数の特定
+2. 単一責任の原則に基づく分割
+3. テストの更新
+
+#### フェーズ4: 重複コードの削除
+
+1. 重複ロジックの特定
+2. 共通関数への抽出
+3. 定数の共通化
+
+#### フェーズ5: エラーハンドリングの統一
+
+1. 統一されたエラー階層の実装
+2. エラーハンドリングパターンの適用
+3. ログ出力の構造化
+
+### 期待される効果
+
+1. **保守性の向上**: 明確な責任分離により、変更の影響範囲が限定される
+2. **テスト容易性**: 小さな関数により、単体テストが書きやすくなる
+3. **再利用性**: 共通ロジックの抽出により、コードの再利用が促進される
+4. **可読性の向上**: 構造化されたコードにより、理解が容易になる
+5. **拡張性**: 明確なアーキテクチャにより、新機能の追加が容易になる
+
+## Find操作のリファクタリング設計
+
+### 概要
+
+`handleFind`関数は、複数の責任を持つ大きな関数（約400行）であり、単一責任の原則に従って以下の4つの独立した責任に分割されました。
+
+### 現在の実装状況
+
+既に`src/server/operations/find/`ディレクトリにモジュール化された実装が存在しています：
+
+```
+src/server/operations/find/
+├── index.ts           # エクスポート定義
+├── types.ts           # Find操作の型定義
+├── utils.ts           # 共通ユーティリティ関数
+├── idQuery.ts         # ID最適化クエリ実装
+└── shadowQuery.ts     # シャドウレコードクエリ実装
+```
+
+### 責任分離の設計
+
+#### 1. 設定とパラメータ初期化（utils.ts）
+
+**責任**: Find操作のコンテキスト初期化と共通ユーティリティ
+
+```typescript
+/**
+ * Find操作のコンテキストを初期化する
+ * 
+ * 処理内容:
+ * - シャドー設定の読み込み
+ * - ソート条件の正規化（デフォルト値適用）
+ * - ページネーション条件の正規化
+ * - フィルター条件の解析（拡張フィールド構文対応）
+ */
+export function initializeFindContext(
+  resource: string,
+  params: FindParams,
+  requestId: string
+): FindContext;
+```
+
+**主要機能**:
+- `normalizeSort()`: ソート条件の正規化とデフォルト値適用
+- `normalizePagination()`: ページネーション条件の正規化
+- `parseFilters()`: フィルター条件の解析（拡張フィールド構文対応）
+- `findOptimizableFilter()`: Query最適化可能なフィルター条件の検出
+- `matchesAllFilters()`: メモリ内フィルタリングの実行
+
+#### 2. ID最適化クエリ（idQuery.ts）
+
+**責任**: `sort.field='id'`の場合の特別な処理
+
+```typescript
+/**
+ * ID最適化クエリを実行する
+ * 
+ * 処理内容:
+ * - 特定IDフィルターの検出と処理
+ * - 本体レコードの直接Query（シャドウレコード不要）
+ * - ページネーション対応
+ * - メモリ内フィルタリング
+ */
+export async function executeIdOptimizedQuery(
+  context: FindContext
+): Promise<QueryExecutionResult>;
+```
+
+**最適化ポイント**:
+- `id`フィールドは本体レコード（`SK = id#{ULID}`）として既に存在
+- シャドウレコードを参照する必要がないため、直接Queryで高速取得
+- `filter.id`が指定されている場合は、特定のIDのレコードを直接取得
+
+#### 3. シャドウレコードクエリ（shadowQuery.ts）
+
+**責任**: `sort.field != 'id'`の場合の通常のシャドウレコードクエリ
+
+```typescript
+/**
+ * シャドウレコードクエリを実行する
+ * 
+ * 処理内容:
+ * - Query最適化の適用（ソートフィールドと一致するフィルター条件）
+ * - シャドウレコードのQuery実行
+ * - 本体レコードのBatchGet実行
+ * - レコード順序の保持（シャドウの順序で並べる）
+ * - メモリ内フィルタリング
+ */
+export async function executeShadowQuery(
+  context: FindContext
+): Promise<QueryExecutionResult>;
+```
+
+**Query最適化**:
+- ソートフィールドと一致するフィルター条件を`KeyConditionExpression`に含める
+- 対応演算子: `eq`, `gt`, `gte`, `lt`, `lte`, `starts`
+- 値のエンコード: 型に応じたシャドウSK形式への変換
+
+#### 4. 結果処理とレスポンス生成（index.ts経由でhandler実装）
+
+**責任**: クエリ結果の処理とレスポンス形式の統一
+
+```typescript
+/**
+ * Find操作のメインハンドラー
+ * 
+ * 処理内容:
+ * - コンテキストの初期化
+ * - クエリタイプの判定（ID最適化 vs シャドウクエリ）
+ * - 適切なクエリ実行関数の呼び出し
+ * - レスポンス形式の統一
+ * - エラーハンドリング
+ */
+export async function handleFind(
+  resource: string,
+  params: FindParams,
+  requestId: string
+): Promise<FindResult>;
+```
+
+### 型定義の統一（types.ts）
+
+Find操作で使用される型定義を統一管理：
+
+```typescript
+/**
+ * Find操作のコンテキスト
+ */
+export interface FindContext {
+  resource: string;
+  params: FindParams;
+  requestId: string;
+  shadowConfig: any;
+  sort: { field: string; order: 'ASC' | 'DESC' };
+  pagination: { perPage: number; nextToken?: string };
+  parsedFilters: ParsedFilter[];
+}
+
+/**
+ * クエリ実行結果の統一形式
+ */
+export interface QueryExecutionResult {
+  items: any[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  nextToken?: string;
+}
+```
+
+### リファクタリングの利点
+
+#### 1. 単一責任の原則の実現
+
+- **設定初期化**: パラメータの正規化とバリデーション
+- **ID最適化**: 特別なケースの高速処理
+- **シャドウクエリ**: 通常のソート処理
+- **結果処理**: レスポンス形式の統一
+
+#### 2. テスト容易性の向上
+
+各責任を独立してテスト可能：
+
+```typescript
+// 設定初期化のテスト
+describe('initializeFindContext', () => {
+  it('should normalize sort conditions', () => {
+    // テストコード
+  });
+});
+
+// ID最適化クエリのテスト
+describe('executeIdOptimizedQuery', () => {
+  it('should handle specific ID filter', () => {
+    // テストコード
+  });
+});
+
+// シャドウクエリのテスト
+describe('executeShadowQuery', () => {
+  it('should apply query optimization', () => {
+    // テストコード
+  });
+});
+```
+
+#### 3. 保守性の向上
+
+- **変更の影響範囲が限定**: 各責任が独立しているため、変更時の影響が限定される
+- **コードの理解が容易**: 各ファイルが特定の責任に集中している
+- **デバッグが簡単**: 問題の発生箇所を特定しやすい
+
+#### 4. 拡張性の向上
+
+- **新しいクエリ最適化の追加**: `shadowQuery.ts`に集中して実装
+- **新しいフィルター演算子の追加**: `utils.ts`の`matchesAllFilters`に追加
+- **新しい認証方式の追加**: 既存のコードに影響なし
+
+#### 5. パフォーマンスの向上
+
+- **ID最適化**: シャドウレコードを経由しない高速クエリ
+- **Query最適化**: DynamoDBのKeyConditionExpressionを活用
+- **メモリ効率**: 必要な処理のみを実行
+
+### 移行戦略
+
+#### 現在の状況
+
+- ✅ モジュール化された実装が既に存在（`find/`ディレクトリ）
+- ✅ 型定義が統一されている（`types.ts`）
+- ✅ 各責任が適切に分離されている
+
+#### 次のステップ
+
+1. **既存実装の検証**: 現在のモジュール化された実装をテストで検証
+2. **統合テストの追加**: 各モジュール間の連携をテスト
+3. **パフォーマンステスト**: ID最適化とQuery最適化の効果を測定
+4. **ドキュメント更新**: 新しいアーキテクチャの説明を追加
+
+#### 期待される成果
+
+- **コード行数の削減**: 大きな関数の分割により、各関数が理解しやすいサイズに
+- **テストカバレッジの向上**: 独立したテストにより、より詳細なテストが可能
+- **バグの減少**: 責任の明確化により、バグの発生箇所を特定しやすく
+- **開発速度の向上**: 新機能の追加や修正が容易に
