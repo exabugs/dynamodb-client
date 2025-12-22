@@ -117,7 +117,7 @@ export function matchesAllFilters(
   return parsedFilters.every((filter) => {
     const { field, operator } = filter.parsed;
     const recordValue = record[field];
-    const filterValue = filter.value;
+    const filterValue = filter.value as any;
 
     switch (operator) {
       case 'eq':
