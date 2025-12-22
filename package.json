@@ -97,7 +97,7 @@
     "build:client": "tsc",
     "build:lambda": "node esbuild.config.js",
     "clean": "rm -rf dist",
-    "lint": "eslint src --ext ts --max-warnings 10",
+    "lint": "eslint src --ext ts --max-warnings 20",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

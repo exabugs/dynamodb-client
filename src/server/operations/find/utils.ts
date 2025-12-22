@@ -3,7 +3,7 @@
  */
 
 import type { FindParams } from '../../types.js';
-import type { FindContext, ParsedFilter, OptimizableFilter, NormalizedFindParams } from './types.js';
+import type { ParsedFilter, OptimizableFilter, NormalizedFindParams } from './types.js';
 import { getShadowConfig } from '../../shadow/index.js';
 import { createLogger } from '../../../shared/index.js';
 import { parseFilterField } from '../../utils/filter.js';
