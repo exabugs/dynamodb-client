@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2024-12-23
+
+### Fixed
+
+- **Package**: Removed obsolete `bin` field for `generate-shadow-config`
+  - CLI tool was removed in v0.3.2 but bin field was not removed from package.json
+  - Eliminates pnpm warning about missing generate-shadow-config.js file
+  - No functional changes - purely cleanup
+
 ## [0.4.0] - 2024-12-23
 
 ### Changed
@@ -30,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependencies**: Established clear dependency direction without circular references
 - **Testing**: All 266 tests continue to pass with improved architecture
 - **Documentation**: Added comprehensive architecture documentation
+- **Package**: Removed obsolete `bin` field for `generate-shadow-config` CLI tool
 
 ## [0.3.7] - 2024-12-19
 
