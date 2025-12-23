@@ -143,7 +143,7 @@ async function executeShadowRecordQuery(
   perPage: number,
   nextToken: string | undefined,
   optimizableFilter: OptimizableFilter | undefined,
-  requestId: string
+  _requestId: string
 ): Promise<any> {
   const dbClient = getDBClient();
   const tableName = getTableName();

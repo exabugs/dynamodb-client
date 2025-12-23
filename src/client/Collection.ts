@@ -3,6 +3,7 @@
  *
  * 認証ハンドラーは外部から注入されます。
  */
+import { DEFAULT_HTTP_TIMEOUT_MS } from '../shared/constants/http.js';
 import type {
   DeleteResult,
   Filter,
@@ -100,7 +101,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
 
     // タイムアウト設定
     const controller = new AbortController();
-    const timeout = this.clientOptions?.timeout || 30000;
+    const timeout = this.clientOptions?.timeout || DEFAULT_HTTP_TIMEOUT_MS;
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {

@@ -1,21 +1,27 @@
 /**
  * HTTP関連の定数
+ *
+ * HTTPリクエストやタイムアウトに関する共通定数
  */
+
+/**
+ * デフォルトHTTPタイムアウト（ミリ秒）
+ * 30秒のタイムアウトを設定
+ */
+export const DEFAULT_HTTP_TIMEOUT_MS = 30000;
 
 /**
  * HTTPステータスコード
  */
 export const HTTP_STATUS = {
   OK: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
-  MULTI_STATUS: 207,
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
-  CONFLICT: 409,
+  METHOD_NOT_ALLOWED: 405,
   INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
 } as const;
 
 /**
@@ -25,27 +31,6 @@ export const HTTP_METHOD = {
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
-  PATCH: 'PATCH',
   DELETE: 'DELETE',
-} as const;
-
-/**
- * Content-Type
- */
-export const CONTENT_TYPE = {
-  JSON: 'application/json',
-  TEXT: 'text/plain',
-  HTML: 'text/html',
-} as const;
-
-/**
- * HTTPヘッダー名
- */
-export const HTTP_HEADER = {
-  AUTHORIZATION: 'Authorization',
-  CONTENT_TYPE: 'Content-Type',
-  CONTENT_LENGTH: 'Content-Length',
-  USER_AGENT: 'User-Agent',
-  X_REQUEST_ID: 'X-Request-ID',
-  X_FORWARDED_FOR: 'X-Forwarded-For',
+  OPTIONS: 'OPTIONS',
 } as const;

@@ -3,7 +3,7 @@
  */
 
 import type { FindParams } from '../../types.js';
-import type { FindContext, ParsedFilter, OptimizableFilter, NormalizedFindParams } from './types.js';
+import type { ParsedFilter, OptimizableFilter, NormalizedFindParams } from './types.js';
 import { getShadowConfig } from '../../shadow/index.js';
 import { createLogger } from '../../../shared/index.js';
 import { parseFilterField } from '../../utils/filter.js';
@@ -125,13 +125,13 @@ export function matchesAllFilters(
       case 'ne':
         return recordValue !== filterValue;
       case 'gt':
-        return recordValue != null && recordValue > filterValue;
+        return recordValue != null && recordValue > (filterValue as any);
       case 'gte':
-        return recordValue != null && recordValue >= filterValue;
+        return recordValue != null && recordValue >= (filterValue as any);
       case 'lt':
-        return recordValue != null && recordValue < filterValue;
+        return recordValue != null && recordValue < (filterValue as any);
       case 'lte':
-        return recordValue != null && recordValue <= filterValue;
+        return recordValue != null && recordValue <= (filterValue as any);
       case 'in':
         return Array.isArray(filterValue) && filterValue.includes(recordValue);
       case 'nin':
