@@ -5,7 +5,7 @@
  */
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
-import { createLogger, isAppError } from '../../shared/index.js';
+import { createLogger, isAppError, ErrorCode } from '../../shared/index.js';
 import { HTTP_STATUS } from '../../shared/constants/http.js';
 import { VALIDATION_ERROR_PATTERNS } from '../../shared/constants/validation.js';
 import { createErrorResponse } from './responseBuilder.js';
@@ -48,25 +48,25 @@ export function handleError(error: unknown, requestId: string): APIGatewayProxyR
 
     // バリデーションエラーの判定
     if (isValidationError(error.message)) {
-      return createErrorResponse('VALIDATION_ERROR', error.message, HTTP_STATUS.BAD_REQUEST, requestId);
+      return createErrorResponse(ErrorCode.VALIDATION_ERROR, error.message, HTTP_STATUS.BAD_REQUEST, requestId);
     }
 
     // 未実装エラーの判定
     if (error.message.includes('not yet implemented')) {
-      return createErrorResponse('NOT_IMPLEMENTED', error.message, HTTP_STATUS.NOT_IMPLEMENTED, requestId);
+      return createErrorResponse(ErrorCode.NOT_IMPLEMENTED, error.message, HTTP_STATUS.NOT_IMPLEMENTED, requestId);
     }
 
     // 不明な操作エラーの判定
     if (error.message.includes('Unknown operation')) {
-      return createErrorResponse('INVALID_OPERATION', error.message, HTTP_STATUS.BAD_REQUEST, requestId);
+      return createErrorResponse(ErrorCode.INVALID_OPERATION, error.message, HTTP_STATUS.BAD_REQUEST, requestId);
     }
 
     // その他のエラー
-    return createErrorResponse('INTERNAL_ERROR', error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId);
+    return createErrorResponse(ErrorCode.INTERNAL_ERROR, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId);
   }
 
   // 予期しないエラー
-  return createErrorResponse('UNKNOWN_ERROR', 'An unexpected error occurred', HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId, {
+  return createErrorResponse(ErrorCode.UNKNOWN_ERROR, 'An unexpected error occurred', HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId, {
     error: String(error),
   });
 }

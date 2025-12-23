@@ -6,7 +6,7 @@
  */
 import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import { createLogger } from '../../shared/index.js';
+import { createLogger, ErrorCode } from '../../shared/index.js';
 import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
 import { calculateShadowDiff, generateMainRecordSK } from '../shadow/index.js';
 import type { OperationError, UpdateManyParams, UpdateManyResult } from '../types.js';
@@ -440,5 +440,5 @@ function getPreparationErrorCode(error: unknown): string {
       return error.name;
     }
   }
-  return 'VALIDATION_ERROR';
+  return ErrorCode.VALIDATION_ERROR;
 }
