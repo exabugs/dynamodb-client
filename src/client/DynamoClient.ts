@@ -11,7 +11,7 @@ export interface ClientOptions<TAuthOptions = unknown> {
   auth?: TAuthOptions;
   /** 自動接続（デフォルト: false） */
   autoConnect?: boolean;
-  /** タイムアウト（ミリ秒、デフォルト: 30000） */
+  /** タイムアウト（ミリ秒、デフォルト: DEFAULT_HTTP_TIMEOUT_MS） */
   timeout?: number;
 }
 

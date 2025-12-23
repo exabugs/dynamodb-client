@@ -6,6 +6,8 @@
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 import { createLogger, isAppError } from '../../shared/index.js';
+import { HTTP_STATUS } from '../../shared/constants/http.js';
+import { VALIDATION_ERROR_PATTERNS } from '../../shared/constants/validation.js';
 import { createErrorResponse } from './responseBuilder.js';
 
 /**
@@ -46,25 +48,25 @@ export function handleError(error: unknown, requestId: string): APIGatewayProxyR
 
     // バリデーションエラーの判定
     if (isValidationError(error.message)) {
-      return createErrorResponse('VALIDATION_ERROR', error.message, 400, requestId);
+      return createErrorResponse('VALIDATION_ERROR', error.message, HTTP_STATUS.BAD_REQUEST, requestId);
     }
 
     // 未実装エラーの判定
     if (error.message.includes('not yet implemented')) {
-      return createErrorResponse('NOT_IMPLEMENTED', error.message, 501, requestId);
+      return createErrorResponse('NOT_IMPLEMENTED', error.message, HTTP_STATUS.NOT_IMPLEMENTED, requestId);
     }
 
     // 不明な操作エラーの判定
     if (error.message.includes('Unknown operation')) {
-      return createErrorResponse('INVALID_OPERATION', error.message, 400, requestId);
+      return createErrorResponse('INVALID_OPERATION', error.message, HTTP_STATUS.BAD_REQUEST, requestId);
     }
 
     // その他のエラー
-    return createErrorResponse('INTERNAL_ERROR', error.message, 500, requestId);
+    return createErrorResponse('INTERNAL_ERROR', error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId);
   }
 
   // 予期しないエラー
-  return createErrorResponse('UNKNOWN_ERROR', 'An unexpected error occurred', 500, requestId, {
+  return createErrorResponse('UNKNOWN_ERROR', 'An unexpected error occurred', HTTP_STATUS.INTERNAL_SERVER_ERROR, requestId, {
     error: String(error),
   });
 }
@@ -76,14 +78,5 @@ export function handleError(error: unknown, requestId: string): APIGatewayProxyR
  * @returns バリデーションエラーの場合true
  */
 function isValidationError(message: string): boolean {
-  const validationErrorPatterns = [
-    'Missing required field',
-    'Invalid JSON',
-    'Request body is required',
-    'requires filter.id',
-    'requires document',
-    'requires documents',
-  ];
-
-  return validationErrorPatterns.some((pattern) => message.includes(pattern));
+  return VALIDATION_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
 }

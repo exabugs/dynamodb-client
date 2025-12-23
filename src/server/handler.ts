@@ -7,6 +7,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
 import { createLogger } from '../shared/index.js';
+import { HTTP_STATUS } from '../shared/constants/http.js';
 import { executeOperation } from './operations/operationDispatcher.js';
 import { handleAuthentication } from './utils/authHandler.js';
 import { handleError } from './utils/errorHandler.js';
@@ -45,7 +46,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     // CORSプリフライトリクエスト処理
     if (event.requestContext.http.method === 'OPTIONS') {
-      return createCorsResponse(200);
+      return createCorsResponse(HTTP_STATUS.OK);
     }
 
     // POSTメソッドのみ許可

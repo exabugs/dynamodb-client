@@ -6,6 +6,7 @@
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 import { createLogger } from '../../shared/index.js';
+import { HTTP_STATUS } from '../../shared/constants/http.js';
 import type { ApiErrorResponse, ApiSuccessResponse } from '../types.js';
 
 /**
@@ -38,7 +39,7 @@ export function createSuccessResponse(data: unknown, requestId: string): APIGate
   logger.info('Request succeeded', { requestId });
 
   return {
-    statusCode: 200,
+    statusCode: HTTP_STATUS.OK,
     headers: {
       'Content-Type': 'application/json',
       ...CORS_HEADERS,

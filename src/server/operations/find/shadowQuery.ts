@@ -6,6 +6,7 @@
 
 import { QueryCommand, BatchGetCommand } from '@aws-sdk/lib-dynamodb';
 import { createLogger } from '../../../shared/index.js';
+import { NUMBER_FORMAT } from '../../../shared/constants/formatting.js';
 import { getDBClient, getTableName, executeDynamoDBOperation, extractCleanRecord } from '../../utils/dynamodb.js';
 import { encodeNextToken, decodeNextToken } from '../../utils/pagination.js';
 import type { FindResult, NormalizedFindParams, OptimizableFilter } from './types.js';
@@ -285,7 +286,7 @@ function buildKeyCondition(
  */
 function encodeValueForShadowSK(value: unknown, type?: string): string {
   if (type === 'number') {
-    return String(value).padStart(20, '0');
+    return String(value).padStart(NUMBER_FORMAT.SHADOW_SK_DIGITS, NUMBER_FORMAT.ZERO_PAD_CHAR);
   } else if (type === 'date') {
     return new Date(String(value)).toISOString();
   } else if (type === 'boolean') {

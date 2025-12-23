@@ -3,6 +3,7 @@
  *
  * HTTPリクエストボディをパースしてAPIリクエスト形式に変換する
  */
+import { VALIDATION_ERROR_MESSAGES } from '../../shared/constants/validation.js';
 import type { ApiOperation, ApiRequest } from '../types.js';
 
 /**
@@ -23,7 +24,7 @@ interface MongoDBStyleRequest {
  */
 export function parseRequestBody(body: string | undefined): ApiRequest {
   if (!body) {
-    throw new Error('Request body is required');
+    throw new Error(VALIDATION_ERROR_MESSAGES.REQUEST_BODY_REQUIRED);
   }
 
   try {
@@ -31,13 +32,13 @@ export function parseRequestBody(body: string | undefined): ApiRequest {
 
     // 必須フィールドの検証
     if (!parsed.operation) {
-      throw new Error('Missing required field: operation');
+      throw new Error(VALIDATION_ERROR_MESSAGES.MISSING_OPERATION);
     }
     if (!parsed.collection) {
-      throw new Error('Missing required field: collection');
+      throw new Error(VALIDATION_ERROR_MESSAGES.MISSING_COLLECTION);
     }
     if (parsed.params === undefined) {
-      throw new Error('Missing required field: params');
+      throw new Error(VALIDATION_ERROR_MESSAGES.MISSING_PARAMS);
     }
 
     // MongoDB風のoperation名をそのまま使用（変換なし）
@@ -50,7 +51,7 @@ export function parseRequestBody(body: string | undefined): ApiRequest {
     };
   } catch (error) {
     if (error instanceof SyntaxError) {
-      throw new Error('Invalid JSON in request body');
+      throw new Error(VALIDATION_ERROR_MESSAGES.INVALID_JSON);
     }
     throw error;
   }
