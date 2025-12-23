@@ -1,3 +1,4 @@
+import { DEFAULT_HTTP_TIMEOUT_MS } from '../shared/constants/http.js';
 import type { Filter, FindOptions } from '../shared/index.js';
 import type { AuthHeadersGetter } from './Collection.js';
 import type { ClientOptions } from './DynamoClient.js';
@@ -166,7 +167,7 @@ export class FindCursor<
 
     // タイムアウト設定
     const controller = new AbortController();
-    const timeout = this.clientOptions?.timeout || 30000; // デフォルト30秒
+    const timeout = this.clientOptions?.timeout || DEFAULT_HTTP_TIMEOUT_MS; // デフォルト30秒
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {

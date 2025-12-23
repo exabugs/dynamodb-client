@@ -125,13 +125,13 @@ export function matchesAllFilters(
       case 'ne':
         return recordValue !== filterValue;
       case 'gt':
-        return recordValue != null && recordValue > filterValue;
+        return recordValue != null && recordValue > (filterValue as any);
       case 'gte':
-        return recordValue != null && recordValue >= filterValue;
+        return recordValue != null && recordValue >= (filterValue as any);
       case 'lt':
-        return recordValue != null && recordValue < filterValue;
+        return recordValue != null && recordValue < (filterValue as any);
       case 'lte':
-        return recordValue != null && recordValue <= filterValue;
+        return recordValue != null && recordValue <= (filterValue as any);
       case 'in':
         return Array.isArray(filterValue) && filterValue.includes(recordValue);
       case 'nin':

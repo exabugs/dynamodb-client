@@ -5,6 +5,7 @@
  * 要件: 5.5, 7.1
  */
 import { InvalidTokenError } from '../../index.js';
+import { VALIDATION_ERROR_MESSAGES } from '../../shared/constants/validation.js';
 
 /**
  * nextToken のペイロード構造
@@ -61,7 +62,7 @@ export function decodeNextToken(token: string): NextTokenPayload {
 
     // 必須フィールドの検証
     if (!payload.PK || !payload.SK) {
-      throw new Error('Missing required fields in token payload');
+      throw new Error(VALIDATION_ERROR_MESSAGES.MISSING_TOKEN_FIELDS);
     }
 
     return payload;

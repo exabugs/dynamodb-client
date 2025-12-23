@@ -23,6 +23,16 @@ export enum ErrorCode {
   PARTIAL_FAILURE = 'PARTIAL_FAILURE',
   /** バージョン競合（楽観ロック競合） */
   VERSION_CONFLICT = 'VERSION_CONFLICT',
+  /** バリデーションエラー（リクエスト形式不正、必須フィールド不足など） */
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  /** 内部エラー（予期しないサーバーエラー） */
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  /** 未実装エラー（機能が未実装） */
+  NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
+  /** 無効な操作（不明な操作名） */
+  INVALID_OPERATION = 'INVALID_OPERATION',
+  /** 不明なエラー（予期しないエラー） */
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
 /**
