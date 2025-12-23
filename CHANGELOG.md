@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2024-12-23
+
+### Added
+- 包括的なAPIリファレンスドキュメント (`docs/API.md`)
+  - 3つの認証方式（IAM、Cognito、Token）の詳細な説明
+  - すべてのクライアントAPIメソッドの完全な仕様
+  - 型定義（Filter、UpdateOperators、結果型）の詳細
+  - react-admin統合の使用方法
+  - エラーハンドリングとベストプラクティス
+- コントリビューションガイド (`CONTRIBUTING.md`)
+  - 開発環境のセットアップから本番リリースまでの完全なワークフロー
+  - TypeScript、命名規則、JSDocコメントのコーディング規約
+  - AAA パターンに基づくテストガイドライン
+  - Conventional Commitsに基づくコミットメッセージ規約
+- セキュリティポリシー (`SECURITY.md`)
+  - GitHub Security Advisoriesを使用した脆弱性報告手順
+  - 責任ある開示プロセスと協調的開示タイムライン
+  - 開発者・利用者向けのセキュリティベストプラクティス
+
+### Changed
+- アーキテクチャリファクタリングによるコード構造の改善
+  - 共通モジュールの抽出 (`src/shared/` ディレクトリ構造)
+  - 大きな関数の分割（handler.ts ~520行 → 複数モジュール）
+  - コードの重複排除と共通定数の統一
+  - エラーハンドリングとログ記録の標準化
+- 依存関係管理と循環依存の解決
+
+### Improved
+- コードの可読性と保守性の向上
+- 単一責任原則に基づく関数分割（50行制限）
+- 3回以上繰り返されるコードの共通関数化
+- エラーコード列挙型の拡張
+
 ## [0.4.1] - 2024-12-23
 
 ### Fixed
