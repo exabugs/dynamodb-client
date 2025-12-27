@@ -40,26 +40,22 @@ resource "aws_ssm_parameter" "lambda_records_function_arn" {
   }
 }
 
-# 外部参照用のプレースホルダーパラメータ
-# 実際のプロジェクトで他のTerraformモジュールから値を設定する
+# 外部参照用のパラメータ（実際の値を設定）
+# アプリケーション（Admin UI、Fetch Lambda等）がこれらの値を参照する
 
 # Cognito User Pool ID (Admin UI参照用)
 resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
   name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
   type  = local.parameter_type
   tier  = local.parameter_tier
-  value = "PLACEHOLDER_COGNITO_USER_POOL_ID"
+  value = var.cognito_user_pool_id
 
-  description = "Cognito User Pool ID for Admin UI (set by external Terraform module)"
+  description = "Cognito User Pool ID for Admin UI"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
     Category    = "app-config"
-  }
-
-  lifecycle {
-    ignore_changes = [value]
   }
 }
 
@@ -68,18 +64,14 @@ resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
   name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
   type  = local.parameter_type
   tier  = local.parameter_tier
-  value = "PLACEHOLDER_COGNITO_CLIENT_ID"
+  value = var.cognito_admin_ui_client_id
 
-  description = "Cognito Client ID for Admin UI (set by external Terraform module)"
+  description = "Cognito Client ID for Admin UI"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
     Category    = "app-config"
-  }
-
-  lifecycle {
-    ignore_changes = [value]
   }
 }
 
@@ -88,18 +80,14 @@ resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
   name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
   type  = local.parameter_type
   tier  = local.parameter_tier
-  value = "PLACEHOLDER_COGNITO_DOMAIN"
+  value = "${var.cognito_user_pool_domain}.auth.${var.region}.amazoncognito.com"
 
-  description = "Cognito Domain for Admin UI (set by external Terraform module)"
+  description = "Cognito Domain for Admin UI"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
     Category    = "app-config"
-  }
-
-  lifecycle {
-    ignore_changes = [value]
   }
 }
 
@@ -108,17 +96,13 @@ resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
   name  = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
   type  = local.parameter_type
   tier  = local.parameter_tier
-  value = "PLACEHOLDER_DYNAMODB_TABLE_NAME"
+  value = var.dynamodb_table_name
 
-  description = "DynamoDB Table Name (set by external Terraform module)"
+  description = "DynamoDB Table Name"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
     Category    = "infra-info"
-  }
-
-  lifecycle {
-    ignore_changes = [value]
   }
 }

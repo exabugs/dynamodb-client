@@ -24,3 +24,23 @@ variable "records_function_arn" {
   description = "Records Lambda Function ARN"
   type        = string
 }
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "cognito_admin_ui_client_id" {
+  description = "Admin UI用Cognito User Pool Client ID"
+  type        = string
+}
+
+variable "cognito_user_pool_domain" {
+  description = "Cognito User Pool Domain"
+  type        = string
+}
+
+variable "dynamodb_table_name" {
+  description = "DynamoDB Table Name"
+  type        = string
+}
