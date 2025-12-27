@@ -25,17 +25,33 @@ module "parameter_store" {
   environment  = "dev"
   region       = "us-east-1"
 
-  # Records Lambda設定
-  records_function_url = "https://abc123.lambda-url.us-east-1.on.aws/"
-  records_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:my-project-dev-records"
+  # Records Lambda設定（必須）
+  records_function_url = aws_lambda_function_url.records.function_url
+  records_function_arn = aws_lambda_function.records.arn
+}
+```
 
-  # Cognito設定
-  cognito_user_pool_id       = "us-east-1_ABC123DEF"
-  cognito_admin_ui_client_id = "abc123def456ghi789"
-  cognito_user_pool_domain   = "my-project-dev"
+**Note**: このモジュールは外部参照用のプレースホルダーパラメータも作成します。実際の値は他のTerraformモジュール（Cognito、DynamoDB等）から設定してください。
 
-  # DynamoDB設定
-  dynamodb_table_name = "my-project-dev-records"
+### プレースホルダーパラメータの更新
+
+他のTerraformモジュールから値を設定する例：
+
+```hcl
+# Cognitoモジュールから
+resource "aws_ssm_parameter" "cognito_user_pool_id" {
+  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
+  type      = "SecureString"
+  value     = aws_cognito_user_pool.main.id
+  overwrite = true
+}
+
+# DynamoDBモジュールから
+resource "aws_ssm_parameter" "dynamodb_table_name" {
+  name      = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
+  type      = "SecureString"
+  value     = aws_dynamodb_table.main.name
+  overwrite = true
 }
 ```
 

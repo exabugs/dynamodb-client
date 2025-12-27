@@ -265,6 +265,77 @@ See the [example project's documentation](https://github.com/exabugs/dynamodb-cl
 
 ---
 
+## 🔧 Configuration Management
+
+### Parameter Store Integration
+
+The library supports AWS Parameter Store for flexible configuration management, eliminating the need for Terraform outputs in application code.
+
+#### Parameter Structure
+
+Parameters are organized hierarchically:
+
+```
+/{project_name}/{environment}/
+├── app/
+│   ├── records-api-url          # Lambda Function URL
+│   └── admin-ui/
+│       ├── cognito-user-pool-id
+│       ├── cognito-client-id
+│       └── cognito-domain
+├── infra/
+│   └── dynamodb-table-name
+└── lambda/
+    └── records-function-arn
+```
+
+#### Benefits
+
+- **🔄 Dynamic Configuration**: Update settings without redeployment
+- **🔐 Secure Storage**: All parameters encrypted with AWS managed KMS keys
+- **💰 Cost Effective**: Standard tier is free for typical usage
+- **📊 Audit Trail**: Complete change history via CloudTrail
+- **🎯 Environment Separation**: Clear dev/stg/prd isolation
+
+#### Usage in Applications
+
+**React Admin UI**:
+
+```typescript
+// Read configuration from Parameter Store
+const config = await getParametersByPath(`/${PROJECT_NAME}/${ENV}/app/admin-ui/`);
+
+const cognitoConfig = {
+  userPoolId: config['cognito-user-pool-id'],
+  clientId: config['cognito-client-id'],
+  domain: config['cognito-domain'],
+};
+```
+
+**Lambda Functions**:
+
+```typescript
+// Read specific parameters
+const recordsApiUrl = await getParameter(`/${PROJECT_NAME}/${ENV}/app/records-api-url`);
+```
+
+#### IAM Permissions
+
+The Terraform module automatically creates appropriate IAM policies:
+
+- **Admin UI**: Read access to `/app/admin-ui/*` parameters
+- **Fetch Lambda**: Read access to specific required parameters
+- **Minimal Permissions**: Following least privilege principle
+
+#### Migration from Terraform Outputs
+
+1. **Deploy Parameter Store module** (included in v0.6.0+)
+2. **Update application code** to read from Parameter Store
+3. **Remove Terraform output dependencies**
+4. **Enjoy flexible configuration management**
+
+---
+
 ## 🔧 Shadow Configuration
 
 ### Overview
@@ -273,12 +344,12 @@ The shadow feature automatically makes all fields sortable without requiring JSO
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SHADOW_CREATED_AT_FIELD` | `createdAt` | Field name for creation timestamp |
-| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp |
-| `SHADOW_STRING_MAX_BYTES` | `100` | Max bytes for primitive types (array/object use 2x) |
-| `SHADOW_NUMBER_PADDING` | `15` | Padding digits for numbers |
+| Variable                  | Default     | Description                                         |
+| ------------------------- | ----------- | --------------------------------------------------- |
+| `SHADOW_CREATED_AT_FIELD` | `createdAt` | Field name for creation timestamp                   |
+| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp                     |
+| `SHADOW_STRING_MAX_BYTES` | `100`       | Max bytes for primitive types (array/object use 2x) |
+| `SHADOW_NUMBER_PADDING`   | `15`        | Padding digits for numbers                          |
 
 ### Supported Types
 
@@ -300,7 +371,7 @@ const record = {
   viewCount: 123,
   published: true,
   tags: ['tech', 'aws'],
-  metadata: { category: 'tech' }
+  metadata: { category: 'tech' },
 };
 
 // Automatically generates shadow records:

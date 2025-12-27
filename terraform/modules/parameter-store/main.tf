@@ -8,7 +8,7 @@ locals {
   # AWS管理キー（alias/aws/ssm）を使用（カスタマー管理キーは禁止）
 }
 
-# Records Lambda Function URL
+# Records Lambda Function URL (外部参照用)
 resource "aws_ssm_parameter" "app_records_api_url" {
   name  = "/${var.project_name}/${var.environment}/app/records-api-url"
   type  = local.parameter_type
@@ -24,71 +24,7 @@ resource "aws_ssm_parameter" "app_records_api_url" {
   }
 }
 
-# Cognito User Pool ID for Admin UI
-resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.cognito_user_pool_id
-
-  description = "Cognito User Pool ID for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
-# Cognito Client ID for Admin UI
-resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.cognito_admin_ui_client_id
-
-  description = "Cognito Client ID for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
-# Cognito Domain for Admin UI
-resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = "${var.cognito_user_pool_domain}.auth.${var.region}.amazoncognito.com"
-
-  description = "Cognito Domain for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
-# DynamoDB Table Name
-resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
-  name  = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.dynamodb_table_name
-
-  description = "DynamoDB Table Name"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "infra-info"
-  }
-}
-
-# Records Lambda Function ARN
+# Records Lambda Function ARN (外部参照用)
 resource "aws_ssm_parameter" "lambda_records_function_arn" {
   name  = "/${var.project_name}/${var.environment}/lambda/records-function-arn"
   type  = local.parameter_type
@@ -101,5 +37,88 @@ resource "aws_ssm_parameter" "lambda_records_function_arn" {
     Environment = var.environment
     ManagedBy   = "terraform"
     Category    = "lambda-info"
+  }
+}
+
+# 外部参照用のプレースホルダーパラメータ
+# 実際のプロジェクトで他のTerraformモジュールから値を設定する
+
+# Cognito User Pool ID (Admin UI参照用)
+resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
+  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
+  type  = local.parameter_type
+  tier  = local.parameter_tier
+  value = "PLACEHOLDER_COGNITO_USER_POOL_ID"
+
+  description = "Cognito User Pool ID for Admin UI (set by external Terraform module)"
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Category    = "app-config"
+  }
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+# Cognito Client ID (Admin UI参照用)
+resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
+  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
+  type  = local.parameter_type
+  tier  = local.parameter_tier
+  value = "PLACEHOLDER_COGNITO_CLIENT_ID"
+
+  description = "Cognito Client ID for Admin UI (set by external Terraform module)"
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Category    = "app-config"
+  }
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+# Cognito Domain (Admin UI参照用)
+resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
+  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
+  type  = local.parameter_type
+  tier  = local.parameter_tier
+  value = "PLACEHOLDER_COGNITO_DOMAIN"
+
+  description = "Cognito Domain for Admin UI (set by external Terraform module)"
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Category    = "app-config"
+  }
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+# DynamoDB Table Name (外部参照用)
+resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
+  name  = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
+  type  = local.parameter_type
+  tier  = local.parameter_tier
+  value = "PLACEHOLDER_DYNAMODB_TABLE_NAME"
+
+  description = "DynamoDB Table Name (set by external Terraform module)"
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Category    = "infra-info"
+  }
+
+  lifecycle {
+    ignore_changes = [value]
   }
 }
