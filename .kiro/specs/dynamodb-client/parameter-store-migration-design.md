@@ -29,6 +29,71 @@ Terraform outputからAWS Parameter Storeへの移行により、アプリケー
 - **暗号化**: AWS管理キー（`alias/aws/ssm`）のみ使用
 - **カスタマー管理キー**: 絶対に使用しない（運用複雑化を避ける）
 
+### 重要な役割分担（絶対に間違えてはいけない）
+
+#### ⚠️ データフローの方向性
+
+```
+dynamodb-client (書き込み) → Parameter Store → example (読み取り)
+```
+
+**dynamodb-client の役割**:
+- ✅ **Parameter Storeに値を書き込む側**
+- ✅ Terraformパラメータとして外部から値を受け取る
+- ✅ 受け取った値をParameter Storeに書き込む
+- ❌ **Parameter Storeから値を読み取ってはいけない**（循環参照になる）
+
+**example の役割**:
+- ✅ **Parameter Storeから値を読み取る側**
+- ✅ Terraformパラメータを最小限にする
+- ✅ Parameter Storeから直接値を参照する
+- ❌ **dynamodb-clientに値を渡してはいけない**（逆方向の依存関係）
+
+#### 間違った設計例（絶対に避ける）
+
+```hcl
+# ❌ 間違い: dynamodb-clientがParameter Storeから読み取ろうとする
+# これは循環参照になる
+data "aws_ssm_parameter" "dynamodb_table_name" {
+  name = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
+}
+
+resource "aws_lambda_function" "records" {
+  environment {
+    variables = {
+      TABLE_NAME = data.aws_ssm_parameter.dynamodb_table_name.value  # ❌ 循環参照
+    }
+  }
+}
+```
+
+#### 正しい設計例
+
+```hcl
+# ✅ 正しい: dynamodb-clientは外部パラメータを受け取り、Parameter Storeに書き込む
+resource "aws_lambda_function" "records" {
+  environment {
+    variables = {
+      TABLE_NAME = var.dynamodb_table_name  # ✅ 外部パラメータを使用
+    }
+  }
+}
+
+module "parameter_store" {
+  dynamodb_table_name = var.dynamodb_table_name  # ✅ Parameter Storeに書き込み
+}
+```
+
+```hcl
+# ✅ 正しい: exampleはParameter Storeから読み取る
+data "aws_ssm_parameter" "records_api_url" {
+  name = "/${var.project_name}/${var.environment}/app/records-api-url"
+}
+
+# Admin UIの.env生成でParameter Storeから読み取り
+# aws ssm get-parameter --name '/project/env/app/records-api-url'
+```
+
 ### 階層構造
 
 ```
