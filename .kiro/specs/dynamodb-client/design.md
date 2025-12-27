@@ -2075,3 +2075,79 @@ describe('executeShadowQuery', () => {
 - **テストカバレッジの向上**: 独立したテストにより、より詳細なテストが可能
 - **バグの減少**: 責任の明確化により、バグの発生箇所を特定しやすく
 - **開発速度の向上**: 新機能の追加や修正が容易に
+## Parameter Store移行設計
+
+### 概要
+
+Terraform outputからAWS Parameter Storeへの移行により、アプリケーション設定の柔軟性とセキュリティを向上させる。
+
+### 設計原則
+
+- **Parameter Store階層**: Standard階層のみ使用（実質無料）
+- **パラメータタイプ**: すべてSecureString型で統一
+- **KMS暗号化**: AWS管理キー（`alias/aws/ssm`）のみ使用
+- **カスタマー管理キー**: 絶対に使用しない（運用複雑化を避ける）
+
+### 階層構造
+
+```
+/{project_name}/{environment}/
+├── app/
+│   ├── records-api-url          # Lambda Function URL
+│   └── admin-ui/
+│       ├── cognito-user-pool-id
+│       ├── cognito-client-id
+│       └── cognito-domain
+├── infra/
+│   ├── dynamodb-table-name
+│   ├── dynamodb-table-arn
+│   └── s3-bucket-name
+└── lambda/
+    ├── records-function-arn
+    ├── fetch-function-arn
+    └── maintenance-coordinator-arn
+```
+
+### 移行対象
+
+**Parameter Storeに移行**:
+- Admin UI設定（Cognito設定、Records API URL）
+- Fetch Lambda設定（Records Function URL）
+- インフラ情報（必要に応じて）
+
+**Terraform outputのまま保持**:
+- IAMロールARN（セキュリティ監査用）
+- CloudWatch Logs Group名（運用監視用）
+- Step Functions ARN（インフラ管理用）
+
+**移行不要**:
+- dynamodb-client Lambda関数（汎用ライブラリのため）
+
+### コストメリット
+
+- **Parameter Store Standard**: 標準スループット（1,000 TPS以下）では無料
+- **AWS管理キー**: 無料（カスタマー管理キーと異なり月額料金なし）
+- **実質的なコスト**: 通常の使用では完全に無料
+
+### セキュリティメリット
+
+- **暗号化保存**: すべてのパラメータがKMS暗号化
+- **アクセス制御**: IAMによる細かい権限管理
+- **監査ログ**: CloudTrailで完全な操作追跡
+- **Defense in Depth**: 多層防御の実現
+
+詳細な実装については、`parameter-store-migration-design.md`を参照。
+
+## まとめ
+
+DynamoDBクライアントライブラリは、以下の特徴を持つ汎用的なOSSライブラリです：
+
+1. **自動シャドウ化**: v0.3.0以降、設定ファイル不要で自動的にシャドウレコードを生成
+2. **型安全性**: TypeScript型定義がSingle Source of Truth
+3. **MongoDB風API**: 学習コストが低く、直感的なAPI
+4. **セキュリティ**: DynamoDB操作をLambda経由でのみ実行
+5. **OSS化**: npm公開可能な汎用的なライブラリ構造
+6. **CI/CD**: GitHub Actionsによる自動テスト・ビルド・公開
+7. **国際化**: 英語ドキュメントとエラーメッセージ
+8. **MITライセンス**: 商用利用可能なオープンソースライセンス
+9. **Parameter Store統合**: 柔軟で安全な設定管理

@@ -161,3 +161,29 @@ resource "aws_lambda_permission" "function_url" {
   principal              = "*"
   function_url_auth_type = "NONE"
 }
+# Parameter Store モジュール
+module "parameter_store" {
+  source = "./modules/parameter-store"
+
+  # 基本設定
+  project_name = var.project_name
+  environment  = var.environment
+  region       = var.region
+
+  # Records Lambda設定
+  records_function_url = aws_lambda_function_url.records.function_url
+  records_function_arn = aws_lambda_function.records.arn
+
+  # Cognito設定
+  cognito_user_pool_id       = var.cognito_user_pool_id
+  cognito_admin_ui_client_id = var.cognito_client_id
+  cognito_user_pool_domain   = var.cognito_user_pool_domain
+
+  # DynamoDB設定
+  dynamodb_table_name = var.dynamodb_table_name
+
+  depends_on = [
+    aws_lambda_function.records,
+    aws_lambda_function_url.records
+  ]
+}

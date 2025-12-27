@@ -28,6 +28,16 @@ infra/**/*.tfstate
 infra/**/*.tfstate.backup
 infra/**/.terraform.lock.hcl
 infra/**/tfplan
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.backup
+terraform/**/.terraform.lock.hcl
+terraform/**/tfplan
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.backup
+**/.terraform.lock.hcl
+**/tfplan
 
 # IDE
 .vscode/
