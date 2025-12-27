@@ -39,20 +39,5 @@ output "parameter_paths" {
   }
 }
 
-# IAM Policy ARNs
-output "iam_policy_arns" {
-  description = "作成されたIAMポリシーのARN一覧"
-  value = {
-    admin_ui_parameter_read     = aws_iam_policy.admin_ui_parameter_read.arn
-    fetch_lambda_parameter_read = aws_iam_policy.fetch_lambda_parameter_read.arn
-  }
-}
-
-# IAM Policy Names
-output "iam_policy_names" {
-  description = "作成されたIAMポリシーの名前一覧"
-  value = {
-    admin_ui_parameter_read     = aws_iam_policy.admin_ui_parameter_read.name
-    fetch_lambda_parameter_read = aws_iam_policy.fetch_lambda_parameter_read.name
-  }
-}
+# Note: IAMポリシーは各プロジェクトで個別に定義してください
+# 詳細は iam.tf のコメントを参照
