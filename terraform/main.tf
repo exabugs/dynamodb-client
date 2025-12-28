@@ -151,6 +151,10 @@ resource "aws_lambda_function" "records" {
   timeout     = 30
   memory_size = 512
 
+  # KMS暗号化を明示的に無効化（ADR-004）
+  # AWS管理のデフォルトKMSキーアクセス権限の問題を回避
+  kms_key_arn = ""
+
   # 環境変数
   environment {
     variables = {

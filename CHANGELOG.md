@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2025-12-28
+
+### Fixed
+
+- **Lambda KMS Encryption**: Disabled KMS encryption for Lambda function to resolve persistent KMSAccessDeniedException (ADR-004)
+- **Lambda Startup**: Fixed Lambda function startup failure by explicitly setting `kms_key_arn = ""`
+- **502 Bad Gateway**: Resolved Function URL errors caused by Lambda execution environment KMS issues
+
+### Changed
+
+- **Security Model**: Moved from KMS-encrypted Lambda environment to unencrypted for compatibility
+- **ADR-003 Deprecated**: Replaced complex KMS permission approach with simpler encryption disable approach
+
+### Technical
+
+- **Terraform**: Added `kms_key_arn = ""` to Lambda function configuration
+- **Architecture Decision**: Created ADR-004 to document KMS encryption disable decision
+
 ## [0.7.3] - 2025-12-28
 
 ### Fixed
