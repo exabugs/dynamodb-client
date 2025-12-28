@@ -90,6 +90,31 @@ resource "aws_iam_role_policy" "records_kms" {
   })
 }
 
+# カスタムインラインポリシー: KMSデフォルトキーアクセス（Lambda実行環境用）
+# AWS LambdaのデフォルトKMSキーへのアクセス権限（ADR-003）
+resource "aws_iam_role_policy" "records_kms_default" {
+  name = "kms-default-access"
+  role = aws_iam_role.lambda_records.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "lambda.${var.region}.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # CloudWatch Logsロググループ
 resource "aws_cloudwatch_log_group" "lambda_records" {
   name              = "/aws/lambda/${var.project_name}-${var.environment}-records"
@@ -153,7 +178,8 @@ resource "aws_lambda_function" "records" {
   depends_on = [
     aws_cloudwatch_log_group.lambda_records,
     aws_iam_role_policy.records_dynamodb,
-    aws_iam_role_policy.records_kms
+    aws_iam_role_policy.records_kms,
+    aws_iam_role_policy.records_kms_default
   ]
 
   tags = {

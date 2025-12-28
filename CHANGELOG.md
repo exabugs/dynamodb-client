@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2025-12-28
+
+### Fixed
+
+- **Lambda KMS Access**: Added AWS default KMS key access permissions for Lambda execution environment (ADR-003)
+- **KMSAccessDeniedException**: Resolved Lambda startup failure due to missing KMS permissions
+- **Lambda Runtime**: Added conditional access to default KMS key used by Lambda service for function protection
+
+### Security
+
+- **KMS Permissions**: Limited KMS access to Lambda service only with conditional access control
+- **Least Privilege**: Maintained security with service-specific KMS access restrictions
+
 ## [0.7.2] - 2024-12-28
 
 ### Fixed
