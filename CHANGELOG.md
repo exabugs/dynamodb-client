@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] - 2025-12-28
+
+### Removed
+
+- **All KMS Settings Verification**: Removed all KMS-related settings to verify if they were actually necessary
+  - Removed `aws_iam_role_policy.records_kms_default` IAM policy resource (Lambda execution environment)
+  - Removed `aws_iam_role_policy.records_kms` IAM policy resource (Parameter Store access)
+  - Removed `kms_key_arn = ""` setting from Lambda function
+  - Current Lambda function uses only environment variables, not Parameter Store SecureString
+  - This is part of ADR-005 verification to determine the true cause of Lambda Function URL issues
+
 ## [0.7.4] - 2025-12-28
 
 ### Fixed

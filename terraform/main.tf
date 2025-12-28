@@ -65,30 +65,8 @@ resource "aws_iam_role_policy" "records_dynamodb" {
   })
 }
 
-# カスタムインラインポリシー: KMSアクセス（Parameter Store用）
-# Lambda関数がSecureString環境変数を復号化するために必要
-resource "aws_iam_role_policy" "records_kms" {
-  name = "kms-access"
-  role = aws_iam_role.lambda_records.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService" = "ssm.${var.region}.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
+# Parameter Store用KMSアクセスポリシーを削除（ADR-005による検証）
+# 現在のLambda関数は環境変数のみを使用し、Parameter StoreのSecureStringは使用していない
 
 # KMSデフォルトキーアクセスポリシーを削除（ADR-005による検証）
 
@@ -157,9 +135,8 @@ resource "aws_lambda_function" "records" {
   # CloudWatch Logsへの依存関係を明示
   depends_on = [
     aws_cloudwatch_log_group.lambda_records,
-    aws_iam_role_policy.records_dynamodb,
-    aws_iam_role_policy.records_kms
-    # aws_iam_role_policy.records_kms_default  # ADR-005による検証のため削除
+    aws_iam_role_policy.records_dynamodb
+    # aws_iam_role_policy.records_kms  # ADR-005による検証のため削除（Parameter Store未使用）
   ]
 
   tags = {
