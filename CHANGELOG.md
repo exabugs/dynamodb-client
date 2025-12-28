@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-12-28
+
+### BREAKING CHANGES
+
+- **Removed asanowa-specific parameters for library generalization**
+  - Removed `cognito_client_id` parameter (aud verification not needed for generic library)
+  - Removed `cognito_admin_ui_client_id` parameter (asanowa-specific, moved to project-specific configuration)
+  - Removed `cognito_user_pool_domain` parameter (OAuth flow specific, not needed for JWT verification)
+  - Removed `COGNITO_CLIENT_ID` environment variable from Records Lambda
+  - Removed `COGNITO_REGION` environment variable (redundant, extracted from user pool ID)
+  - Removed Admin UI Cognito parameters from Parameter Store module (asanowa-specific)
+
+### Migration Guide
+
+If your project was using the removed parameters:
+
+1. **cognito_client_id**: Remove from module call. JWT verification now works without aud validation for better generalization.
+2. **cognito_admin_ui_client_id** and **cognito_user_pool_domain**: Move these to your project-specific Parameter Store configuration.
+3. **COGNITO_REGION**: No longer needed. Region is automatically extracted from `cognito_user_pool_id`.
+
+### What remains
+
+- `cognito_user_pool_id`: Still required for JWT signature verification (JWKS endpoint construction)
+
 ## [0.7.5] - 2025-12-28
 
 ### Removed
