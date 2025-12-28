@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2024-12-28
+
+### Fixed
+
+- **Parameter Store**: Added overwrite=true to all SSM parameters to handle existing parameters
+  - Prevents ParameterAlreadyExists errors during Terraform apply
+  - Allows updating existing Parameter Store values without manual deletion
+
 ## [0.7.1] - 2024-12-28
 
 ### Fixed

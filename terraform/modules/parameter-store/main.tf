@@ -10,10 +10,11 @@ locals {
 
 # Records Lambda Function URL (外部参照用)
 resource "aws_ssm_parameter" "app_records_api_url" {
-  name  = "/${var.project_name}/${var.environment}/app/records-api-url"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.records_function_url
+  name      = "/${var.project_name}/${var.environment}/app/records-api-url"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.records_function_url
+  overwrite = true
 
   description = "Records Lambda Function URL"
 
@@ -26,10 +27,11 @@ resource "aws_ssm_parameter" "app_records_api_url" {
 
 # Records Lambda Function ARN (外部参照用)
 resource "aws_ssm_parameter" "lambda_records_function_arn" {
-  name  = "/${var.project_name}/${var.environment}/lambda/records-function-arn"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.records_function_arn
+  name      = "/${var.project_name}/${var.environment}/lambda/records-function-arn"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.records_function_arn
+  overwrite = true
 
   description = "Records Lambda Function ARN"
 
@@ -45,10 +47,11 @@ resource "aws_ssm_parameter" "lambda_records_function_arn" {
 
 # Cognito User Pool ID (Admin UI参照用)
 resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.cognito_user_pool_id
+  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.cognito_user_pool_id
+  overwrite = true
 
   description = "Cognito User Pool ID for Admin UI"
 
@@ -61,10 +64,11 @@ resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
 
 # Cognito Client ID (Admin UI参照用)
 resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.cognito_admin_ui_client_id
+  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.cognito_admin_ui_client_id
+  overwrite = true
 
   description = "Cognito Client ID for Admin UI"
 
@@ -77,10 +81,11 @@ resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
 
 # Cognito Domain (Admin UI参照用)
 resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
-  name  = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = "${var.cognito_user_pool_domain}.auth.${var.region}.amazoncognito.com"
+  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = "${var.cognito_user_pool_domain}.auth.${var.region}.amazoncognito.com"
+  overwrite = true
 
   description = "Cognito Domain for Admin UI"
 
@@ -93,10 +98,11 @@ resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
 
 # DynamoDB Table Name (外部参照用)
 resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
-  name  = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
-  type  = local.parameter_type
-  tier  = local.parameter_tier
-  value = var.dynamodb_table_name
+  name      = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.dynamodb_table_name
+  overwrite = true
 
   description = "DynamoDB Table Name"
 
