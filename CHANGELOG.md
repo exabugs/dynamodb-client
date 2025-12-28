@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2025-12-28
+
+### Fixed
+
+- **Terraform Outputs**: Removed deleted Cognito parameters from parameter-store module outputs
+  - Removed `cognito_user_pool_id`, `cognito_client_id`, `cognito_domain` from outputs.tf
+  - These parameters were removed in v0.8.0 but outputs.tf was not updated
+  - Fixes Terraform validation errors in consuming projects
+
 ## [0.8.0] - 2025-12-28
 
 ### BREAKING CHANGES
