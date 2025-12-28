@@ -30,21 +30,7 @@ variable "cognito_user_pool_id" {
   type        = string
 }
 
-variable "cognito_client_id" {
-  description = "Cognito App Client ID（オプション、指定時は aud を検証）"
-  type        = string
-  default     = ""
-}
 
-variable "cognito_user_pool_domain" {
-  description = "Cognito User Pool Domain"
-  type        = string
-}
-
-variable "cognito_admin_ui_client_id" {
-  description = "Admin UI用Cognito User Pool Client ID"
-  type        = string
-}
 
 variable "log_retention_days" {
   description = "CloudWatch Logsの保持期間（日数）"

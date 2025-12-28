@@ -42,60 +42,6 @@ resource "aws_ssm_parameter" "lambda_records_function_arn" {
   }
 }
 
-# 外部参照用のパラメータ（実際の値を設定）
-# アプリケーション（Admin UI、Fetch Lambda等）がこれらの値を参照する
-
-# Cognito User Pool ID (Admin UI参照用)
-resource "aws_ssm_parameter" "app_admin_ui_cognito_user_pool_id" {
-  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-user-pool-id"
-  type      = local.parameter_type
-  tier      = local.parameter_tier
-  value     = var.cognito_user_pool_id
-  overwrite = true
-
-  description = "Cognito User Pool ID for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
-# Cognito Client ID (Admin UI参照用)
-resource "aws_ssm_parameter" "app_admin_ui_cognito_client_id" {
-  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-client-id"
-  type      = local.parameter_type
-  tier      = local.parameter_tier
-  value     = var.cognito_admin_ui_client_id
-  overwrite = true
-
-  description = "Cognito Client ID for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
-# Cognito Domain (Admin UI参照用)
-resource "aws_ssm_parameter" "app_admin_ui_cognito_domain" {
-  name      = "/${var.project_name}/${var.environment}/app/admin-ui/cognito-domain"
-  type      = local.parameter_type
-  tier      = local.parameter_tier
-  value     = "${var.cognito_user_pool_domain}.auth.${var.region}.amazoncognito.com"
-  overwrite = true
-
-  description = "Cognito Domain for Admin UI"
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Category    = "app-config"
-  }
-}
-
 # DynamoDB Table Name (外部参照用)
 resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
   name      = "/${var.project_name}/${var.environment}/infra/dynamodb-table-name"

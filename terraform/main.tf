@@ -116,8 +116,6 @@ resource "aws_lambda_function" "records" {
       REGION               = var.region
       TABLE_NAME           = var.dynamodb_table_name
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
-      COGNITO_CLIENT_ID    = var.cognito_client_id
-      COGNITO_REGION       = var.region
       LOG_LEVEL            = var.log_level
       # シャドウ設定（環境変数ベース）
       SHADOW_CREATED_AT_FIELD = var.shadow_created_at_field
@@ -184,9 +182,7 @@ module "parameter_store" {
   records_function_arn = aws_lambda_function.records.arn
 
   # Cognito設定
-  cognito_user_pool_id       = var.cognito_user_pool_id
-  cognito_admin_ui_client_id = var.cognito_admin_ui_client_id
-  cognito_user_pool_domain   = var.cognito_user_pool_domain
+  cognito_user_pool_id = var.cognito_user_pool_id
 
   # DynamoDB設定
   dynamodb_table_name = var.dynamodb_table_name
