@@ -7,9 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2024-12-28
+
+### Added
+
+- **Terraform**: KMS access policy for Parameter Store integration
+  - Lambda functions can now decrypt SecureString environment variables
+  - Added `kms:Decrypt` permission with SSM service condition
+  - Enables secure configuration management through Parameter Store
+
+### Changed
+
+- **CORS**: Expanded CORS configuration for comprehensive API support
+  - Added support for GET, PUT, DELETE, and OPTIONS methods
+  - Previously only supported POST method
+  - Enables full REST API functionality for react-admin integration
+
+### Improved
+
+- **Infrastructure**: Enhanced Lambda function permissions and dependencies
+  - Added proper dependency management for KMS policy
+  - Improved security with least-privilege access patterns
+
 ## [0.5.0] - 2024-12-23
 
 ### Added
+
 - 包括的なAPIリファレンスドキュメント (`docs/API.md`)
   - 3つの認証方式（IAM、Cognito、Token）の詳細な説明
   - すべてのクライアントAPIメソッドの完全な仕様
@@ -27,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 開発者・利用者向けのセキュリティベストプラクティス
 
 ### Changed
+
 - アーキテクチャリファクタリングによるコード構造の改善
   - 共通モジュールの抽出 (`src/shared/` ディレクトリ構造)
   - 大きな関数の分割（handler.ts ~520行 → 複数モジュール）
@@ -35,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 依存関係管理と循環依存の解決
 
 ### Improved
+
 - コードの可読性と保守性の向上
 - 単一責任原則に基づく関数分割（50行制限）
 - 3回以上繰り返されるコードの共通関数化
@@ -248,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Migration Guide
 
 **Before (v0.1.x):**
+
 ```typescript
 const client = new DynamoClient(apiUrl);
 await client.connect();
@@ -262,6 +288,7 @@ const dataProvider = createDataProvider({
 ```
 
 **After (v0.2.0):**
+
 ```typescript
 const client = new DynamoClient(apiUrl);
 await client.connect();
