@@ -29,6 +29,170 @@ Terraform outputからAWS Parameter Storeへの移行により、アプリケー
 - **暗号化**: AWS管理キー（`alias/aws/ssm`）のみ使用
 - **カスタマー管理キー**: 絶対に使用しない（運用複雑化を避ける）
 
+### 🔒 Single Source of Truth（重要事項）
+
+**Parameter Store は秘匿情報の唯一の情報源（Single Source of Truth）である**
+
+#### 基本原則
+
+1. **秘匿情報の一元管理**
+   - API キー、データベース接続文字列、認証情報等の秘匿情報は **Parameter Store のみ** に保存する
+   - 環境変数、設定ファイル、コード内への直接記述は **絶対に禁止**
+   - 開発環境でも本番環境と同じ Parameter Store を使用する
+
+2. **情報の重複禁止**
+   - 同じ秘匿情報を複数の場所に保存してはならない
+   - Parameter Store の値が変更された場合、他の場所での更新は不要でなければならない
+   - 「バックアップ」や「フォールバック」を理由とした重複保存も禁止
+
+3. **アクセスパターンの統一**
+   - すべてのアプリケーションは Parameter Store から直接読み取る
+   - キャッシュする場合も、Parameter Store が最新の情報源であることを保証する
+   - 設定変更時は Parameter Store の更新のみで全システムに反映される
+
+#### 秘匿情報の分類と管理
+
+**Level 1: 最高機密（Top Secret）**
+- データベースのマスターパスワード
+- 外部 API の秘密キー（Stripe、AWS等）
+- JWT 署名キー
+- 暗号化キー
+
+**Level 2: 機密（Secret）**
+- Cognito Client Secret
+- OAuth Client Secret
+- サードパーティサービスの API キー
+
+**Level 3: 内部情報（Internal）**
+- データベース接続文字列（パスワード含む）
+- 内部サービスの URL
+- 設定値（機密性は低いが一元管理が必要）
+
+#### 禁止事項（絶対に守ること）
+
+❌ **環境変数での秘匿情報保存**
+```bash
+# 絶対に禁止
+export DATABASE_PASSWORD="secret123"
+export API_KEY="sk-1234567890"
+```
+
+❌ **設定ファイルでの秘匿情報保存**
+```json
+// 絶対に禁止
+{
+  "database": {
+    "password": "secret123"
+  },
+  "apiKey": "sk-1234567890"
+}
+```
+
+❌ **コード内での秘匿情報ハードコーディング**
+```typescript
+// 絶対に禁止
+const API_KEY = "sk-1234567890";
+const DB_PASSWORD = "secret123";
+```
+
+❌ **複数箇所での同一情報保存**
+```bash
+# Parameter Store に保存済みなのに、環境変数にも保存（禁止）
+export DATABASE_URL="postgresql://user:pass@host/db"
+```
+
+#### 正しい実装パターン
+
+✅ **Parameter Store からの直接読み取り**
+```typescript
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+
+const ssmClient = new SSMClient({ region: "ap-northeast-1" });
+
+async function getSecretValue(parameterName: string): Promise<string> {
+  const command = new GetParameterCommand({
+    Name: parameterName,
+    WithDecryption: true, // SecureString の復号化
+  });
+  
+  const response = await ssmClient.send(command);
+  return response.Parameter?.Value || "";
+}
+
+// 使用例
+const apiKey = await getSecretValue("/myapp/prod/api/stripe-secret-key");
+const dbPassword = await getSecretValue("/myapp/prod/db/password");
+```
+
+✅ **キャッシュ付きの読み取り（推奨）**
+```typescript
+class ParameterStoreCache {
+  private cache = new Map<string, { value: string; expiry: number }>();
+  private readonly TTL = 5 * 60 * 1000; // 5分
+
+  async getParameter(name: string): Promise<string> {
+    const cached = this.cache.get(name);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.value;
+    }
+
+    const value = await getSecretValue(name);
+    this.cache.set(name, {
+      value,
+      expiry: Date.now() + this.TTL
+    });
+    
+    return value;
+  }
+}
+```
+
+#### 監査とコンプライアンス
+
+1. **アクセスログの完全記録**
+   - CloudTrail で全 Parameter Store アクセスを記録
+   - 誰が、いつ、どのパラメータにアクセスしたかを追跡
+   - 不正アクセスの即座検知
+
+2. **定期的な棚卸し**
+   - 月次で Parameter Store の全パラメータを棚卸し
+   - 不要になったパラメータの削除
+   - アクセス権限の見直し
+
+3. **セキュリティスキャン**
+   - コードベースに秘匿情報がハードコーディングされていないかスキャン
+   - 環境変数や設定ファイルに秘匿情報が含まれていないかチェック
+   - CI/CD パイプラインでの自動検証
+
+#### 違反時の対応
+
+**重大な違反を発見した場合**:
+
+1. **即座に停止**: 違反している実装を即座に停止
+2. **影響範囲調査**: 秘匿情報の漏洩範囲を調査
+3. **秘匿情報の更新**: 漏洩した可能性のある秘匿情報をすべて更新
+4. **Parameter Store への移行**: 正しい実装に修正
+5. **再発防止策**: チーム全体での教育と仕組みの改善
+
+**軽微な違反の場合**:
+
+1. **優先度付け**: セキュリティリスクに応じて優先度を設定
+2. **段階的修正**: 計画的に Parameter Store への移行を実施
+3. **監視強化**: 修正完了まで監視を強化
+
+#### チェックリスト
+
+新機能開発・既存機能修正時に以下を確認すること:
+
+- [ ] 秘匿情報は Parameter Store のみに保存されているか
+- [ ] 環境変数に秘匿情報が含まれていないか
+- [ ] 設定ファイルに秘匿情報が含まれていないか
+- [ ] コード内に秘匿情報がハードコーディングされていないか
+- [ ] 同じ秘匿情報が複数箇所に保存されていないか
+- [ ] Parameter Store からの読み取りが適切に実装されているか
+- [ ] エラーハンドリングが適切に実装されているか
+- [ ] キャッシュ機能が適切に実装されているか（必要な場合）
+
 ### 重要な役割分担（絶対に間違えてはいけない）
 
 #### ⚠️ データフローの方向性
