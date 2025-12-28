@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2024-12-28
+
+### Fixed
+
+- **CORS**: Removed OPTIONS method from allowMethods to comply with AWS Lambda Function URL constraints
+  - AWS Lambda Function URL has a 6-character limit per method name
+  - OPTIONS (7 characters) exceeded this limit causing ValidationException
+  - Preflight OPTIONS requests are handled automatically by Lambda Function URL
+
 ## [0.7.0] - 2024-12-28
 
 ### Added

@@ -169,7 +169,7 @@ resource "aws_lambda_function_url" "records" {
   # CORS設定
   cors {
     allow_origins     = ["*"]
-    allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_methods     = ["GET", "POST", "PUT", "DELETE"]
     allow_headers     = ["content-type", "authorization", "x-amz-date", "x-api-key", "x-amz-security-token"]
     expose_headers    = ["content-type", "x-amzn-requestid"]
     allow_credentials = false
