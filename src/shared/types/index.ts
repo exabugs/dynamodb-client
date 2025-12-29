@@ -1,6 +1,6 @@
 /**
  * 共通型定義
- * 
+ *
  * プロジェクト全体で使用される型定義を集約します。
  * MongoDB風のクエリ演算子、更新演算子、結果型などを提供します。
  */
@@ -121,6 +121,22 @@ export interface FindOptions {
   skip?: number;
   /** ページネーショントークン（カーソルベースのページネーション用） */
   nextToken?: string;
+}
+
+/**
+ * updateOneのオプション
+ */
+export interface UpdateOneOptions {
+  /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
+  upsert?: boolean;
+}
+
+/**
+ * updateManyのオプション
+ */
+export interface UpdateManyOptions {
+  /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
+  upsert?: boolean;
 }
 
 /**

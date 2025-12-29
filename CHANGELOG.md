@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2024-12-29
+
+### Added
+
+- **Upsert Option for updateOne/updateMany**: MongoDB-compatible upsert functionality
+  - Added `UpdateOneOptions` and `UpdateManyOptions` types with `upsert` boolean option
+  - Added `upsertedId` field to `UpdateResult` type (set when a new document is created via upsert)
+  - Server-side implementation: `handleUpsertCreate` and `handleUpsertUpdate` functions
+  - Client-side implementation: Third parameter (options) for `updateOne` and `updateMany` methods
+  - Automatic timestamp management: `createdAt` and `updatedAt` are automatically set on upsert
+  - Automatic shadow record generation: Shadow records are created/updated during upsert operations
+  - Comprehensive test coverage: Unit tests and integration tests for upsert functionality
+  - Complete documentation: API reference, usage examples, and migration guide in `docs/API.md`
+
+### Changed
+
+- **API Enhancement**: `updateOne` and `updateMany` methods now accept an optional third parameter for options
+  - Backward compatible: Existing code continues to work without changes
+  - Default behavior unchanged: `upsert` defaults to `false`
+
+### Documentation
+
+- **API Reference**: Updated `docs/API.md` with detailed upsert option documentation
+  - Added UpdateOneOptions and UpdateManyOptions type definitions
+  - Added UpdateResult.upsertedId field explanation
+  - Added practical usage examples for upsert operations
+  - Added migration guide from v0.3.x to v0.4.x
+  - Added FAQ section for common upsert questions
+
 ## [0.8.1] - 2025-12-28
 
 ### Fixed

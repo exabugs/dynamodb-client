@@ -116,6 +116,11 @@ export interface UpdateOneParams {
   id: string;
   /** 更新データ（JSON Merge Patch形式） */
   data: Record<string, unknown>;
+  /** 更新オプション */
+  options?: {
+    /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
+    upsert?: boolean;
+  };
 }
 
 /**
@@ -126,6 +131,11 @@ export interface UpdateManyParams {
   ids: string[];
   /** 更新データ（JSON Merge Patch形式） */
   data: Record<string, unknown>;
+  /** 更新オプション */
+  options?: {
+    /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
+    upsert?: boolean;
+  };
 }
 
 /**

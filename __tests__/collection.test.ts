@@ -267,6 +267,74 @@ describe('Collection', () => {
         upsertedId: undefined,
       });
     });
+
+    it('upsert=trueでレコードが存在しない場合は新規作成する', async () => {
+      const filter: Filter<Product> = { id: 'prod-new' };
+      const update: UpdateOperators<Product> = {
+        set: { name: 'New Product', status: 'active' },
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            __upsertedId: 'prod-new',
+          },
+        }),
+      });
+
+      const result = await collection.updateOne(filter, update, { upsert: true });
+
+      expect(result).toEqual({
+        acknowledged: true,
+        matchedCount: 0,
+        modifiedCount: 0,
+        upsertedId: 'prod-new',
+      });
+    });
+
+    it('upsert=trueでレコードが存在する場合は更新する', async () => {
+      const filter: Filter<Product> = { id: 'prod-123' };
+      const update: UpdateOperators<Product> = {
+        set: { status: 'inactive' },
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            matchedCount: 1,
+            modifiedCount: 1,
+          },
+        }),
+      });
+
+      const result = await collection.updateOne(filter, update, { upsert: true });
+
+      expect(result).toEqual({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
+        upsertedId: undefined,
+      });
+    });
+
+    it('upsert=falseまたは省略時にレコードが存在しない場合はエラー', async () => {
+      const filter: Filter<Product> = { id: 'prod-nonexistent' };
+      const update: UpdateOperators<Product> = {
+        set: { status: 'inactive' },
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Not Found',
+        json: async () => ({
+          message: 'Record not found',
+        }),
+      });
+
+      await expect(collection.updateOne(filter, update)).rejects.toThrow();
+    });
   });
 
   describe('updateMany', () => {

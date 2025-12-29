@@ -2151,3 +2151,570 @@ DynamoDBクライアントライブラリは、以下の特徴を持つ汎用的
 7. **国際化**: 英語ドキュメントとエラーメッセージ
 8. **MITライセンス**: 商用利用可能なオープンソースライセンス
 9. **Parameter Store統合**: 柔軟で安全な設定管理
+
+## updateOne/updateManyのupsertオプション設計
+
+### 概要
+
+MongoDB互換のupsertオプションを実装し、レコードの存在確認なしに作成・更新を行えるようにする。
+
+### 設計原則
+
+1. **MongoDB互換性**: MongoDBの`updateOne`/`updateMany`と同じ動作
+2. **型安全性**: TypeScriptの型システムで`upsert`オプションを保証
+3. **パフォーマンス**: 不要なGetItem操作を削減
+4. **一貫性**: 既存のupdate操作と同じエラーハンドリング
+
+### API設計
+
+#### クライアント側（Collection.ts）
+
+```typescript
+/**
+ * updateOneのオプション
+ */
+export interface UpdateOneOptions {
+  /** レコードが存在しない場合に新規作成するか */
+  upsert?: boolean;
+}
+
+/**
+ * updateManyのオプション
+ */
+export interface UpdateManyOptions {
+  /** レコードが存在しない場合に新規作成するか */
+  upsert?: boolean;
+}
+
+/**
+ * 単一レコードを更新（upsertオプション対応）
+ */
+async updateOne(
+  filter: Filter<TSchema>,
+  update: UpdateOperators<TSchema>,
+  options?: UpdateOneOptions
+): Promise<UpdateResult> {
+  const response = await this.request('updateOne', { 
+    filter, 
+    update,
+    options // ★ オプションを追加
+  });
+  const result = response as {
+    matchedCount: number;
+    modifiedCount: number;
+    upsertedId?: string;
+  };
+  return {
+    acknowledged: true,
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+    upsertedId: result.upsertedId, // ★ upsertedIdを返す
+  };
+}
+
+/**
+ * 複数レコードを更新（upsertオプション対応）
+ */
+async updateMany(
+  filter: Filter<TSchema>,
+  update: UpdateOperators<TSchema>,
+  options?: UpdateManyOptions
+): Promise<UpdateResult> {
+  const response = await this.request('updateMany', { 
+    filter, 
+    update,
+    options // ★ オプションを追加
+  });
+  // ... 既存の実装
+}
+```
+
+#### サーバー側（updateOne.ts）
+
+```typescript
+/**
+ * updateOneパラメータ（upsertオプション追加）
+ */
+export interface UpdateOneParams {
+  id: string;
+  data: Record<string, unknown>;
+  options?: {
+    upsert?: boolean;
+  };
+}
+
+/**
+ * updateOne操作（upsert対応）
+ */
+export async function handleUpdateOne(
+  resource: string,
+  params: UpdateOneParams,
+  requestId: string
+): Promise<UpdateOneResult> {
+  const { id, data: patchData, options } = params;
+  const upsert = options?.upsert ?? false;
+
+  logger.debug('Executing updateOne', {
+    requestId,
+    resource,
+    id,
+    upsert,
+  });
+
+  const dbClient = getDBClient();
+  const tableName = getTableName();
+  const mainSK = generateMainRecordSK(id);
+
+  // 既存レコードを取得
+  const getResult = await executeDynamoDBOperation(
+    () =>
+      dbClient.send(
+        new GetCommand({
+          TableName: tableName,
+          Key: { PK: resource, SK: mainSK },
+          ConsistentRead: true,
+        })
+      ),
+    'GetItem'
+  );
+
+  // レコードが存在しない場合の処理
+  if (!getResult.Item) {
+    if (!upsert) {
+      // upsert=falseの場合はエラー
+      throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
+    }
+    
+    // upsert=trueの場合は新規作成
+    return await handleUpsertCreate(resource, id, patchData, requestId);
+  }
+
+  // レコードが存在する場合は更新
+  return await handleUpsertUpdate(resource, id, getResult.Item, patchData, requestId);
+}
+
+/**
+ * upsertで新規作成
+ */
+async function handleUpsertCreate(
+  resource: string,
+  id: string,
+  data: Record<string, unknown>,
+  requestId: string
+): Promise<UpdateOneResult> {
+  // createdAt と updatedAt を自動設定
+  const recordData = addCreateTimestamps({ ...data, id });
+  
+  // シャドー設定を取得
+  const shadowConfig = getShadowConfig();
+  
+  // シャドウレコードを生成
+  const shadowRecords = generateShadowRecords(recordData, resource, shadowConfig);
+  const shadowKeys = shadowRecords.map((shadow) => shadow.SK);
+  
+  // TransactWriteItemsで一括作成
+  const transactItems: Array<{
+    Put?: { TableName: string; Item: Record<string, unknown> };
+  }> = [];
+  
+  // メインレコードを作成
+  transactItems.push({
+    Put: {
+      TableName: getTableName(),
+      Item: {
+        PK: resource,
+        SK: generateMainRecordSK(id),
+        data: {
+          ...recordData,
+          __shadowKeys: shadowKeys,
+        },
+      },
+    },
+  });
+  
+  // シャドウレコードを作成
+  for (const shadowRecord of shadowRecords) {
+    transactItems.push({
+      Put: {
+        TableName: getTableName(),
+        Item: shadowRecord as unknown as Record<string, unknown>,
+      },
+    });
+  }
+  
+  // トランザクション実行
+  await executeDynamoDBOperation(
+    () =>
+      getDBClient().send(
+        new TransactWriteCommand({
+          TransactItems: transactItems,
+        })
+      ),
+    'TransactWriteItems'
+  );
+  
+  logger.info('updateOne upsert created', {
+    requestId,
+    resource,
+    id,
+    shadowsCreated: shadowKeys.length,
+  });
+  
+  // upsertedIdを返す
+  return {
+    ...removeShadowKeys(recordData),
+    __upsertedId: id, // ★ 内部フラグ（クライアント側で変換）
+  };
+}
+
+/**
+ * upsertで更新
+ */
+async function handleUpsertUpdate(
+  resource: string,
+  id: string,
+  existingItem: Record<string, unknown>,
+  patchData: Record<string, unknown>,
+  requestId: string
+): Promise<UpdateOneResult> {
+  // 既存のupdateOne実装を再利用
+  const existingData = existingItem.data as Record<string, unknown>;
+  const oldShadowKeys = (existingData.__shadowKeys as string[]) || [];
+  
+  // JSON Merge Patchを適用
+  const mergedData = applyJsonMergePatch(removeShadowKeys(existingData), patchData);
+  
+  // updatedAt を更新
+  const updatedData = addUpdateTimestamp({ ...mergedData, id });
+  
+  // シャドー設定を取得
+  const shadowConfig = getShadowConfig();
+  
+  // 新しいシャドウレコードを生成
+  const newShadowRecords = generateShadowRecords(updatedData, resource, shadowConfig);
+  const newShadowKeys = newShadowRecords.map((shadow) => shadow.SK);
+  
+  // シャドー差分を計算
+  const shadowDiff = calculateShadowDiff(oldShadowKeys, newShadowKeys);
+  
+  // TransactWriteItemsで一括更新
+  const transactItems: Array<{
+    Put?: { TableName: string; Item: Record<string, unknown> };
+    Delete?: { TableName: string; Key: Record<string, string> };
+  }> = [];
+  
+  // メインレコードを更新
+  transactItems.push({
+    Put: {
+      TableName: getTableName(),
+      Item: {
+        PK: resource,
+        SK: generateMainRecordSK(id),
+        data: {
+          ...updatedData,
+          __shadowKeys: newShadowKeys,
+        },
+      },
+    },
+  });
+  
+  // 旧シャドーを削除
+  for (const shadowSK of shadowDiff.toDelete) {
+    transactItems.push({
+      Delete: {
+        TableName: getTableName(),
+        Key: { PK: resource, SK: shadowSK },
+      },
+    });
+  }
+  
+  // 新シャドーを追加
+  for (const shadowRecord of newShadowRecords) {
+    if (shadowDiff.toAdd.includes(shadowRecord.SK)) {
+      transactItems.push({
+        Put: {
+          TableName: getTableName(),
+          Item: shadowRecord as unknown as Record<string, unknown>,
+        },
+      });
+    }
+  }
+  
+  // トランザクション実行
+  await executeDynamoDBOperation(
+    () =>
+      getDBClient().send(
+        new TransactWriteCommand({
+          TransactItems: transactItems,
+        })
+      ),
+    'TransactWriteItems'
+  );
+  
+  logger.info('updateOne upsert updated', {
+    requestId,
+    resource,
+    id,
+    shadowDiffEmpty: isDiffEmpty(shadowDiff),
+    shadowsDeleted: shadowDiff.toDelete.length,
+    shadowsAdded: shadowDiff.toAdd.length,
+  });
+  
+  return removeShadowKeys(updatedData);
+}
+```
+
+### 型定義の更新
+
+```typescript
+// shared/types/common.ts
+
+/**
+ * MongoDB互換のUpdateResult（upsertedId追加）
+ */
+export interface UpdateResult {
+  acknowledged: boolean;
+  matchedCount: number;
+  modifiedCount: number;
+  upsertedId?: string; // ★ upsertで新規作成された場合のID
+}
+```
+
+### 使用例
+
+#### 基本的な使用方法
+
+```typescript
+// upsert=trueの場合（レコードが存在しない場合は新規作成）
+const result = await collection.updateOne(
+  { id: 'article-123' },
+  { set: { title: 'New Title', status: 'published' } },
+  { upsert: true } // ★ upsertオプション
+);
+
+if (result.upsertedId) {
+  console.log(`Created new record: ${result.upsertedId}`);
+} else {
+  console.log(`Updated existing record: ${result.modifiedCount} modified`);
+}
+
+// upsert=falseまたは省略の場合（レコードが存在しない場合はエラー）
+try {
+  await collection.updateOne(
+    { id: 'article-456' },
+    { set: { title: 'Updated Title' } }
+    // upsertオプションなし（デフォルト: false）
+  );
+} catch (error) {
+  if (error instanceof ItemNotFoundError) {
+    console.error('Record not found');
+  }
+}
+```
+
+#### updateManyでのupsert
+
+```typescript
+// 複数レコードのupsert
+const result = await collection.updateMany(
+  { status: 'draft' },
+  { set: { status: 'published', publishedAt: new Date().toISOString() } },
+  { upsert: true } // ★ 各レコードに対してupsert動作
+);
+
+console.log(`Matched: ${result.matchedCount}, Modified: ${result.modifiedCount}`);
+```
+
+### パフォーマンス最適化
+
+#### 既存実装との比較
+
+**upsert=false（既存実装）**:
+1. GetItem（レコード取得）
+2. レコードが存在しない場合はエラー
+3. レコードが存在する場合はTransactWriteItems（更新）
+
+**upsert=true（新実装）**:
+1. GetItem（レコード取得）
+2. レコードが存在しない場合はTransactWriteItems（作成）
+3. レコードが存在する場合はTransactWriteItems（更新）
+
+**最適化ポイント**:
+- GetItemは必須（既存レコードの確認とシャドウ差分計算のため）
+- upsert=trueでも追加のDynamoDB操作は不要
+- TransactWriteItemsで一括処理（原子性保証）
+
+### エラーハンドリング
+
+```typescript
+// upsert=falseの場合（既存動作）
+try {
+  await collection.updateOne(
+    { id: 'article-123' },
+    { set: { title: 'New Title' } }
+  );
+} catch (error) {
+  if (error instanceof ItemNotFoundError) {
+    // レコードが存在しない場合のエラー
+    console.error('Record not found');
+  }
+}
+
+// upsert=trueの場合（エラーなし）
+const result = await collection.updateOne(
+  { id: 'article-123' },
+  { set: { title: 'New Title' } },
+  { upsert: true }
+);
+
+// upsertedIdで新規作成かどうかを判定
+if (result.upsertedId) {
+  console.log('Created new record');
+} else {
+  console.log('Updated existing record');
+}
+```
+
+### テスト戦略
+
+#### 単体テスト
+
+```typescript
+describe('updateOne with upsert', () => {
+  it('should create new record when upsert=true and record does not exist', async () => {
+    const result = await collection.updateOne(
+      { id: 'new-id' },
+      { set: { title: 'New Title' } },
+      { upsert: true }
+    );
+    
+    expect(result.upsertedId).toBe('new-id');
+    expect(result.matchedCount).toBe(0);
+    expect(result.modifiedCount).toBe(0);
+  });
+  
+  it('should update existing record when upsert=true and record exists', async () => {
+    // 既存レコードを作成
+    await collection.insertOne({ id: 'existing-id', title: 'Old Title' });
+    
+    const result = await collection.updateOne(
+      { id: 'existing-id' },
+      { set: { title: 'New Title' } },
+      { upsert: true }
+    );
+    
+    expect(result.upsertedId).toBeUndefined();
+    expect(result.matchedCount).toBe(1);
+    expect(result.modifiedCount).toBe(1);
+  });
+  
+  it('should throw error when upsert=false and record does not exist', async () => {
+    await expect(
+      collection.updateOne(
+        { id: 'non-existent-id' },
+        { set: { title: 'New Title' } },
+        { upsert: false }
+      )
+    ).rejects.toThrow(ItemNotFoundError);
+  });
+});
+```
+
+#### 統合テスト
+
+```typescript
+describe('updateOne upsert integration', () => {
+  it('should create record with timestamps and shadows', async () => {
+    const result = await collection.updateOne(
+      { id: 'test-id' },
+      { set: { title: 'Test Title', priority: 5 } },
+      { upsert: true }
+    );
+    
+    // レコードを取得して確認
+    const record = await collection.findOne({ id: 'test-id' });
+    
+    expect(record).toBeDefined();
+    expect(record.title).toBe('Test Title');
+    expect(record.priority).toBe(5);
+    expect(record.createdAt).toBeDefined();
+    expect(record.updatedAt).toBeDefined();
+    
+    // シャドウレコードが生成されていることを確認
+    // （内部実装の確認）
+  });
+});
+```
+
+### 後方互換性
+
+- **既存のupdateOne呼び出し**: 第3引数を省略した場合は`upsert=false`（既存動作）
+- **既存のupdateMany呼び出し**: 第3引数を省略した場合は`upsert=false`（既存動作）
+- **破壊的変更なし**: 既存のコードは変更不要
+
+### マイグレーション
+
+既存のコードは変更不要ですが、upsert機能を活用する場合は以下のように変更できます：
+
+```typescript
+// Before（既存コード）
+try {
+  await collection.updateOne(
+    { id: articleId },
+    { set: { title: newTitle } }
+  );
+} catch (error) {
+  if (error instanceof ItemNotFoundError) {
+    await collection.insertOne({
+      id: articleId,
+      title: newTitle,
+    });
+  }
+}
+
+// After（upsert使用）
+await collection.updateOne(
+  { id: articleId },
+  { set: { title: newTitle } },
+  { upsert: true } // ★ シンプルに
+);
+```
+
+### 実装計画
+
+#### フェーズ1: 型定義の更新
+
+1. `UpdateOneOptions`と`UpdateManyOptions`の追加
+2. `UpdateResult`に`upsertedId`フィールドを追加
+3. `UpdateOneParams`に`options`フィールドを追加
+
+#### フェーズ2: サーバー側実装
+
+1. `handleUpdateOne`に`upsert`オプション処理を追加
+2. `handleUpsertCreate`関数の実装
+3. `handleUpsertUpdate`関数の実装（既存ロジックの再利用）
+
+#### フェーズ3: クライアント側実装
+
+1. `Collection.updateOne`に第3引数`options`を追加
+2. `Collection.updateMany`に第3引数`options`を追加
+3. レスポンスの`upsertedId`処理
+
+#### フェーズ4: テストの追加
+
+1. 単体テストの追加
+2. 統合テストの追加
+3. エラーケースのテスト
+
+#### フェーズ5: ドキュメント更新
+
+1. API.mdにupsertオプションの説明を追加
+2. 使用例の追加
+3. マイグレーションガイドの追加
+
+### 期待される効果
+
+1. **MongoDB互換性の向上**: MongoDBユーザーが違和感なく使用可能
+2. **コードの簡潔化**: 存在確認とエラーハンドリングが不要
+3. **パフォーマンス**: 不要なGetItem操作を削減（既存実装と同等）
+4. **原子性**: TransactWriteItemsによる一貫性保証

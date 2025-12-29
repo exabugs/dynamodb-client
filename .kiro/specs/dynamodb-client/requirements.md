@@ -337,3 +337,20 @@ v0.3.0以降、自動シャドウ化機能により、設定ファイルのメ�
 8. THE エラーハンドリング SHALL 一貫したパターンに従う
 9. THE ログ出力 SHALL 構造化された形式で統一される
 10. THE 設定管理 SHALL 環境変数と設定ファイルを適切に分離する
+
+### 要件25: updateOne/updateManyのupsertオプション対応
+
+**ユーザーストーリー:** 開発者として、MongoDB風のupsertオプションを使用することで、レコードの存在確認なしに作成・更新を行いたい
+
+#### 受入基準
+
+1. WHEN updateOneの第3引数に `{ upsert: true }` を指定する THEN レコードが存在しない場合は新規作成する
+2. WHEN updateOneの第3引数に `{ upsert: true }` を指定する THEN レコードが存在する場合は更新する
+3. WHEN updateOneの第3引数に `{ upsert: false }` または省略する THEN レコードが存在しない場合はエラーを返す
+4. WHEN updateManyの第3引数に `{ upsert: true }` を指定する THEN 各レコードに対してupsert動作を行う
+5. WHEN upsertで新規作成する THEN `createdAt` と `updatedAt` タイムスタンプを自動設定する
+6. WHEN upsertで更新する THEN `updatedAt` タイムスタンプのみを更新する
+7. WHEN upsertで新規作成する THEN シャドウレコードを自動生成する
+8. THE UpdateResult SHALL `upsertedId` フィールドを含む（新規作成時のみ）
+9. THE UpdateResult SHALL `matchedCount` と `modifiedCount` を正しく返す
+10. THE upsertオプション SHALL MongoDB互換の動作を提供する

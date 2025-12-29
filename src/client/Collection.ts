@@ -197,27 +197,34 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
 
   async updateOne(
     filter: Filter<TSchema>,
-    update: UpdateOperators<TSchema>
+    update: UpdateOperators<TSchema>,
+    options?: { upsert?: boolean }
   ): Promise<UpdateResult> {
-    const response = await this.request('updateOne', { filter, update });
+    const response = await this.request('updateOne', { filter, update, options });
     const result = response as {
       matchedCount: number;
       modifiedCount: number;
       upsertedId?: string;
+      __upsertedId?: string;
     };
+
+    // __upsertedIdフラグをupsertedIdに変換
+    const upsertedId = result.__upsertedId || result.upsertedId;
+
     return {
       acknowledged: true,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-      upsertedId: result.upsertedId,
+      matchedCount: upsertedId ? 0 : 1, // upsertで新規作成の場合は0
+      modifiedCount: upsertedId ? 0 : 1, // upsertで新規作成の場合は0
+      upsertedId,
     };
   }
 
   async updateMany(
     filter: Filter<TSchema>,
-    update: UpdateOperators<TSchema>
+    update: UpdateOperators<TSchema>,
+    options?: { upsert?: boolean }
   ): Promise<UpdateResult> {
-    const response = await this.request('updateMany', { filter, update });
+    const response = await this.request('updateMany', { filter, update, options });
     // Records Lambdaは統一形式 { count, successIds, failedIds, errors } を返す
     // MongoDB互換形式に変換
     const result = response as {

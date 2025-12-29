@@ -306,7 +306,49 @@
 
 ## フェーズ3: テストカバレッジの向上
 
-### タスク9: 自動シャドウ化のテスト追加
+### タスク9: updateOne/updateManyのupsertオプション実装（新規追加）
+
+**目的**: MongoDB互換のupsertオプションを実装する
+
+**詳細**:
+- 型定義の更新（UpdateOneOptions、UpdateManyOptions、UpdateResult）
+- サーバー側実装（handleUpsertCreate、handleUpsertUpdate）
+- クライアント側実装（Collection.updateOne、Collection.updateMany）
+- テストの追加（単体テスト、統合テスト）
+- ドキュメント更新（API.md、使用例）
+
+**参照**: 要件25（updateOne/updateManyのupsertオプション対応）
+
+**成果物**:
+- `src/shared/types/common.ts` - UpdateResult型の更新
+- `src/client/Collection.ts` - updateOne/updateManyの第3引数追加
+- `src/server/operations/updateOne.ts` - upsert処理の実装
+- `__tests__/operations/updateOne.test.ts` - upsertテストの追加
+- `docs/API.md` - upsertオプションの説明追加
+
+**サブタスク**:
+- [x] 9.1 型定義の更新（UpdateOneOptions、UpdateManyOptions、UpdateResult）
+- [x] 9.2 サーバー側実装（handleUpsertCreate関数の実装）
+- [x] 9.3 サーバー側実装（handleUpsertUpdate関数の実装）
+- [x] 9.4 クライアント側実装（Collection.updateOneの第3引数追加）
+- [x] 9.5 クライアント側実装（Collection.updateManyの第3引数追加）
+- [x] 9.6 単体テストの追加（upsert=true、upsert=false、省略時）
+- [x] 9.7 統合テストの追加（タイムスタンプ、シャドウレコード生成）
+- [x] 9.8 ドキュメント更新（API.md、使用例、マイグレーションガイド）
+
+**完了日**: 2024-12-29
+**成果**: 
+- MongoDB互換のupsertオプションを実装
+- 型定義を更新し、UpdateOneOptions、UpdateManyOptions、UpdateResultを追加
+- サーバー側でupsert処理を実装（新規作成と更新の両方に対応）
+- クライアント側でupdateOne/updateManyの第3引数としてoptionsを追加
+- 単体テストと統合テストを追加（タイムスタンプ、シャドウレコード生成の確認）
+- API.mdにupsertオプションの詳細な説明、使用例、マイグレーションガイドを追加
+- すべてのテスト（273件）が正常に通過することを確認
+
+---
+
+### タスク10: エラーハンドリングのテスト追加
 
 **目的**: v0.3.0で追加された自動シャドウ化機能のテストカバレッジを向上させる
 
@@ -513,19 +555,20 @@
 6. タスク6: API リファレンスの作成
 7. タスク7: コントリビューションガイドの作成
 8. タスク8: セキュリティポリシーの作成
+9. **タスク9: updateOne/updateManyのupsertオプション実装（新規追加・最優先）**
 
 ### 中優先度（次のマイナーバージョン）
 
-9. タスク9: 自動シャドウ化のテスト追加
 10. タスク10: エラーハンドリングのテスト追加
-11. タスク15: 構造化ロギングの追加
+11. タスク11: 自動シャドウ化のテスト追加
+12. タスク15: 構造化ロギングの追加
 
 ### 低優先度（将来のバージョン）
 
-12. タスク11: バルク操作のパフォーマンス最適化
-13. タスク12: シャドウレコード生成の最適化
-14. タスク13: クエリビルダーの改善
-15. タスク14: トランザクションサポートの追加
+12. タスク12: バルク操作のパフォーマンス最適化
+13. タスク13: シャドウレコード生成の最適化
+14. タスク14: クエリビルダーの改善
+15. タスク15: トランザクションサポートの追加
 16. タスク16: メトリクスの追加
 17. タスク17: CLIツールの拡張
 18. タスク18: VSCode拡張の作成

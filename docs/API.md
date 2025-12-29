@@ -52,6 +52,7 @@ const db = client.db();
 ```
 
 **必要な環境変数:**
+
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_SESSION_TOKEN`（一時的な認証情報の場合）
@@ -165,6 +166,7 @@ new DynamoClient<TAuthOptions>(
 ```
 
 **パラメータ:**
+
 - `endpoint`: Lambda Function URL
 - `options`: クライアントオプション
 - `getAuthHeaders`: 認証ヘッダー取得関数（内部使用）
@@ -231,9 +233,11 @@ collection<TSchema extends ResultBase>(name: string): Collection<TSchema, TAuthO
 指定した名前のコレクションを取得します。
 
 **パラメータ:**
+
 - `name`: コレクション名
 
 **型パラメータ:**
+
 - `TSchema`: ドキュメントの型（`ResultBase`を継承）
 
 ### Collection
@@ -260,10 +264,12 @@ find(filter?: Filter<TSchema>, options?: FindOptions): FindCursor<TSchema, TAuth
 フィルタ条件に一致するドキュメントを検索します。FindCursorを返します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件（省略可）
 - `options`: 検索オプション（省略可）
 
 **例:**
+
 ```typescript
 // 基本的な検索
 const cursor = products.find({ status: 'active' });
@@ -293,12 +299,15 @@ async findOne(filter: Filter<TSchema>): Promise<TSchema | null>
 フィルタ条件に一致する最初のドキュメントを取得します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件
 
 **戻り値:**
+
 - 見つかったドキュメント、または`null`
 
 **例:**
+
 ```typescript
 const product = await products.findOne({ id: 'product-123' });
 if (product) {
@@ -315,12 +324,15 @@ async findMany(ids: string[]): Promise<TSchema[]>
 指定したIDの配列に一致するドキュメントを取得します。
 
 **パラメータ:**
+
 - `ids`: IDの配列
 
 **戻り値:**
+
 - ドキュメントの配列
 
 **例:**
+
 ```typescript
 const products = await collection.findMany(['id1', 'id2', 'id3']);
 ```
@@ -336,12 +348,15 @@ async insertOne(document: InputBase & Omit<TSchema, 'id'>): Promise<InsertOneRes
 単一のドキュメントを挿入します。
 
 **パラメータ:**
+
 - `document`: 挿入するドキュメント（`id`は省略可）
 
 **戻り値:**
+
 - 挿入結果
 
 **例:**
+
 ```typescript
 const result = await products.insertOne({
   name: 'New Product',
@@ -362,12 +377,15 @@ async insertMany(documents: (InputBase & Omit<TSchema, 'id'>)[]): Promise<Insert
 複数のドキュメントを一括挿入します。
 
 **パラメータ:**
+
 - `documents`: 挿入するドキュメントの配列
 
 **戻り値:**
+
 - 一括挿入結果
 
 **例:**
+
 ```typescript
 const result = await products.insertMany([
   { name: 'Product A', price: 1000, status: 'active' },
@@ -391,61 +409,130 @@ if (result.failedIds && result.failedIds.length > 0) {
 ```typescript
 async updateOne(
   filter: Filter<TSchema>,
-  update: UpdateOperators<TSchema>
+  update: UpdateOperators<TSchema>,
+  options?: UpdateOneOptions
 ): Promise<UpdateResult>
 ```
 
 フィルタ条件に一致する最初のドキュメントを更新します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件
 - `update`: 更新操作
+- `options`: 更新オプション（省略可）
+  - `upsert`: `true`の場合、ドキュメントが存在しない場合は新規作成します（デフォルト: `false`）
 
 **戻り値:**
+
 - 更新結果
+  - `matchedCount`: 一致したドキュメント数
+  - `modifiedCount`: 更新されたドキュメント数
+  - `upsertedId`: upsertで新規作成された場合のID（upsert=trueの場合のみ）
 
 **例:**
+
 ```typescript
+// 基本的な更新
 const result = await products.updateOne(
   { id: 'product-123' },
   {
     set: { price: 1500, updatedAt: new Date().toISOString() },
     inc: { viewCount: 1 },
-    unset: ['oldField']
+    unset: ['oldField'],
   }
 );
 
 console.log('Matched:', result.matchedCount);
 console.log('Modified:', result.modifiedCount);
+
+// upsert: 存在しない場合は新規作成
+const upsertResult = await products.updateOne(
+  { id: 'product-456' },
+  {
+    set: {
+      name: 'New Product',
+      price: 2000,
+      status: 'active',
+    },
+  },
+  { upsert: true }
+);
+
+if (upsertResult.upsertedId) {
+  console.log('Created new document:', upsertResult.upsertedId);
+} else {
+  console.log('Updated existing document');
+}
 ```
+
+**upsertオプションの動作:**
+
+- `upsert: false`（デフォルト）: ドキュメントが存在しない場合は何もしません
+- `upsert: true`: ドキュメントが存在しない場合は新規作成します
+  - 新規作成時: `createdAt`と`updatedAt`が自動的に設定されます
+  - 更新時: `updatedAt`のみが更新されます（`createdAt`は保持）
+  - シャドウレコードも自動的に生成・更新されます
 
 ##### updateMany()
 
 ```typescript
 async updateMany(
   filter: Filter<TSchema>,
-  update: UpdateOperators<TSchema>
+  update: UpdateOperators<TSchema>,
+  options?: UpdateManyOptions
 ): Promise<UpdateResult>
 ```
 
 フィルタ条件に一致するすべてのドキュメントを更新します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件
 - `update`: 更新操作
+- `options`: 更新オプション（省略可）
+  - `upsert`: `true`の場合、ドキュメントが存在しない場合は新規作成します（デフォルト: `false`）
 
 **戻り値:**
+
 - 更新結果
+  - `matchedCount`: 一致したドキュメント数
+  - `modifiedCount`: 更新されたドキュメント数
+  - `upsertedId`: upsertで新規作成された場合のID（upsert=trueの場合のみ）
 
 **例:**
+
 ```typescript
+// 基本的な一括更新
 const result = await products.updateMany(
   { status: 'draft' },
   { set: { status: 'active', updatedAt: new Date().toISOString() } }
 );
 
 console.log('Updated count:', result.modifiedCount);
+
+// upsert: 存在しない場合は新規作成
+const upsertResult = await products.updateMany(
+  { category: 'new-category' },
+  {
+    set: {
+      name: 'Default Product',
+      price: 1000,
+      status: 'active',
+    },
+  },
+  { upsert: true }
+);
+
+if (upsertResult.upsertedId) {
+  console.log('Created new document:', upsertResult.upsertedId);
+}
 ```
+
+**注意:**
+
+- `updateMany`でupsertを使用する場合、フィルタ条件に一致するドキュメントが存在しない場合のみ新規作成されます
+- 複数のドキュメントが一致する場合は、すべて更新されます（新規作成はされません）
 
 #### 削除メソッド
 
@@ -458,12 +545,15 @@ async deleteOne(filter: Filter<TSchema>): Promise<DeleteResult>
 フィルタ条件に一致する最初のドキュメントを削除します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件
 
 **戻り値:**
+
 - 削除結果
 
 **例:**
+
 ```typescript
 const result = await products.deleteOne({ id: 'product-123' });
 console.log('Deleted count:', result.deletedCount);
@@ -478,12 +568,15 @@ async deleteMany(filter: Filter<TSchema>): Promise<DeleteResult>
 フィルタ条件に一致するすべてのドキュメントを削除します。
 
 **パラメータ:**
+
 - `filter`: フィルタ条件
 
 **戻り値:**
+
 - 削除結果
 
 **例:**
+
 ```typescript
 const result = await products.deleteMany({ status: 'inactive' });
 console.log('Deleted count:', result.deletedCount);
@@ -504,9 +597,11 @@ sort(sort: Record<string, 1 | -1 | 'asc' | 'desc'>): this
 ソート条件を設定します。
 
 **パラメータ:**
+
 - `sort`: ソート条件
 
 **例:**
+
 ```typescript
 // 単一フィールドでソート
 cursor.sort({ price: 'desc' });
@@ -527,9 +622,11 @@ limit(limit: number): this
 取得件数を制限します。
 
 **パラメータ:**
+
 - `limit`: 取得件数（正の整数）
 
 **例:**
+
 ```typescript
 cursor.limit(10); // 最初の10件を取得
 ```
@@ -543,9 +640,11 @@ skip(skip: number): this
 スキップする件数を設定します。
 
 **パラメータ:**
+
 - `skip`: スキップする件数（0以上の整数）
 
 **例:**
+
 ```typescript
 cursor.skip(20); // 最初の20件をスキップ
 
@@ -562,9 +661,11 @@ async toArray(): Promise<TSchema[]>
 クエリを実行し、結果をドキュメントの配列として返します。
 
 **戻り値:**
+
 - ドキュメントの配列
 
 **例:**
+
 ```typescript
 const results = await products
   .find({ status: 'active' })
@@ -588,14 +689,13 @@ async getPageInfo(): Promise<{
 ページネーション情報を取得します。
 
 **戻り値:**
+
 - ページネーション情報
 
 **例:**
+
 ```typescript
-const cursor = products
-  .find({ status: 'active' })
-  .sort({ price: 'desc' })
-  .limit(10);
+const cursor = products.find({ status: 'active' }).sort({ price: 'desc' }).limit(10);
 
 const results = await cursor.toArray();
 const pageInfo = await cursor.getPageInfo();
@@ -649,6 +749,7 @@ interface FilterOperators<T> {
 ```
 
 **使用例:**
+
 ```typescript
 // 直接値を指定
 const filter: Filter<Product> = { status: 'active' };
@@ -685,6 +786,7 @@ interface UpdateOperators<T> {
 ```
 
 **使用例:**
+
 ```typescript
 // フィールドを設定
 const update: UpdateOperators<Product> = {
@@ -707,6 +809,50 @@ const update: UpdateOperators<Product> = {
   inc: { viewCount: 1 },
   unset: ['draft']
 };
+```
+
+### UpdateOneOptions
+
+updateOneメソッドのオプションを定義します。
+
+```typescript
+interface UpdateOneOptions {
+  /** upsert: ドキュメントが存在しない場合は新規作成する（デフォルト: false） */
+  upsert?: boolean;
+}
+```
+
+**使用例:**
+
+```typescript
+// upsertオプションを使用
+await products.updateOne(
+  { id: 'product-123' },
+  { set: { name: 'New Product', price: 1000 } },
+  { upsert: true }
+);
+```
+
+### UpdateManyOptions
+
+updateManyメソッドのオプションを定義します。
+
+```typescript
+interface UpdateManyOptions {
+  /** upsert: ドキュメントが存在しない場合は新規作成する（デフォルト: false） */
+  upsert?: boolean;
+}
+```
+
+**使用例:**
+
+```typescript
+// upsertオプションを使用
+await products.updateMany(
+  { category: 'new-category' },
+  { set: { name: 'Default Product', price: 1000 } },
+  { upsert: true }
+);
 ```
 
 ### FindOptions
@@ -766,8 +912,32 @@ interface UpdateResult {
   matchedCount: number;
   /** 変更されたドキュメントの数 */
   modifiedCount: number;
-  /** アップサートされたドキュメントのID（存在する場合） */
+  /** アップサートされたドキュメントのID（upsert=trueで新規作成された場合のみ） */
   upsertedId?: string;
+}
+```
+
+**upsertedIdフィールド:**
+
+- `upsert: true`オプションを使用し、ドキュメントが存在しない場合に新規作成されたときのみ設定されます
+- 既存のドキュメントが更新された場合は`undefined`です
+- このフィールドの有無で、新規作成か更新かを判断できます
+
+**使用例:**
+
+```typescript
+const result = await products.updateOne(
+  { id: 'product-123' },
+  { set: { name: 'Product Name', price: 1000 } },
+  { upsert: true }
+);
+
+if (result.upsertedId) {
+  console.log('新規作成されました:', result.upsertedId);
+} else if (result.modifiedCount > 0) {
+  console.log('既存のドキュメントが更新されました');
+} else {
+  console.log('変更はありませんでした');
 }
 ```
 
@@ -961,12 +1131,12 @@ async function createProduct(productData: Omit<Product, 'id'>) {
 // ✅ 良い例: 適切な接続管理
 async function processProducts() {
   const client = new DynamoClient(endpoint, options);
-  
+
   try {
     await client.connect();
     const db = client.db();
     const products = db.collection<Product>('products');
-    
+
     // 処理を実行
     const results = await products.find({ status: 'active' }).toArray();
     return results;
@@ -996,18 +1166,15 @@ for (const productData of productsData) {
 
 ```typescript
 async function getProductsPage(pageToken?: string) {
-  const cursor = products
-    .find({ status: 'active' })
-    .sort({ createdAt: 'desc' })
-    .limit(20);
-  
+  const cursor = products.find({ status: 'active' }).sort({ createdAt: 'desc' }).limit(20);
+
   if (pageToken) {
     cursor.skip(0); // nextTokenを使用する場合はskipは不要
   }
-  
+
   const items = await cursor.toArray();
   const pageInfo = await cursor.getPageInfo();
-  
+
   return {
     items,
     hasNextPage: pageInfo.hasNextPage,
@@ -1019,3 +1186,148 @@ async function getProductsPage(pageToken?: string) {
 ---
 
 このAPIリファレンスは、DynamoDB Client SDKの全機能を網羅しています。詳細な使用例やトラブルシューティングについては、プロジェクトのREADMEやサンプルコードを参照してください。
+
+## マイグレーションガイド
+
+### v0.3.x から v0.4.x へのアップグレード
+
+v0.4.0では、`updateOne`と`updateMany`メソッドにupsertオプションが追加されました。既存のコードは変更なしで動作しますが、新しい機能を活用することで、より簡潔なコードを書くことができます。
+
+#### 破壊的変更
+
+**なし** - v0.4.0は完全に後方互換性があります。
+
+#### 新機能: upsertオプション
+
+##### 変更前（v0.3.x）
+
+```typescript
+// ドキュメントが存在するか確認してから作成または更新
+const existing = await products.findOne({ id: 'product-123' });
+
+if (existing) {
+  // 更新
+  await products.updateOne(
+    { id: 'product-123' },
+    { set: { name: 'Updated Product', price: 1500 } }
+  );
+} else {
+  // 新規作成
+  await products.insertOne({
+    id: 'product-123',
+    name: 'New Product',
+    price: 1000,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+```
+
+##### 変更後（v0.4.x）
+
+```typescript
+// upsertオプションで1回の操作で完了
+const result = await products.updateOne(
+  { id: 'product-123' },
+  {
+    set: {
+      name: 'Product Name',
+      price: 1000,
+      status: 'active',
+    },
+  },
+  { upsert: true }
+);
+
+// 新規作成か更新かを判断
+if (result.upsertedId) {
+  console.log('新規作成されました:', result.upsertedId);
+} else {
+  console.log('既存のドキュメントが更新されました');
+}
+```
+
+#### upsertオプションの利点
+
+1. **コードの簡潔化**: 存在チェックと条件分岐が不要
+2. **パフォーマンス向上**: 1回のAPI呼び出しで完了
+3. **競合状態の回避**: 存在チェックと作成/更新の間に他の操作が入る可能性を排除
+4. **自動タイムスタンプ**: `createdAt`と`updatedAt`が自動的に設定される
+5. **シャドウレコード管理**: シャドウレコードも自動的に生成・更新される
+
+#### 移行のベストプラクティス
+
+##### 1. 段階的な移行
+
+既存のコードを一度にすべて変更する必要はありません。新しいコードからupsertオプションを使用し、既存のコードは必要に応じて更新してください。
+
+##### 2. テストの追加
+
+upsertオプションを使用する場合は、以下のケースをテストしてください：
+
+```typescript
+// テストケース1: 新規作成
+const result1 = await products.updateOne(
+  { id: 'new-product' },
+  { set: { name: 'New Product', price: 1000 } },
+  { upsert: true }
+);
+expect(result1.upsertedId).toBeDefined();
+
+// テストケース2: 既存の更新
+const result2 = await products.updateOne(
+  { id: 'new-product' },
+  { set: { price: 1500 } },
+  { upsert: true }
+);
+expect(result2.upsertedId).toBeUndefined();
+expect(result2.modifiedCount).toBe(1);
+
+// テストケース3: upsert=falseの場合（デフォルト）
+const result3 = await products.updateOne({ id: 'non-existent' }, { set: { name: 'Product' } });
+expect(result3.matchedCount).toBe(0);
+expect(result3.modifiedCount).toBe(0);
+```
+
+##### 3. エラーハンドリング
+
+upsertオプションを使用する場合も、適切なエラーハンドリングを実装してください：
+
+```typescript
+try {
+  const result = await products.updateOne({ id: productId }, { set: updateData }, { upsert: true });
+
+  if (result.upsertedId) {
+    logger.info('Product created', { id: result.upsertedId });
+  } else {
+    logger.info('Product updated', { id: productId });
+  }
+} catch (error) {
+  logger.error('Failed to upsert product', { error, productId });
+  throw error;
+}
+```
+
+#### よくある質問
+
+##### Q1: upsertオプションを使用すると、既存のcreatedAtは上書きされますか？
+
+**A:** いいえ、上書きされません。upsertで既存のドキュメントを更新する場合、`createdAt`は保持され、`updatedAt`のみが更新されます。
+
+##### Q2: updateManyでupsertを使用すると、複数のドキュメントが作成されますか？
+
+**A:** いいえ、作成されません。`updateMany`でupsertを使用する場合、フィルタ条件に一致するドキュメントが存在しない場合のみ、1つのドキュメントが新規作成されます。複数のドキュメントが一致する場合は、すべて更新されます。
+
+##### Q3: upsertオプションを使用すると、シャドウレコードはどうなりますか？
+
+**A:** シャドウレコードは自動的に生成・更新されます。新規作成時は新しいシャドウレコードが生成され、更新時は変更されたフィールドのシャドウレコードのみが更新されます。
+
+##### Q4: upsertオプションのパフォーマンスへの影響は？
+
+**A:** upsertオプションを使用すると、存在チェックと作成/更新を1回のAPI呼び出しで完了できるため、パフォーマンスが向上します。特に、ネットワークレイテンシが高い環境では効果的です。
+
+#### サポート
+
+質問や問題がある場合は、GitHubのIssuesで報告してください：
+https://github.com/exabugs/dynamodb-client/issues
