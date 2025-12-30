@@ -45,6 +45,9 @@ interface MongoUpdateParams extends MongoFilterParams {
         set?: Record<string, unknown>;
       }
     | Record<string, unknown>;
+  options?: {
+    upsert?: boolean;
+  };
 }
 
 /**
@@ -115,9 +118,7 @@ export function convertFindOneParams(mongoParams: MongoFilterParams): FindOnePar
 export function convertFindManyParams(mongoParams: MongoFilterParams): FindManyParams {
   const idFilter = mongoParams.filter?.id;
   const ids =
-    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter
-      ? idFilter.in || []
-      : [];
+    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter ? idFilter.in || [] : [];
   return { ids };
 }
 
@@ -158,6 +159,7 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
   return {
     id,
     data: updateData,
+    options: mongoParams.options,
   };
 }
 
@@ -170,9 +172,7 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
 export function convertUpdateManyParams(mongoParams: MongoUpdateParams): UpdateManyParams {
   const idFilter = mongoParams.filter?.id;
   const ids =
-    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter
-      ? idFilter.in || []
-      : [];
+    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter ? idFilter.in || [] : [];
   const updateData: Record<string, unknown> =
     mongoParams.update && typeof mongoParams.update === 'object'
       ? 'set' in mongoParams.update
@@ -182,6 +182,7 @@ export function convertUpdateManyParams(mongoParams: MongoUpdateParams): UpdateM
   return {
     ids,
     data: updateData,
+    options: mongoParams.options,
   };
 }
 
@@ -209,9 +210,7 @@ export function convertDeleteOneParams(mongoParams: MongoFilterParams): DeleteOn
 export function convertDeleteManyParams(mongoParams: MongoFilterParams): DeleteManyParams {
   const idFilter = mongoParams.filter?.id;
   const ids =
-    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter
-      ? idFilter.in || []
-      : [];
+    typeof idFilter === 'object' && idFilter !== null && 'in' in idFilter ? idFilter.in || [] : [];
   return { ids };
 }
 

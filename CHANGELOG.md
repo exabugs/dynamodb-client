@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2024-12-31
+
+### Fixed
+
+- **Parameter Converter**: Improved code formatting and maintainability
+  - Refactored multi-line ternary operators to single-line format for better readability
+  - Enhanced `convertUpdateOneParams` and `convertUpdateManyParams` to properly pass through `options` parameter
+  - Ensures upsert options are correctly propagated from MongoDB-style API to internal operations
+  - No functional changes - purely code quality improvements
+
 ## [0.9.1] - 2024-12-30
 
 ### Fixed
