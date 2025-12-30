@@ -110,9 +110,9 @@ v0.3.0以降、自動シャドウ化機能により、設定ファイルのメ�
 #### 受入基準
 
 1. THE Filter<T> SHALL TypeScript型安全なフィルタ定義を提供する
-2. THE FilterOperators SHALL eq、ne、gt、gte、lt、lte、in、nin、exists、regexをサポートする
-3. THE Filter SHALL $プレフィックスなしの演算子名を使用する（例: { priority: { gte: 5 } }）
-4. THE Filter SHALL andとor論理演算子をサポートする
+2. THE FilterOperators SHALL $eq、$ne、$gt、$gte、$lt、$lte、$in、$nin、$exists、$regexをサポートする
+3. THE Filter SHALL $プレフィックス付きの演算子名を使用する（例: { priority: { $gte: 5 } }）
+4. THE Filter SHALL $andと$or論理演算子をサポートする
 
 ### 要件7: 更新API
 
@@ -120,8 +120,8 @@ v0.3.0以降、自動シャドウ化機能により、設定ファイルのメ�
 
 #### 受入基準
 
-1. THE UpdateOperators SHALL set、unset、incをサポートする
-2. THE UpdateOperators SHALL $プレフィックスなしの演算子名を使用する（例: { set: { status: 'published' } }）
+1. THE UpdateOperators SHALL $set、$unset、$incをサポートする
+2. THE UpdateOperators SHALL $プレフィックス付きの演算子名を使用する（例: { $set: { status: 'published' } }）
 
 ### 要件8: Lambda実装
 
@@ -354,3 +354,20 @@ v0.3.0以降、自動シャドウ化機能により、設定ファイルのメ�
 8. THE UpdateResult SHALL `upsertedId` フィールドを含む（新規作成時のみ）
 9. THE UpdateResult SHALL `matchedCount` と `modifiedCount` を正しく返す
 10. THE upsertオプション SHALL MongoDB互換の動作を提供する
+
+### 要件26: MongoDB互換性向上 - $プレフィックス付きオペレータ
+
+**ユーザーストーリー:** 開発者として、MongoDBと完全に互換性のあるオペレータ構文を使用することで、既存のMongoDB知識を活用し、学習コストを削減したい
+
+#### 受入基準
+
+1. THE FilterOperators SHALL すべての演算子に `$` プレフィックスを使用する（$eq、$ne、$gt、$gte、$lt、$lte、$in、$nin、$exists、$regex）
+2. THE UpdateOperators SHALL すべての演算子に `$` プレフィックスを使用する（$set、$unset、$inc）
+3. THE Filter SHALL 論理演算子に `$` プレフィックスを使用する（$and、$or）
+4. WHEN 既存コード（$プレフィックスなし）を使用する THEN コンパイルエラーが発生する
+5. THE 型定義 SHALL $プレフィックス付きプロパティのみを許可する
+6. THE ドキュメント SHALL 新しい構文の使用例を含む
+7. THE CHANGELOG SHALL 破壊的変更として明記する
+8. THE バージョン SHALL メジャーバージョンアップ（v1.0.0）を行う
+9. THE マイグレーションガイド SHALL 既存コードの更新方法を提供する
+10. THE 実装 SHALL MongoDBの公式ドキュメントと一致する動作を提供する

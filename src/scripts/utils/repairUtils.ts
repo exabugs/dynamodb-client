@@ -52,7 +52,7 @@ export async function repairRecordViaDynamoClient<TAuthOptions = unknown>(
   recordId: string
 ): Promise<void> {
   // updateOneを呼び出すと、Records Lambdaと同じロジックでシャドーレコードが再生成される
-  await collection.updateOne({ id: recordId }, { set: { updatedAt: new Date().toISOString() } });
+  await collection.updateOne({ id: recordId }, { $set: { updatedAt: new Date().toISOString() } });
 }
 
 /**

@@ -503,19 +503,19 @@ export class FindCursor<TSchema = any> {
 // src/types.ts
 
 /**
- * フィルタ演算子（$プレフィックスなし）
+ * フィルタ演算子（$プレフィックス付き - MongoDB互換）
  */
 export interface FilterOperators<T> {
-  eq?: T;           // 等しい
-  ne?: T;           // 等しくない
-  gt?: T;           // より大きい
-  gte?: T;          // 以上
-  lt?: T;           // より小さい
-  lte?: T;          // 以下
-  in?: T[];         // いずれかに一致
-  nin?: T[];        // いずれにも一致しない
-  exists?: boolean; // フィールドの存在チェック
-  regex?: string | RegExp; // 正規表現マッチ
+  $eq?: T;           // 等しい
+  $ne?: T;           // 等しくない
+  $gt?: T;           // より大きい
+  $gte?: T;          // 以上
+  $lt?: T;           // より小さい
+  $lte?: T;          // 以下
+  $in?: T[];         // いずれかに一致
+  $nin?: T[];        // いずれにも一致しない
+  $exists?: boolean; // フィールドの存在チェック
+  $regex?: string | RegExp; // 正規表現マッチ
 }
 
 /**
@@ -524,17 +524,17 @@ export interface FilterOperators<T> {
 export type Filter<T> = {
   [P in keyof T]?: T[P] | FilterOperators<T[P]>;
 } & {
-  and?: Filter<T>[];  // AND条件
-  or?: Filter<T>[];   // OR条件
+  $and?: Filter<T>[];  // AND条件
+  $or?: Filter<T>[];   // OR条件
 };
 
 /**
- * 更新演算子（$プレフィックスなし）
+ * 更新演算子（$プレフィックス付き - MongoDB互換）
  */
 export interface UpdateOperators<T> {
-  set?: Partial<T>;                    // フィールドを設定
-  unset?: (keyof T)[];                 // フィールドを削除
-  inc?: Partial<Record<keyof T, number>>; // 数値をインクリメント
+  $set?: Partial<T>;                    // フィールドを設定
+  $unset?: (keyof T)[];                 // フィールドを削除
+  $inc?: Partial<Record<keyof T, number>>; // 数値をインクリメント
 }
 
 /**
@@ -653,17 +653,17 @@ await client.connect();
 const db = client.db('ainews');
 const articles = db.collection<Article>('articles');
 
-// MongoDB風のクエリ
+// MongoDB風のクエリ（$プレフィックス付き）
 const results = await articles
-  .find({ status: 'published', publishedAt: { gte: '2025-01-01' } })
+  .find({ status: 'published', publishedAt: { $gte: '2025-01-01' } })
   .sort({ publishedAt: 'desc' })
   .limit(10)
   .toArray();
 
-// 更新
+// 更新（$プレフィックス付き）
 await articles.updateMany(
   { status: 'draft' },
-  { set: { status: 'published', publishedAt: new Date().toISOString() } }
+  { $set: { status: 'published', publishedAt: new Date().toISOString() } }
 );
 ```
 
@@ -2718,3 +2718,243 @@ await collection.updateOne(
 2. **コードの簡潔化**: 存在確認とエラーハンドリングが不要
 3. **パフォーマンス**: 不要なGetItem操作を削減（既存実装と同等）
 4. **原子性**: TransactWriteItemsによる一貫性保証
+
+
+## MongoDB互換性向上 - $プレフィックス付きオペレータ（v1.0.0）
+
+### 概要
+
+v1.0.0では、MongoDBとの完全な互換性を実現するため、すべての操作オペレータに `$` プレフィックスを追加します。これは**破壊的変更（Breaking Change）**であり、既存コードの更新が必要です。
+
+### 変更内容
+
+#### フィルタ演算子
+
+**変更前（v0.x）:**
+```typescript
+// $プレフィックスなし
+const filter = {
+  status: 'published',
+  priority: { gte: 5, lte: 10 },
+  tags: { in: ['tech', 'news'] }
+};
+```
+
+**変更後（v1.0.0）:**
+```typescript
+// $プレフィックス付き（MongoDB互換）
+const filter = {
+  status: 'published',
+  priority: { $gte: 5, $lte: 10 },
+  tags: { $in: ['tech', 'news'] }
+};
+```
+
+#### 更新演算子
+
+**変更前（v0.x）:**
+```typescript
+// $プレフィックスなし
+const update = {
+  set: { status: 'published' },
+  inc: { viewCount: 1 },
+  unset: ['draft']
+};
+```
+
+**変更後（v1.0.0）:**
+```typescript
+// $プレフィックス付き（MongoDB互換）
+const update = {
+  $set: { status: 'published' },
+  $inc: { viewCount: 1 },
+  $unset: ['draft']
+};
+```
+
+#### 論理演算子
+
+**変更前（v0.x）:**
+```typescript
+// $プレフィックスなし
+const filter = {
+  or: [
+    { status: 'published' },
+    { priority: { gte: 5 } }
+  ]
+};
+```
+
+**変更後（v1.0.0）:**
+```typescript
+// $プレフィックス付き（MongoDB互換）
+const filter = {
+  $or: [
+    { status: 'published' },
+    { priority: { $gte: 5 } }
+  ]
+};
+```
+
+### 型定義の変更
+
+```typescript
+// v1.0.0の型定義
+
+/**
+ * フィルタ演算子（$プレフィックス付き - MongoDB互換）
+ */
+export interface FilterOperators<T> {
+  $eq?: T;           // 等しい
+  $ne?: T;           // 等しくない
+  $gt?: T;           // より大きい
+  $gte?: T;          // 以上
+  $lt?: T;           // より小さい
+  $lte?: T;          // 以下
+  $in?: T[];         // いずれかに一致
+  $nin?: T[];        // いずれにも一致しない
+  $exists?: boolean; // フィールドの存在チェック
+  $regex?: string | RegExp; // 正規表現マッチ
+}
+
+/**
+ * フィルタ定義
+ */
+export type Filter<T> = {
+  [P in keyof T]?: T[P] | FilterOperators<T[P]>;
+} & {
+  $and?: Filter<T>[];  // AND条件
+  $or?: Filter<T>[];   // OR条件
+};
+
+/**
+ * 更新演算子（$プレフィックス付き - MongoDB互換）
+ */
+export interface UpdateOperators<T> {
+  $set?: Partial<T>;                    // フィールドを設定
+  $unset?: (keyof T)[];                 // フィールドを削除
+  $inc?: Partial<Record<keyof T, number>>; // 数値をインクリメント
+}
+```
+
+### マイグレーションガイド
+
+#### 自動マイグレーション（推奨）
+
+正規表現を使用した一括置換:
+
+```bash
+# フィルタ演算子の置換
+find . -name "*.ts" -type f -exec sed -i '' \
+  -e 's/{ eq:/{ $eq:/g' \
+  -e 's/{ ne:/{ $ne:/g' \
+  -e 's/{ gt:/{ $gt:/g' \
+  -e 's/{ gte:/{ $gte:/g' \
+  -e 's/{ lt:/{ $lt:/g' \
+  -e 's/{ lte:/{ $lte:/g' \
+  -e 's/{ in:/{ $in:/g' \
+  -e 's/{ nin:/{ $nin:/g' \
+  -e 's/{ exists:/{ $exists:/g' \
+  -e 's/{ regex:/{ $regex:/g' \
+  {} \;
+
+# 更新演算子の置換
+find . -name "*.ts" -type f -exec sed -i '' \
+  -e 's/{ set:/{ $set:/g' \
+  -e 's/{ unset:/{ $unset:/g' \
+  -e 's/{ inc:/{ $inc:/g' \
+  {} \;
+
+# 論理演算子の置換
+find . -name "*.ts" -type f -exec sed -i '' \
+  -e 's/and:/\$and:/g' \
+  -e 's/or:/\$or:/g' \
+  {} \;
+```
+
+#### 手動マイグレーション
+
+1. **フィルタ演算子の更新**:
+   - `eq` → `$eq`
+   - `ne` → `$ne`
+   - `gt` → `$gt`
+   - `gte` → `$gte`
+   - `lt` → `$lt`
+   - `lte` → `$lte`
+   - `in` → `$in`
+   - `nin` → `$nin`
+   - `exists` → `$exists`
+   - `regex` → `$regex`
+
+2. **更新演算子の更新**:
+   - `set` → `$set`
+   - `unset` → `$unset`
+   - `inc` → `$inc`
+
+3. **論理演算子の更新**:
+   - `and` → `$and`
+   - `or` → `$or`
+
+#### TypeScriptによる型チェック
+
+v1.0.0にアップグレード後、TypeScriptコンパイラが自動的にエラーを検出します:
+
+```typescript
+// v0.xのコード（v1.0.0ではコンパイルエラー）
+const filter = {
+  priority: { gte: 5 }  // ❌ Property 'gte' does not exist
+};
+
+// v1.0.0のコード（正しい）
+const filter = {
+  priority: { $gte: 5 }  // ✅ OK
+};
+```
+
+### 実装計画
+
+#### フェーズ1: 型定義の更新
+
+1. `FilterOperators`のプロパティ名を`$`プレフィックス付きに変更
+2. `UpdateOperators`のプロパティ名を`$`プレフィックス付きに変更
+3. `Filter`の`and`/`or`を`$and`/`$or`に変更
+
+#### フェーズ2: サーバー側実装の更新
+
+1. クエリ変換ロジックで`$`プレフィックスを処理
+2. 更新演算子の処理で`$`プレフィックスを処理
+3. 既存のテストを更新
+
+#### フェーズ3: クライアント側実装の更新
+
+1. Collection、FindCursorの型定義を更新
+2. 使用例を更新
+3. 統合テストを更新
+
+#### フェーズ4: ドキュメント更新
+
+1. README.mdの使用例を更新
+2. API.mdのオペレータ一覧を更新
+3. CHANGELOG.mdに破壊的変更を明記
+4. マイグレーションガイドを追加
+
+#### フェーズ5: バージョンアップ
+
+1. package.jsonのバージョンを`1.0.0`に更新
+2. npmに公開
+3. GitHub Releaseを作成
+
+### 期待される効果
+
+1. **MongoDB互換性**: MongoDBの公式ドキュメントと完全に一致
+2. **学習コスト削減**: MongoDB経験者が即座に使用可能
+3. **エコシステム統合**: MongoDB関連ツールとの統合が容易
+4. **明確な意図**: `$`プレフィックスにより演算子であることが明確
+5. **将来の拡張性**: MongoDB互換の新しい演算子を追加しやすい
+
+### 注意事項
+
+1. **破壊的変更**: v0.xからv1.0.0へのアップグレードには既存コードの更新が必要
+2. **型チェック**: TypeScriptコンパイラが自動的にエラーを検出するため、見落としは少ない
+3. **段階的移行**: 大規模プロジェクトでは、機能ごとに段階的に移行することを推奨
+4. **テスト**: マイグレーション後は必ず全テストを実行して動作を確認
