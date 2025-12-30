@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2024-12-30
+
+### Fixed
+
+- **Filter Operator Support**: Added support for `in`, `nin`, `contains`, and `exists` operators
+  - Updated `FilterOperator` type to include all supported operators
+  - Enhanced `parseFilters` function to support nested object filter syntax: `{ id: { in: [...] } }`
+  - Added `contains` and `exists` operator handling in `matchesAllFilters` function
+  - Fixed react-admin integration: `getMany` operation now works correctly with `in` operator
+  - Backward compatible: Both filter syntaxes are supported (`"id:in"` and `{ id: { in: [...] } }`)
+
 ## [0.9.0] - 2024-12-29
 
 ### Added

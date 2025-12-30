@@ -1,14 +1,16 @@
 /**
  * Find操作のユーティリティ関数
  */
-
-import type { FindParams } from '../../types.js';
-import type { ParsedFilter, OptimizableFilter, NormalizedFindParams } from './types.js';
-import { getShadowConfig } from '../../shadow/index.js';
-import { createLogger } from '../../../shared/index.js';
-import { parseFilterField } from '../../utils/filter.js';
 import { ConfigError } from '../../../shared/errors/index.js';
-import { normalizeSort as originalNormalizeSort, normalizePagination as originalNormalizePagination } from '../../utils/validation.js';
+import { createLogger } from '../../../shared/index.js';
+import { getShadowConfig } from '../../shadow/index.js';
+import type { FindParams } from '../../types.js';
+import { parseFilterField } from '../../utils/filter.js';
+import {
+  normalizePagination as originalNormalizePagination,
+  normalizeSort as originalNormalizeSort,
+} from '../../utils/validation.js';
+import type { NormalizedFindParams, OptimizableFilter, ParsedFilter } from './types.js';
 
 const logger = createLogger({
   service: 'find-utils',
@@ -17,7 +19,7 @@ const logger = createLogger({
 
 /**
  * Find操作の設定を初期化する
- * 
+ *
  * @returns シャドウ設定
  */
 export function initializeFindConfig() {
@@ -26,7 +28,7 @@ export function initializeFindConfig() {
 
 /**
  * Find操作のパラメータを正規化する
- * 
+ *
  * @param config - シャドウ設定
  * @param resource - リソース名
  * @param params - Find操作のパラメータ
@@ -39,7 +41,7 @@ export function normalizeFindParams(
 ): NormalizedFindParams {
   // ソート条件を正規化
   const sort = originalNormalizeSort(config, resource, params.sort);
-  
+
   // ページネーション条件を正規化
   const pagination = originalNormalizePagination(params.pagination);
 
@@ -55,13 +57,15 @@ export function normalizeFindParams(
 
 /**
  * フィルター条件を解析する
- * 
+ *
+ * 2つの形式をサポート:
+ * 1. フィールド名に演算子を含める形式: { "id:in": ["value1", "value2"] }
+ * 2. ネストされたオブジェクト形式: { id: { in: ["value1", "value2"] } }
+ *
  * @param filter - フィルター条件
  * @returns 解析済みフィルター条件の配列
  */
-function parseFilters(
-  filter?: Record<string, unknown>
-): ParsedFilter[] {
+function parseFilters(filter?: Record<string, unknown>): ParsedFilter[] {
   const parsedFilters: ParsedFilter[] = [];
 
   if (!filter || Object.keys(filter).length === 0) {
@@ -70,8 +74,18 @@ function parseFilters(
 
   for (const [fieldKey, value] of Object.entries(filter)) {
     try {
-      const parsed = parseFilterField(fieldKey);
-      parsedFilters.push({ parsed, value });
+      // 値がオブジェクトの場合、ネストされた演算子形式として処理
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // { id: { in: ["value1", "value2"] } } 形式
+        for (const [operator, operatorValue] of Object.entries(value)) {
+          const parsed = parseFilterField(`${fieldKey}:${operator}`);
+          parsedFilters.push({ parsed, value: operatorValue });
+        }
+      } else {
+        // { "id:in": ["value1", "value2"] } 形式または { id: "value" } 形式
+        const parsed = parseFilterField(fieldKey);
+        parsedFilters.push({ parsed, value });
+      }
     } catch (error) {
       logger.error('Invalid filter field syntax', {
         fieldKey,
@@ -89,7 +103,7 @@ function parseFilters(
 
 /**
  * 最適化可能なフィルター条件を検索する
- * 
+ *
  * @param sortField - ソートフィールド
  * @param parsedFilters - 解析済みフィルター条件
  * @returns 最適化可能なフィルター条件（見つからない場合はundefined）
@@ -98,14 +112,14 @@ export function findOptimizableFilter(
   sortField: string,
   parsedFilters: ParsedFilter[]
 ): OptimizableFilter | undefined {
-  return parsedFilters.find(
-    (filter) => filter.parsed.field === sortField
-  ) as OptimizableFilter | undefined;
+  return parsedFilters.find((filter) => filter.parsed.field === sortField) as
+    | OptimizableFilter
+    | undefined;
 }
 
 /**
  * すべてのフィルター条件にマッチするかチェックする
- * 
+ *
  * @param record - レコード
  * @param parsedFilters - 解析済みフィルター条件
  * @returns マッチする場合true
@@ -137,7 +151,27 @@ export function matchesAllFilters(
       case 'nin':
         return Array.isArray(filterValue) && !filterValue.includes(recordValue);
       case 'starts':
-        return typeof recordValue === 'string' && typeof filterValue === 'string' && recordValue.startsWith(filterValue);
+        return (
+          typeof recordValue === 'string' &&
+          typeof filterValue === 'string' &&
+          recordValue.startsWith(filterValue)
+        );
+      case 'ends':
+        return (
+          typeof recordValue === 'string' &&
+          typeof filterValue === 'string' &&
+          recordValue.endsWith(filterValue)
+        );
+      case 'contains':
+        return (
+          typeof recordValue === 'string' &&
+          typeof filterValue === 'string' &&
+          recordValue.includes(filterValue)
+        );
+      case 'exists':
+        return filterValue
+          ? recordValue !== undefined && recordValue !== null
+          : recordValue === undefined || recordValue === null;
       default:
         return true;
     }

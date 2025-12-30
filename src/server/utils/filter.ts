@@ -10,7 +10,19 @@
  *
  * 要件: 12.2
  */
-export type FilterOperator = 'eq' | 'lt' | 'lte' | 'gt' | 'gte' | 'starts' | 'ends';
+export type FilterOperator =
+  | 'eq'
+  | 'ne'
+  | 'lt'
+  | 'lte'
+  | 'gt'
+  | 'gte'
+  | 'in'
+  | 'nin'
+  | 'starts'
+  | 'ends'
+  | 'contains'
+  | 'exists';
 
 /**
  * フィルター型
@@ -102,7 +114,20 @@ export function parseFilterField(fieldKey: string): ParsedFilterField {
  * 演算子が有効かチェックする
  */
 function isValidOperator(operator: string): operator is FilterOperator {
-  return ['eq', 'lt', 'lte', 'gt', 'gte', 'starts', 'ends'].includes(operator);
+  return [
+    'eq',
+    'ne',
+    'lt',
+    'lte',
+    'gt',
+    'gte',
+    'in',
+    'nin',
+    'starts',
+    'ends',
+    'contains',
+    'exists',
+  ].includes(operator);
 }
 
 /**
