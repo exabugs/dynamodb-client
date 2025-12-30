@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2024-12-31
+
+### Fixed
+
+- **Lambda Handler**: Improved CORS and error handling
+  - Simplified CORS preflight handling with dedicated `createCorsResponse` function
+  - Improved error response structure with consistent CORS headers
+  - Enhanced error logging with request context
+  - Better separation of concerns between response builders and error handlers
+
 ## [0.9.2] - 2024-12-31
 
 ### Fixed
