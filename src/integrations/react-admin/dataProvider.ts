@@ -273,7 +273,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
 
         // IDの配列でレコードを検索（デフォルトソートを指定）
         const items = await collection
-          .find({ id: { in: params.ids.map(String) } })
+          .find({ id: { $in: params.ids.map(String) } })
           .sort({ id: 'asc' })
           .toArray();
 
@@ -374,7 +374,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         await collection.updateOne(
           { id: String(params.id) },
           {
-            set: params.data,
+            $set: params.data,
           }
         );
 
@@ -404,9 +404,9 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
 
         // 複数レコードを更新
         await collection.updateMany(
-          { id: { in: params.ids.map(String) } },
+          { id: { $in: params.ids.map(String) } },
           {
-            set: params.data,
+            $set: params.data,
           }
         );
 
@@ -463,7 +463,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const collection = db.collection(resource);
 
         // 複数レコードを削除
-        await collection.deleteMany({ id: { in: params.ids.map(String) } });
+        await collection.deleteMany({ id: { $in: params.ids.map(String) } });
 
         // react-adminは削除されたIDの配列を期待
         return { data: params.ids.map(String) };

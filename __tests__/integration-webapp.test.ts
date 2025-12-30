@@ -115,7 +115,7 @@ describeOrSkip('Webアプリケーション統合テスト', () => {
       });
 
       const updateResult = await articles.updateOne({ id: 'article-001' } as Filter<Article>, {
-        set: {
+        $set: {
           status: 'published',
           publishedAt: '2025-01-19T11:00:00.000Z',
         },
@@ -267,7 +267,7 @@ describeOrSkip('Webアプリケーション統合テスト', () => {
       });
 
       const updateResult = await articles.updateMany({ status: 'draft' } as Filter<Article>, {
-        set: {
+        $set: {
           status: 'published',
           publishedAt: '2025-01-19T12:00:00.000Z',
         },
@@ -290,7 +290,7 @@ describeOrSkip('Webアプリケーション統合テスト', () => {
       });
 
       const deleteResult = await articles.deleteMany({
-        id: { in: ['article-A', 'article-B', 'article-C'] },
+        id: { $in: ['article-A', 'article-B', 'article-C'] },
       } as Filter<Article>);
 
       expect(deleteResult.acknowledged).toBe(true);
@@ -327,7 +327,7 @@ describeOrSkip('Webアプリケーション統合テスト', () => {
       const results = await articles
         .find({
           status: 'published',
-          priority: { gte: 5 },
+          priority: { $gte: 5 },
         } as Filter<Article>)
         .sort({ priority: 'desc' })
         .limit(10)

@@ -237,7 +237,7 @@ describeOrSkip('Lambda統合テスト', () => {
 
       const foundArticles = await articles
         .find({
-          publishedAt: { lt: '2024-06-01T00:00:00.000Z' },
+          publishedAt: { $lt: '2024-06-01T00:00:00.000Z' },
         } as Filter<Article>)
         .toArray();
 
@@ -259,7 +259,7 @@ describeOrSkip('Lambda統合テスト', () => {
       });
 
       const deleteResult = await articles.deleteMany({
-        id: { in: idsToDelete },
+        id: { $in: idsToDelete },
       } as Filter<Article>);
 
       expect(deleteResult.acknowledged).toBe(true);
@@ -319,7 +319,7 @@ describeOrSkip('Lambda統合テスト', () => {
       });
 
       const updateResult = await tasks.updateMany({ status: 'processing' } as Filter<Task>, {
-        set: {
+        $set: {
           status: 'completed',
         },
       });

@@ -106,16 +106,16 @@ export function convertFilterToDynamo<T = any>(collection: string, filter: Filte
   }
 
   // 論理演算子の処理
-  if ('and' in filter && Array.isArray(filter.and)) {
+  if ('$and' in filter && Array.isArray(filter.$and)) {
     // AND条件: 各フィルタを再帰的に変換して結合
-    for (const subFilter of filter.and) {
+    for (const subFilter of filter.$and) {
       const subQuery = convertFilterToDynamo(collection, subFilter);
       conditions.push(...subQuery.conditions);
     }
     logicalOperator = 'AND';
-  } else if ('or' in filter && Array.isArray(filter.or)) {
+  } else if ('$or' in filter && Array.isArray(filter.$or)) {
     // OR条件: 各フィルタを再帰的に変換して結合
-    for (const subFilter of filter.or) {
+    for (const subFilter of filter.$or) {
       const subQuery = convertFilterToDynamo(collection, subFilter);
       conditions.push(...subQuery.conditions);
     }
@@ -125,7 +125,7 @@ export function convertFilterToDynamo<T = any>(collection: string, filter: Filte
   // 通常のフィールド条件を処理
   for (const [key, value] of Object.entries(filter)) {
     // 論理演算子はスキップ
-    if (key === 'and' || key === 'or') {
+    if (key === '$and' || key === '$or') {
       continue;
     }
 
@@ -175,7 +175,18 @@ function isFilterOperators(value: unknown): value is FilterOperators<any> {
     return false;
   }
 
-  const validOperators = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'nin', 'exists', 'regex'];
+  const validOperators = [
+    '$eq',
+    '$ne',
+    '$gt',
+    '$gte',
+    '$lt',
+    '$lte',
+    '$in',
+    '$nin',
+    '$exists',
+    '$regex',
+  ];
   const keys = Object.keys(value);
 
   // 少なくとも1つの有効な演算子キーを持つ場合はFilterOperatorsとみなす
@@ -185,30 +196,30 @@ function isFilterOperators(value: unknown): value is FilterOperators<any> {
 /**
  * MongoDB風の演算子をDynamoDB演算子にマッピングする
  *
- * @param operator - MongoDB風の演算子
+ * @param operator - MongoDB風の演算子（$プレフィックス付き）
  * @returns DynamoDB演算子
  */
 function mapOperatorToDynamo(operator: keyof FilterOperators<any>): DynamoComparisonOperator {
   switch (operator) {
-    case 'eq':
+    case '$eq':
       return 'eq';
-    case 'ne':
+    case '$ne':
       return 'ne';
-    case 'gt':
+    case '$gt':
       return 'gt';
-    case 'gte':
+    case '$gte':
       return 'gte';
-    case 'lt':
+    case '$lt':
       return 'lt';
-    case 'lte':
+    case '$lte':
       return 'lte';
-    case 'in':
+    case '$in':
       return 'in';
-    case 'nin':
+    case '$nin':
       return 'nin';
-    case 'exists':
+    case '$exists':
       return 'exists';
-    case 'regex':
+    case '$regex':
       // 正規表現は部分一致（contains）として扱う（簡易実装）
       return 'contains';
     default:

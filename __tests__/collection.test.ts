@@ -245,7 +245,7 @@ describe('Collection', () => {
     it('単一ドキュメントを更新する', async () => {
       const filter: Filter<Product> = { id: 'prod-123' };
       const update: UpdateOperators<Product> = {
-        set: { status: 'inactive' },
+        $set: { status: 'inactive' },
       };
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -271,7 +271,7 @@ describe('Collection', () => {
     it('upsert=trueでレコードが存在しない場合は新規作成する', async () => {
       const filter: Filter<Product> = { id: 'prod-new' };
       const update: UpdateOperators<Product> = {
-        set: { name: 'New Product', status: 'active' },
+        $set: { name: 'New Product', status: 'active' },
       };
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -296,7 +296,7 @@ describe('Collection', () => {
     it('upsert=trueでレコードが存在する場合は更新する', async () => {
       const filter: Filter<Product> = { id: 'prod-123' };
       const update: UpdateOperators<Product> = {
-        set: { status: 'inactive' },
+        $set: { status: 'inactive' },
       };
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -322,7 +322,7 @@ describe('Collection', () => {
     it('upsert=falseまたは省略時にレコードが存在しない場合はエラー', async () => {
       const filter: Filter<Product> = { id: 'prod-nonexistent' };
       const update: UpdateOperators<Product> = {
-        set: { status: 'inactive' },
+        $set: { status: 'inactive' },
       };
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -341,7 +341,7 @@ describe('Collection', () => {
     it('複数ドキュメントを更新する', async () => {
       const filter: Filter<Product> = { status: 'inactive' };
       const update: UpdateOperators<Product> = {
-        set: { status: 'active' },
+        $set: { status: 'active' },
       };
 
       (global.fetch as any).mockResolvedValueOnce({

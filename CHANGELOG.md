@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-01-01
+
+### BREAKING CHANGES
+
+- **MongoDB互換性向上**: すべての操作オペレータに `$` プレフィックスを追加
+  - **フィルタ演算子**: `eq` → `$eq`, `gt` → `$gt`, `gte` → `$gte`, `lt` → `$lt`, `lte` → `$lte`, `in` → `$in`, `nin` → `$nin`, `exists` → `$exists`, `regex` → `$regex`, `ne` → `$ne`
+  - **更新演算子**: `set` → `$set`, `unset` → `$unset`, `inc` → `$inc`
+  - **論理演算子**: `and` → `$and`, `or` → `$or`
+  - MongoDBの公式ドキュメントと完全に一致する構文を採用
+  - TypeScriptコンパイラが自動的にエラーを検出するため、移行は比較的容易
+
+### Migration Guide
+
+v0.xからv1.0.0へのアップグレードには、既存コードの更新が必要です。詳細なマイグレーションガイドは [docs/MIGRATION_v1.md](./docs/MIGRATION_v1.md) を参照してください。
+
+**主な変更点**:
+
+```typescript
+// v0.x（旧）
+collection.find({ age: { gte: 18 } });
+collection.updateOne({ id: '123' }, { set: { name: 'John' } });
+
+// v1.0.0（新）
+collection.find({ age: { $gte: 18 } });
+collection.updateOne({ id: '123' }, { $set: { name: 'John' } });
+```
+
+**自動マイグレーション**:
+
+```bash
+# 一括置換（推奨）
+find src -name "*.ts" -type f -exec sed -i '' \
+  -e 's/{ eq:/{ $eq:/g' \
+  -e 's/{ gt:/{ $gt:/g' \
+  -e 's/{ gte:/{ $gte:/g' \
+  -e 's/{ lt:/{ $lt:/g' \
+  -e 's/{ lte:/{ $lte:/g' \
+  -e 's/{ in:/{ $in:/g' \
+  -e 's/{ nin:/{ $nin:/g' \
+  -e 's/{ exists:/{ $exists:/g' \
+  -e 's/{ regex:/{ $regex:/g' \
+  -e 's/{ ne:/{ $ne:/g' \
+  -e 's/{ set:/{ $set:/g' \
+  -e 's/{ unset:/{ $unset:/g' \
+  -e 's/{ inc:/{ $inc:/g' \
+  -e 's/{ and:/{ $and:/g' \
+  -e 's/{ or:/{ $or:/g' \
+  {} +
+```
+
+### Benefits
+
+- **MongoDB互換性**: MongoDBの公式ドキュメントと完全に一致
+- **学習コスト削減**: MongoDB経験者が即座に使用可能
+- **エコシステム統合**: MongoDB関連ツールとの統合が容易
+- **明確な意図**: `$` プレフィックスにより演算子であることが明確
+- **将来の拡張性**: MongoDB互換の新しい演算子を追加しやすい
+
+### Changed
+
+- **型定義**: `FilterOperators`, `UpdateOperators`, `Filter` 型を更新
+- **サーバー側**: クエリ変換と更新演算子処理を更新
+- **クライアント側**: `Collection` と `FindCursor` の実装を更新
+- **react-admin統合**: データプロバイダーを更新
+- **テスト**: すべてのテストケース（314件）を更新し、全テストが通過
+
+### Documentation
+
+- **マイグレーションガイド**: 詳細な移行手順を `docs/MIGRATION_v1.md` に追加
+- **APIリファレンス**: `docs/API.md` のオペレータ一覧を更新
+- **使用例**: すべてのコード例を新しい構文に更新
+
 ## [0.9.3] - 2024-12-31
 
 ### Fixed

@@ -6,32 +6,32 @@
  */
 
 /**
- * フィルタ演算子（$プレフィックスなし）
+ * フィルタ演算子（$プレフィックス付き - MongoDB互換）
  *
  * MongoDB風のクエリ演算子を提供します。
- * すべての演算子は$プレフィックスなしで使用します。
+ * すべての演算子は$プレフィックス付きで使用します（MongoDB互換）。
  */
 export interface FilterOperators<T> {
   /** 等しい */
-  eq?: T;
+  $eq?: T;
   /** 等しくない */
-  ne?: T;
+  $ne?: T;
   /** より大きい */
-  gt?: T;
+  $gt?: T;
   /** 以上 */
-  gte?: T;
+  $gte?: T;
   /** より小さい */
-  lt?: T;
+  $lt?: T;
   /** 以下 */
-  lte?: T;
+  $lte?: T;
   /** いずれかに一致 */
-  in?: T[];
+  $in?: T[];
   /** いずれにも一致しない */
-  nin?: T[];
+  $nin?: T[];
   /** フィールドの存在チェック */
-  exists?: boolean;
+  $exists?: boolean;
   /** 正規表現マッチ */
-  regex?: string | RegExp;
+  $regex?: string | RegExp;
 }
 
 /**
@@ -45,17 +45,17 @@ export interface FilterOperators<T> {
  * // 直接値を指定
  * const filter: Filter<Product> = { status: 'active' };
  *
- * // 演算子を使用
+ * // 演算子を使用（$プレフィックス付き）
  * const filter: Filter<Product> = {
- *   price: { gte: 1000, lte: 5000 },
- *   status: { in: ['active', 'pending'] }
+ *   price: { $gte: 1000, $lte: 5000 },
+ *   status: { $in: ['active', 'pending'] }
  * };
  *
- * // 論理演算子を使用
+ * // 論理演算子を使用（$プレフィックス付き）
  * const filter: Filter<Product> = {
- *   or: [
+ *   $or: [
  *     { status: 'active' },
- *     { priority: { gte: 5 } }
+ *     { priority: { $gte: 5 } }
  *   ]
  * };
  * ```
@@ -64,49 +64,49 @@ export type Filter<T> = {
   [P in keyof T]?: T[P] | FilterOperators<T[P]>;
 } & {
   /** AND条件（すべての条件を満たす） */
-  and?: Filter<T>[];
+  $and?: Filter<T>[];
   /** OR条件（いずれかの条件を満たす） */
-  or?: Filter<T>[];
+  $or?: Filter<T>[];
 };
 
 /**
- * 更新演算子（$プレフィックスなし）
+ * 更新演算子（$プレフィックス付き - MongoDB互換）
  *
  * MongoDB風の更新演算子を提供します。
- * すべての演算子は$プレフィックスなしで使用します。
+ * すべての演算子は$プレフィックス付きで使用します（MongoDB互換）。
  *
  * @example
  * ```typescript
  * // フィールドを設定
  * const update: UpdateOperators<Product> = {
- *   set: { status: 'published', updatedAt: new Date().toISOString() }
+ *   $set: { status: 'published', updatedAt: new Date().toISOString() }
  * };
  *
  * // フィールドを削除
  * const update: UpdateOperators<Product> = {
- *   unset: ['description', 'tags']
+ *   $unset: ['description', 'tags']
  * };
  *
  * // 数値をインクリメント
  * const update: UpdateOperators<Product> = {
- *   inc: { stock: -1, viewCount: 1 }
+ *   $inc: { stock: -1, viewCount: 1 }
  * };
  *
  * // 複数の演算子を組み合わせ
  * const update: UpdateOperators<Product> = {
- *   set: { status: 'published' },
- *   inc: { viewCount: 1 },
- *   unset: ['draft']
+ *   $set: { status: 'published' },
+ *   $inc: { viewCount: 1 },
+ *   $unset: ['draft']
  * };
  * ```
  */
 export interface UpdateOperators<T> {
   /** フィールドを設定 */
-  set?: Partial<T>;
+  $set?: Partial<T>;
   /** フィールドを削除 */
-  unset?: (keyof T)[];
+  $unset?: (keyof T)[];
   /** 数値をインクリメント（負の値でデクリメント） */
-  inc?: Partial<Record<keyof T, number>>;
+  $inc?: Partial<Record<keyof T, number>>;
 }
 
 /**

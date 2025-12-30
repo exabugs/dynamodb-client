@@ -13,7 +13,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 /**
  * モックイベントを作成するヘルパー関数
  */
-function createMockEvent(body: string, headers: Record<string, string> = {}): APIGatewayProxyEventV2 {
+function createMockEvent(
+  body: string,
+  headers: Record<string, string> = {}
+): APIGatewayProxyEventV2 {
   return {
     version: '2.0',
     routeKey: '$default',
@@ -229,7 +232,7 @@ describe('Lambda Handler', () => {
         params: {
           filter: { id: 'article-001' },
           update: {
-            set: {
+            $set: {
               status: 'published',
             },
           },
@@ -240,7 +243,7 @@ describe('Lambda Handler', () => {
       expect(parsed.operation).toBe('updateOne');
       expect(parsed.collection).toBe('articles');
       expect(parsed.params.filter.id).toBe('article-001');
-      expect(parsed.params.update.set).toEqual({ status: 'published' });
+      expect(parsed.params.update.$set).toEqual({ status: 'published' });
     });
 
     it('deleteOne 操作のリクエスト形式', () => {
@@ -281,9 +284,9 @@ describe('Lambda Handler', () => {
         operation: 'updateMany',
         collection: 'articles',
         params: {
-          filter: { id: { in: ['article-001', 'article-002'] } },
+          filter: { id: { $in: ['article-001', 'article-002'] } },
           update: {
-            set: { status: 'archived' },
+            $set: { status: 'archived' },
           },
         },
       });
@@ -291,7 +294,7 @@ describe('Lambda Handler', () => {
       const parsed = JSON.parse(body);
       expect(parsed.operation).toBe('updateMany');
       expect(parsed.collection).toBe('articles');
-      expect(parsed.params.filter.id.in).toEqual(['article-001', 'article-002']);
+      expect(parsed.params.filter.id.$in).toEqual(['article-001', 'article-002']);
     });
 
     it('deleteMany 操作のリクエスト形式', () => {
@@ -299,14 +302,14 @@ describe('Lambda Handler', () => {
         operation: 'deleteMany',
         collection: 'articles',
         params: {
-          filter: { id: { in: ['article-001', 'article-002'] } },
+          filter: { id: { $in: ['article-001', 'article-002'] } },
         },
       });
 
       const parsed = JSON.parse(body);
       expect(parsed.operation).toBe('deleteMany');
       expect(parsed.collection).toBe('articles');
-      expect(parsed.params.filter.id.in).toEqual(['article-001', 'article-002']);
+      expect(parsed.params.filter.id.$in).toEqual(['article-001', 'article-002']);
     });
   });
 

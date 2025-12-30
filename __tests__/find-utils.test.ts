@@ -28,22 +28,22 @@ describe('parseFilters（統合テスト）', () => {
   describe('ネストされたオブジェクト形式', () => {
     it('in演算子（ネスト形式）', () => {
       const filter = {
-        id: { in: ['id1', 'id2', 'id3'] },
+        id: { $in: ['id1', 'id2', 'id3'] },
       };
       expect(filter).toBeDefined();
     });
 
     it('複数の演算子', () => {
       const filter = {
-        priority: { gte: 5, lte: 10 },
+        priority: { $gte: 5, $lte: 10 },
       };
       expect(filter).toBeDefined();
     });
 
     it('複数のフィールド', () => {
       const filter = {
-        status: { eq: 'active' },
-        priority: { gte: 5 },
+        status: { $eq: 'active' },
+        priority: { $gte: 5 },
       };
       expect(filter).toBeDefined();
     });
@@ -52,8 +52,8 @@ describe('parseFilters（統合テスト）', () => {
   describe('混在形式', () => {
     it('フィールド名形式とネスト形式の混在', () => {
       const filter = {
-        'status:eq': 'active',
-        priority: { gte: 5 },
+        'status:$eq': 'active',
+        priority: { $gte: 5 },
       };
       expect(filter).toBeDefined();
     });

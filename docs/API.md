@@ -123,7 +123,7 @@ const products = db.collection<Product>('products');
 
 // レコードを検索
 const activeProducts = await products
-  .find({ status: 'active', price: { gte: 1000 } })
+  .find({ status: 'active', price: { $gte: 1000 } })
   .sort({ price: 'desc' })
   .limit(10)
   .toArray();
@@ -140,7 +140,7 @@ const result = await products.insertOne({
 // レコードを更新
 await products.updateOne(
   { id: result.insertedId },
-  { set: { price: 2500, updatedAt: new Date().toISOString() } }
+  { $set: { price: 2500, updatedAt: new Date().toISOString() } }
 );
 
 // レコードを削除
@@ -277,15 +277,15 @@ const cursor = products.find({ status: 'active' });
 // 複雑な条件
 const cursor = products.find({
   status: 'active',
-  price: { gte: 1000, lte: 5000 },
-  category: { in: ['electronics', 'books'] }
+  price: { $gte: 1000, $lte: 5000 },
+  category: { $in: ['electronics', 'books'] }
 });
 
 // 論理演算子
 const cursor = products.find({
-  or: [
+  $or: [
     { status: 'active' },
-    { priority: { gte: 5 } }
+    { priority: { $gte: 5 } }
   ]
 });
 ```
@@ -437,9 +437,9 @@ async updateOne(
 const result = await products.updateOne(
   { id: 'product-123' },
   {
-    set: { price: 1500, updatedAt: new Date().toISOString() },
-    inc: { viewCount: 1 },
-    unset: ['oldField'],
+    $set: { price: 1500, updatedAt: new Date().toISOString() },
+    $inc: { viewCount: 1 },
+    $unset: ['oldField'],
   }
 );
 
@@ -450,7 +450,7 @@ console.log('Modified:', result.modifiedCount);
 const upsertResult = await products.updateOne(
   { id: 'product-456' },
   {
-    set: {
+    $set: {
       name: 'New Product',
       price: 2000,
       status: 'active',
@@ -506,7 +506,7 @@ async updateMany(
 // 基本的な一括更新
 const result = await products.updateMany(
   { status: 'draft' },
-  { set: { status: 'active', updatedAt: new Date().toISOString() } }
+  { $set: { status: 'active', updatedAt: new Date().toISOString() } }
 );
 
 console.log('Updated count:', result.modifiedCount);
@@ -515,7 +515,7 @@ console.log('Updated count:', result.modifiedCount);
 const upsertResult = await products.updateMany(
   { category: 'new-category' },
   {
-    set: {
+    $set: {
       name: 'Default Product',
       price: 1000,
       status: 'active',
@@ -726,25 +726,25 @@ type Filter<T> = {
 ```typescript
 interface FilterOperators<T> {
   /** 等しい */
-  eq?: T;
+  $eq?: T;
   /** 等しくない */
-  ne?: T;
+  $ne?: T;
   /** より大きい */
-  gt?: T;
+  $gt?: T;
   /** 以上 */
-  gte?: T;
+  $gte?: T;
   /** より小さい */
-  lt?: T;
+  $lt?: T;
   /** 以下 */
-  lte?: T;
+  $lte?: T;
   /** いずれかに一致 */
-  in?: T[];
+  $in?: T[];
   /** いずれにも一致しない */
-  nin?: T[];
+  $nin?: T[];
   /** フィールドの存在チェック */
-  exists?: boolean;
+  $exists?: boolean;
   /** 正規表現マッチ */
-  regex?: string | RegExp;
+  $regex?: string | RegExp;
 }
 ```
 
@@ -756,16 +756,16 @@ const filter: Filter<Product> = { status: 'active' };
 
 // 演算子を使用
 const filter: Filter<Product> = {
-  price: { gte: 1000, lte: 5000 },
-  status: { in: ['active', 'pending'] },
-  name: { regex: /^Product/ }
+  price: { $gte: 1000, $lte: 5000 },
+  status: { $in: ['active', 'pending'] },
+  name: { $regex: /^Product/ }
 };
 
 // 論理演算子を使用
 const filter: Filter<Product> = {
-  or: [
+  $or: [
     { status: 'active' },
-    { priority: { gte: 5 } }
+    { priority: { $gte: 5 } }
   ]
 };
 ```
@@ -777,11 +777,11 @@ MongoDB風の更新演算子を提供します。
 ```typescript
 interface UpdateOperators<T> {
   /** フィールドを設定 */
-  set?: Partial<T>;
+  $set?: Partial<T>;
   /** フィールドを削除 */
-  unset?: (keyof T)[];
+  $unset?: (keyof T)[];
   /** 数値をインクリメント（負の値でデクリメント） */
-  inc?: Partial<Record<keyof T, number>>;
+  $inc?: Partial<Record<keyof T, number>>;
 }
 ```
 
@@ -790,24 +790,24 @@ interface UpdateOperators<T> {
 ```typescript
 // フィールドを設定
 const update: UpdateOperators<Product> = {
-  set: { status: 'published', updatedAt: new Date().toISOString() }
+  $set: { status: 'published', updatedAt: new Date().toISOString() }
 };
 
 // フィールドを削除
 const update: UpdateOperators<Product> = {
-  unset: ['description', 'tags']
+  $unset: ['description', 'tags']
 };
 
 // 数値をインクリメント
 const update: UpdateOperators<Product> = {
-  inc: { stock: -1, viewCount: 1 }
+  $inc: { stock: -1, viewCount: 1 }
 };
 
 // 複数の演算子を組み合わせ
 const update: UpdateOperators<Product> = {
-  set: { status: 'published' },
-  inc: { viewCount: 1 },
-  unset: ['draft']
+  $set: { status: 'published' },
+  $inc: { viewCount: 1 },
+  $unset: ['draft']
 };
 ```
 
@@ -828,7 +828,7 @@ interface UpdateOneOptions {
 // upsertオプションを使用
 await products.updateOne(
   { id: 'product-123' },
-  { set: { name: 'New Product', price: 1000 } },
+  { $set: { name: 'New Product', price: 1000 } },
   { upsert: true }
 );
 ```
@@ -850,7 +850,7 @@ interface UpdateManyOptions {
 // upsertオプションを使用
 await products.updateMany(
   { category: 'new-category' },
-  { set: { name: 'Default Product', price: 1000 } },
+  { $set: { name: 'Default Product', price: 1000 } },
   { upsert: true }
 );
 ```
@@ -1209,7 +1209,7 @@ if (existing) {
   // 更新
   await products.updateOne(
     { id: 'product-123' },
-    { set: { name: 'Updated Product', price: 1500 } }
+    { $set: { name: 'Updated Product', price: 1500 } }
   );
 } else {
   // 新規作成
@@ -1231,7 +1231,7 @@ if (existing) {
 const result = await products.updateOne(
   { id: 'product-123' },
   {
-    set: {
+    $set: {
       name: 'Product Name',
       price: 1000,
       status: 'active',
@@ -1270,7 +1270,7 @@ upsertオプションを使用する場合は、以下のケースをテスト�
 // テストケース1: 新規作成
 const result1 = await products.updateOne(
   { id: 'new-product' },
-  { set: { name: 'New Product', price: 1000 } },
+  { $set: { name: 'New Product', price: 1000 } },
   { upsert: true }
 );
 expect(result1.upsertedId).toBeDefined();
@@ -1278,14 +1278,14 @@ expect(result1.upsertedId).toBeDefined();
 // テストケース2: 既存の更新
 const result2 = await products.updateOne(
   { id: 'new-product' },
-  { set: { price: 1500 } },
+  { $set: { price: 1500 } },
   { upsert: true }
 );
 expect(result2.upsertedId).toBeUndefined();
 expect(result2.modifiedCount).toBe(1);
 
 // テストケース3: upsert=falseの場合（デフォルト）
-const result3 = await products.updateOne({ id: 'non-existent' }, { set: { name: 'Product' } });
+const result3 = await products.updateOne({ id: 'non-existent' }, { $set: { name: 'Product' } });
 expect(result3.matchedCount).toBe(0);
 expect(result3.modifiedCount).toBe(0);
 ```
@@ -1296,7 +1296,11 @@ upsertオプションを使用する場合も、適切なエラーハンドリ�
 
 ```typescript
 try {
-  const result = await products.updateOne({ id: productId }, { set: updateData }, { upsert: true });
+  const result = await products.updateOne(
+    { id: productId },
+    { $set: updateData },
+    { upsert: true }
+  );
 
   if (result.upsertedId) {
     logger.info('Product created', { id: result.upsertedId });

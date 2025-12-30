@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { convertFilterToDynamo } from '../src/server/query/converter.js';
-import type { Filter } from '../src/types.js';
+import type { Filter } from '../src/shared/types/index.js';
 
 interface Product {
   id: string;
@@ -66,7 +66,7 @@ describe('convertFilterToDynamo', () => {
 
   it('比較演算子を変換する', () => {
     const filter: Filter<Product> = {
-      price: { gte: 1000, lte: 5000 },
+      price: { $gte: 1000, $lte: 5000 },
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -86,7 +86,7 @@ describe('convertFilterToDynamo', () => {
 
   it('in演算子を変換する', () => {
     const filter: Filter<Product> = {
-      status: { in: ['active', 'pending'] },
+      status: { $in: ['active', 'pending'] },
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -104,7 +104,7 @@ describe('convertFilterToDynamo', () => {
 
   it('exists演算子を変換する', () => {
     const filter: Filter<Product> = {
-      name: { exists: true },
+      name: { $exists: true },
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -122,7 +122,7 @@ describe('convertFilterToDynamo', () => {
 
   it('AND条件を変換する', () => {
     const filter: Filter<Product> = {
-      and: [{ status: 'active' }, { price: { gte: 1000 } }],
+      $and: [{ status: 'active' }, { price: { $gte: 1000 } }],
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -143,7 +143,7 @@ describe('convertFilterToDynamo', () => {
 
   it('OR条件を変換する', () => {
     const filter: Filter<Product> = {
-      or: [{ status: 'active' }, { priority: { gte: 5 } }],
+      $or: [{ status: 'active' }, { priority: { $gte: 5 } }],
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -165,8 +165,8 @@ describe('convertFilterToDynamo', () => {
   it('複雑な条件を変換する', () => {
     const filter: Filter<Product> = {
       status: 'active',
-      price: { gte: 1000, lte: 5000 },
-      stock: { gt: 0 },
+      price: { $gte: 1000, $lte: 5000 },
+      stock: { $gt: 0 },
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -197,8 +197,10 @@ describe('convertFilterToDynamo', () => {
   it('nullとundefinedの値をスキップする', () => {
     const filter: Filter<Product> = {
       status: 'active',
-      name: null as any,
-      price: undefined as any,
+      // @ts-expect-error - テスト用にnullとundefinedを意図的に渡す
+      name: null,
+      // @ts-expect-error - テスト用にnullとundefinedを意図的に渡す
+      price: undefined,
     };
     const result = convertFilterToDynamo('products', filter);
 
@@ -213,7 +215,7 @@ describe('convertFilterToDynamo', () => {
 
   it('regex演算子をcontainsに変換する', () => {
     const filter: Filter<Product> = {
-      name: { regex: 'test' },
+      name: { $regex: 'test' },
     };
     const result = convertFilterToDynamo('products', filter);
 
