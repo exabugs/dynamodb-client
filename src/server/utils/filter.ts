@@ -6,23 +6,23 @@
  */
 
 /**
- * フィルター演算子
+ * フィルター演算子（MongoDB互換）
  *
  * 要件: 12.2
  */
 export type FilterOperator =
-  | 'eq'
-  | 'ne'
-  | 'lt'
-  | 'lte'
-  | 'gt'
-  | 'gte'
-  | 'in'
-  | 'nin'
-  | 'starts'
-  | 'ends'
-  | 'contains'
-  | 'exists';
+  | '$eq'
+  | '$ne'
+  | '$lt'
+  | '$lte'
+  | '$gt'
+  | '$gte'
+  | '$in'
+  | '$nin'
+  | '$starts'
+  | '$ends'
+  | '$contains'
+  | '$exists';
 
 /**
  * フィルター型
@@ -61,13 +61,13 @@ export interface FilterExpressionResult {
  * フィルターフィールド名をパースする
  *
  * フォーマット: `フィールド名:オペレータ:型`
- * - オペレータ省略時: eq（デフォルト）
+ * - オペレータ省略時: $eq（デフォルト）
  * - 型省略時: string（デフォルト）
  *
  * 例:
- * - "status" → { field: "status", operator: "eq", type: "string" }
- * - "priority:gte" → { field: "priority", operator: "gte", type: "string" }
- * - "priority:gte:number" → { field: "priority", operator: "gte", type: "number" }
+ * - "status" → { field: "status", operator: "$eq", type: "string" }
+ * - "priority:$gte" → { field: "priority", operator: "$gte", type: "string" }
+ * - "priority:$gte:number" → { field: "priority", operator: "$gte", type: "number" }
  *
  * 要件: 12.1, 12.3, 12.4
  *
@@ -79,12 +79,12 @@ export function parseFilterField(fieldKey: string): ParsedFilterField {
   const parts = fieldKey.split(':');
 
   if (parts.length === 1) {
-    // "status" → { field: "status", operator: "eq", type: "string" }
-    return { field: parts[0], operator: 'eq', type: 'string' };
+    // "status" → { field: "status", operator: "$eq", type: "string" }
+    return { field: parts[0], operator: '$eq', type: 'string' };
   }
 
   if (parts.length === 2) {
-    // "priority:gte" → { field: "priority", operator: "gte", type: "string" }
+    // "priority:$gte" → { field: "priority", operator: "$gte", type: "string" }
     const operator = parts[1] as FilterOperator;
     if (!isValidOperator(operator)) {
       throw new Error(`Invalid filter operator: ${parts[1]}`);
@@ -93,7 +93,7 @@ export function parseFilterField(fieldKey: string): ParsedFilterField {
   }
 
   if (parts.length === 3) {
-    // "priority:gte:number" → { field: "priority", operator: "gte", type: "number" }
+    // "priority:$gte:number" → { field: "priority", operator: "$gte", type: "number" }
     const operator = parts[1] as FilterOperator;
     const type = parts[2] as FilterType;
 
@@ -115,18 +115,18 @@ export function parseFilterField(fieldKey: string): ParsedFilterField {
  */
 function isValidOperator(operator: string): operator is FilterOperator {
   return [
-    'eq',
-    'ne',
-    'lt',
-    'lte',
-    'gt',
-    'gte',
-    'in',
-    'nin',
-    'starts',
-    'ends',
-    'contains',
-    'exists',
+    '$eq',
+    '$ne',
+    '$lt',
+    '$lte',
+    '$gt',
+    '$gte',
+    '$in',
+    '$nin',
+    '$starts',
+    '$ends',
+    '$contains',
+    '$exists',
   ].includes(operator);
 }
 
@@ -325,19 +325,19 @@ export function matchesFilter(
 
   // 演算子に応じた比較
   switch (parsed.operator) {
-    case 'eq':
+    case '$eq':
       return typedFieldValue === typedFilterValue;
-    case 'lt':
+    case '$lt':
       return typedFieldValue < typedFilterValue;
-    case 'lte':
+    case '$lte':
       return typedFieldValue <= typedFilterValue;
-    case 'gt':
+    case '$gt':
       return typedFieldValue > typedFilterValue;
-    case 'gte':
+    case '$gte':
       return typedFieldValue >= typedFilterValue;
-    case 'starts':
+    case '$starts':
       return String(typedFieldValue).startsWith(String(typedFilterValue));
-    case 'ends':
+    case '$ends':
       return String(typedFieldValue).endsWith(String(typedFilterValue));
     default:
       return false;
@@ -376,7 +376,7 @@ export function findOptimizableFilter(
   parsedFilters: Array<{ parsed: ParsedFilterField; value: unknown }>
 ): { parsed: ParsedFilterField; value: unknown } | null {
   // Query可能な演算子
-  const queryableOperators: FilterOperator[] = ['eq', 'lt', 'lte', 'gt', 'gte', 'starts'];
+  const queryableOperators: FilterOperator[] = ['$eq', '$lt', '$lte', '$gt', '$gte', '$starts'];
 
   // ソートフィールドと一致し、Query可能な演算子を持つフィルターを探す
   return (

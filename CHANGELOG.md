@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2025-12-31
+
+### Changed
+
+- **BREAKING**: フィルター演算子を `$` プレフィックス必須に統一
+  - `FilterOperator` 型を `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`, `$in`, `$nin`, `$starts`, `$ends`, `$contains`, `$exists` に変更
+  - すべてのサーバー側フィルター処理で `$` プレフィックスを標準とする
+  - `$` なしの演算子はエラーとして扱う（明確なエラーメッセージ）
+  - MongoDB互換性を完全に保証
+
+### Fixed
+
+- **サーバーサイドフィルター処理**: `$` プレフィックス付き演算子を正しく処理
+  - `find` 操作で `{ id: { $in: [...] } }` 形式のフィルターが正常に動作
+  - react-admin統合からのフィルターが正常に動作
+  - 一貫性のある演算子処理（モンキーパッチなし）
+
 ## [1.0.1] - 2025-12-31
 
 ### Fixed

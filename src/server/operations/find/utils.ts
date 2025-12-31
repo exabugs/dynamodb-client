@@ -59,8 +59,8 @@ export function normalizeFindParams(
  * フィルター条件を解析する
  *
  * 2つの形式をサポート:
- * 1. フィールド名に演算子を含める形式: { "id:in": ["value1", "value2"] }
- * 2. ネストされたオブジェクト形式: { id: { in: ["value1", "value2"] } }
+ * 1. フィールド名に演算子を含める形式: { "id:$in": ["value1", "value2"] }
+ * 2. ネストされたオブジェクト形式: { id: { $in: ["value1", "value2"] } }
  *
  * @param filter - フィルター条件
  * @returns 解析済みフィルター条件の配列
@@ -76,13 +76,13 @@ function parseFilters(filter?: Record<string, unknown>): ParsedFilter[] {
     try {
       // 値がオブジェクトの場合、ネストされた演算子形式として処理
       if (value && typeof value === 'object' && !Array.isArray(value)) {
-        // { id: { in: ["value1", "value2"] } } 形式
+        // { id: { $in: ["value1", "value2"] } } 形式
         for (const [operator, operatorValue] of Object.entries(value)) {
           const parsed = parseFilterField(`${fieldKey}:${operator}`);
           parsedFilters.push({ parsed, value: operatorValue });
         }
       } else {
-        // { "id:in": ["value1", "value2"] } 形式または { id: "value" } 形式
+        // { "id:$in": ["value1", "value2"] } 形式または { id: "value" } 形式
         const parsed = parseFilterField(fieldKey);
         parsedFilters.push({ parsed, value });
       }
@@ -134,41 +134,41 @@ export function matchesAllFilters(
     const filterValue = filter.value as any;
 
     switch (operator) {
-      case 'eq':
+      case '$eq':
         return recordValue === filterValue;
-      case 'ne':
+      case '$ne':
         return recordValue !== filterValue;
-      case 'gt':
+      case '$gt':
         return recordValue != null && recordValue > (filterValue as any);
-      case 'gte':
+      case '$gte':
         return recordValue != null && recordValue >= (filterValue as any);
-      case 'lt':
+      case '$lt':
         return recordValue != null && recordValue < (filterValue as any);
-      case 'lte':
+      case '$lte':
         return recordValue != null && recordValue <= (filterValue as any);
-      case 'in':
+      case '$in':
         return Array.isArray(filterValue) && filterValue.includes(recordValue);
-      case 'nin':
+      case '$nin':
         return Array.isArray(filterValue) && !filterValue.includes(recordValue);
-      case 'starts':
+      case '$starts':
         return (
           typeof recordValue === 'string' &&
           typeof filterValue === 'string' &&
           recordValue.startsWith(filterValue)
         );
-      case 'ends':
+      case '$ends':
         return (
           typeof recordValue === 'string' &&
           typeof filterValue === 'string' &&
           recordValue.endsWith(filterValue)
         );
-      case 'contains':
+      case '$contains':
         return (
           typeof recordValue === 'string' &&
           typeof filterValue === 'string' &&
           recordValue.includes(filterValue)
         );
-      case 'exists':
+      case '$exists':
         return filterValue
           ? recordValue !== undefined && recordValue !== null
           : recordValue === undefined || recordValue === null;
