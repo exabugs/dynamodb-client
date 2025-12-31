@@ -58,6 +58,11 @@ import type { DataProviderOptions } from './types.js';
 /**
  * react-adminのフィルタをDynamoDB Client SDKのFilter型に変換
  *
+ * dynamodb-client 1.0.0 では、すべての演算子に $ プレフィックスが必要です。
+ * react-admin は演算子を $ なしで送信するため、ここで変換します。
+ *
+ * 例: {id: {in: [...]}} → {id: {$in: [...]}}
+ *
  * @param filter - react-adminのフィルタオブジェクト
  * @returns DynamoDB Client SDKのFilter型
  */
@@ -67,7 +72,14 @@ function convertFilter(filter: Record<string, unknown>): Filter<Record<string, u
   for (const [key, value] of Object.entries(filter)) {
     // 値がオブジェクトの場合、演算子として扱う
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      converted[key] = value;
+      // ネストされたオブジェクト（演算子を含む可能性）
+      const nested: Record<string, unknown> = {};
+      for (const [nestedKey, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+        // 演算子名に $ プレフィックスを追加（既に $ がある場合はスキップ）
+        const operatorKey = nestedKey.startsWith('$') ? nestedKey : `$${nestedKey}`;
+        nested[operatorKey] = nestedValue;
+      }
+      converted[key] = nested;
     } else {
       // 単純な値の場合、等価比較として扱う
       converted[key] = value;

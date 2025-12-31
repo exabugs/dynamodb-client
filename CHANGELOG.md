@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-12-31
+
+### Fixed
+
+- **react-admin統合**: `convertFilter`関数が演算子に`$`プレフィックスを追加するように修正
+  - react-adminから送信される`{id: {in: [...]}}`を`{id: {$in: [...]}}`に自動変換
+  - `update`、`delete`、`getList`、`getManyReference`操作で正しくフィルタが適用されるように修正
+  - dynamodb-client 1.0.0のMongoDB互換性向上に対応
+
 ## [1.0.0] - 2025-01-01
 
 ### BREAKING CHANGES
