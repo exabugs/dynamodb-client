@@ -1,8 +1,8 @@
 /**
  * Find操作の型定義
  */
-
 import type { FindParams, FindResult } from '../../types.js';
+import type { ParsedFilterField } from '../../utils/filter.js';
 
 /**
  * 解析済みフィルター条件
@@ -10,15 +10,6 @@ import type { FindParams, FindResult } from '../../types.js';
 export interface ParsedFilter {
   parsed: ParsedFilterField;
   value: unknown;
-}
-
-/**
- * フィルターフィールドの解析結果
- */
-export interface ParsedFilterField {
-  field: string;
-  operator: string;
-  type?: string;
 }
 
 /**

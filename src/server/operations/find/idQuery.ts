@@ -1,13 +1,18 @@
 /**
  * ID最適化クエリの実装
- * 
+ *
  * sort.field='id'の場合の特別な処理を担当します。
  */
-
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+
 import { createLogger } from '../../../shared/index.js';
-import { getDBClient, getTableName, executeDynamoDBOperation, extractCleanRecord } from '../../utils/dynamodb.js';
-import { encodeNextToken, decodeNextToken } from '../../utils/pagination.js';
+import {
+  executeDynamoDBOperation,
+  extractCleanRecord,
+  getDBClient,
+  getTableName,
+} from '../../utils/dynamodb.js';
+import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
 import type { FindResult, NormalizedFindParams } from './types.js';
 import { matchesAllFilters } from './utils.js';
 
@@ -18,7 +23,7 @@ const logger = createLogger({
 
 /**
  * ID最適化クエリを実行する
- * 
+ *
  * @param resource - リソース名
  * @param normalizedParams - 正規化されたパラメータ
  * @param requestId - リクエストID
@@ -41,24 +46,17 @@ export async function executeIdQuery(
 
   // 特定のIDフィルターがある場合の処理
   const idFilter = parsedFilters.find((f) => f.parsed.field === 'id');
-  if (idFilter && idFilter.parsed.operator === 'eq') {
+  if (idFilter && idFilter.parsed.operator === '$eq') {
     return await executeSpecificIdQuery(resource, String(idFilter.value), requestId);
   }
 
   // 全レコード取得の場合の処理
-  return await executeAllRecordsQuery(
-    resource,
-    sort,
-    perPage,
-    nextToken,
-    parsedFilters,
-    requestId
-  );
+  return await executeAllRecordsQuery(resource, sort, perPage, nextToken, parsedFilters, requestId);
 }
 
 /**
  * 特定のIDのレコードを取得する
- * 
+ *
  * @param resource - リソース名
  * @param targetId - 対象のID
  * @param requestId - リクエストID
@@ -109,7 +107,7 @@ async function executeSpecificIdQuery(
 
 /**
  * 全レコードを取得する（IDソート）
- * 
+ *
  * @param resource - リソース名
  * @param sort - ソート条件
  * @param perPage - ページサイズ

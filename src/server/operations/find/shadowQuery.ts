@@ -1,14 +1,19 @@
 /**
  * シャドウレコードクエリの実装
- * 
+ *
  * sort.field != 'id'の場合の通常のシャドウレコードクエリを担当します。
  */
+import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
-import { QueryCommand, BatchGetCommand } from '@aws-sdk/lib-dynamodb';
-import { createLogger } from '../../../shared/index.js';
 import { NUMBER_FORMAT } from '../../../shared/constants/formatting.js';
-import { getDBClient, getTableName, executeDynamoDBOperation, extractCleanRecord } from '../../utils/dynamodb.js';
-import { encodeNextToken, decodeNextToken } from '../../utils/pagination.js';
+import { createLogger } from '../../../shared/index.js';
+import {
+  executeDynamoDBOperation,
+  extractCleanRecord,
+  getDBClient,
+  getTableName,
+} from '../../utils/dynamodb.js';
+import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
 import type { FindResult, NormalizedFindParams, OptimizableFilter } from './types.js';
 import { findOptimizableFilter, matchesAllFilters } from './utils.js';
 
@@ -19,7 +24,7 @@ const logger = createLogger({
 
 /**
  * シャドウレコードクエリを実行する
- * 
+ *
  * @param resource - リソース名
  * @param normalizedParams - 正規化されたパラメータ
  * @param requestId - リクエストID
@@ -129,7 +134,7 @@ export async function executeShadowQuery(
 
 /**
  * シャドウレコードクエリを実行する
- * 
+ *
  * @param resource - リソース名
  * @param sort - ソート条件
  * @param perPage - ページサイズ
@@ -185,7 +190,7 @@ async function executeShadowRecordQuery(
 
 /**
  * KeyConditionExpressionを構築する
- * 
+ *
  * @param resource - リソース名
  * @param sortField - ソートフィールド
  * @param optimizableFilter - 最適化可能なフィルター
@@ -223,7 +228,7 @@ function buildKeyCondition(
   const skValue = `${sortField}#${encodedValue}`;
 
   switch (operator) {
-    case 'eq':
+    case '$eq':
       return {
         keyConditionExpression: 'PK = :pk AND begins_with(SK, :skValue)',
         expressionAttributeValues: {
@@ -231,7 +236,7 @@ function buildKeyCondition(
           ':skValue': `${skValue}#id#`,
         },
       };
-    case 'gt':
+    case '$gt':
       return {
         keyConditionExpression: 'PK = :pk AND SK > :skValue',
         expressionAttributeValues: {
@@ -239,7 +244,7 @@ function buildKeyCondition(
           ':skValue': `${skValue}#id#~`,
         },
       };
-    case 'gte':
+    case '$gte':
       return {
         keyConditionExpression: 'PK = :pk AND SK >= :skValue',
         expressionAttributeValues: {
@@ -247,7 +252,7 @@ function buildKeyCondition(
           ':skValue': `${skValue}#id#`,
         },
       };
-    case 'lt':
+    case '$lt':
       return {
         keyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix) AND SK < :skValue',
         expressionAttributeValues: {
@@ -256,7 +261,7 @@ function buildKeyCondition(
           ':skValue': `${skValue}#id#`,
         },
       };
-    case 'lte':
+    case '$lte':
       return {
         keyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix) AND SK <= :skValue',
         expressionAttributeValues: {
@@ -279,7 +284,7 @@ function buildKeyCondition(
 
 /**
  * 値をシャドーSK形式にエンコードする
- * 
+ *
  * @param value - エンコードする値
  * @param type - 値の型
  * @returns エンコードされた値
@@ -299,7 +304,7 @@ function encodeValueForShadowSK(value: unknown, type?: string): string {
 
 /**
  * シャドウレコードから本体レコードのIDを抽出する
- * 
+ *
  * @param shadowRecords - シャドウレコードの配列
  * @returns レコードIDの配列
  */
@@ -316,7 +321,7 @@ function extractRecordIds(shadowRecords: any[]): string[] {
 
 /**
  * 本体レコードを取得する
- * 
+ *
  * @param resource - リソース名
  * @param recordIds - レコードIDの配列
  * @param requestId - リクエストID

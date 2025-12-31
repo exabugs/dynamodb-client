@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2025-12-31
+
+### Fixed
+
+- **型安全性の向上**: `ParsedFilterField`の型定義を修正
+  - `find/types.ts`の重複した型定義を削除し、`filter.ts`からインポート
+  - `operator`フィールドを`string`型から`FilterOperator`型に変更
+  - TypeScriptコンパイラが`$`プレフィックスなしの演算子を検出できるように修正
+
+- **ID最適化クエリ**: `$eq`演算子の比較を修正
+  - `idQuery.ts`で演算子比較が`'eq'`（`$`なし）になっていた問題を修正
+  - `getOne`操作で単一レコードが正しく取得できるように修正
+  - react-admin詳細画面が正常に動作するように修正
+
+- **シャドウクエリ**: `$`プレフィックス付き演算子に統一
+  - `shadowQuery.ts`のswitch文で`'eq'`, `'gt'`, `'gte'`, `'lt'`, `'lte'`を`'$eq'`, `'$gt'`, `'$gte'`, `'$lt'`, `'$lte'`に修正
+  - すべてのクエリ最適化で一貫して`$`プレフィックス付き演算子を使用
+
 ## [1.0.2] - 2025-12-31
 
 ### Changed
