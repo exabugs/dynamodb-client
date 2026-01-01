@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-01-02
+
+### Fixed
+
+- **Parameter Store**: outputs.tfのパラメータ参照を修正
+  - 古いパラメータ名（`app_records_api_url`, `lambda_records_function_arn`）から新しい名前（`infra_dynamodb_client_api_url`, `infra_dynamodb_client_api_arn`）に更新
+  - v1.1.0で変更したパラメータ名に合わせてoutputsを修正
+
 ## [1.1.1] - 2025-01-02
 
 ### Fixed
