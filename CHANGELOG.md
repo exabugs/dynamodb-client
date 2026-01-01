@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-01-02
+
+### Fixed
+
+- **Parameter Store**: DynamoDB Table ARNパラメータの作成を修正
+  - `dynamodb_table_arn`をParameter Storeモジュールに渡すように修正
+  - `/infra/dynamodb-table-arn`パラメータが正しく作成されるようになった
+
 ## [1.1.0] - 2025-01-02
 
 ### Changed

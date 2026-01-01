@@ -186,6 +186,7 @@ module "parameter_store" {
 
   # DynamoDB設定
   dynamodb_table_name = var.dynamodb_table_name
+  dynamodb_table_arn  = var.dynamodb_table_arn
 
   depends_on = [
     aws_lambda_function.records,
