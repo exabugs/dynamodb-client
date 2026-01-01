@@ -8,39 +8,41 @@ locals {
   # AWS管理キー（alias/aws/ssm）を使用（カスタマー管理キーは禁止）
 }
 
-# Records Lambda Function URL (外部参照用)
-resource "aws_ssm_parameter" "app_records_api_url" {
-  name      = "/${var.project_name}/${var.environment}/app/records-api-url"
+# DynamoDB Client API URL (外部参照用)
+resource "aws_ssm_parameter" "infra_dynamodb_client_api_url" {
+  name      = "/${var.project_name}/${var.environment}/infra/dynamodb-client-api-url"
   type      = local.parameter_type
   tier      = local.parameter_tier
   value     = var.records_function_url
   overwrite = true
 
-  description = "Records Lambda Function URL"
+  description = "DynamoDB Client API URL (for Admin UI and internal Lambdas)"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
-    Category    = "app-config"
+    Category    = "infra-info"
   }
 }
 
-# Records Lambda Function ARN (外部参照用)
-resource "aws_ssm_parameter" "lambda_records_function_arn" {
-  name      = "/${var.project_name}/${var.environment}/lambda/records-function-arn"
+# DynamoDB Client API Lambda ARN (外部参照用)
+resource "aws_ssm_parameter" "infra_dynamodb_client_api_arn" {
+  name      = "/${var.project_name}/${var.environment}/infra/dynamodb-client-api-arn"
   type      = local.parameter_type
   tier      = local.parameter_tier
   value     = var.records_function_arn
   overwrite = true
 
-  description = "Records Lambda Function ARN"
+  description = "DynamoDB Client API Lambda Function ARN"
 
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
-    Category    = "lambda-info"
+    Category    = "infra-info"
   }
 }
+
+
 
 # DynamoDB Table Name (外部参照用)
 resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
@@ -51,6 +53,23 @@ resource "aws_ssm_parameter" "infra_dynamodb_table_name" {
   overwrite = true
 
   description = "DynamoDB Table Name"
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Category    = "infra-info"
+  }
+}
+
+# DynamoDB Table ARN (外部参照用)
+resource "aws_ssm_parameter" "infra_dynamodb_table_arn" {
+  name      = "/${var.project_name}/${var.environment}/infra/dynamodb-table-arn"
+  type      = local.parameter_type
+  tier      = local.parameter_tier
+  value     = var.dynamodb_table_arn
+  overwrite = true
+
+  description = "DynamoDB Table ARN"
 
   tags = {
     Environment = var.environment

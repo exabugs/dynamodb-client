@@ -34,3 +34,8 @@ variable "dynamodb_table_name" {
   description = "DynamoDB Table Name"
   type        = string
 }
+
+variable "dynamodb_table_arn" {
+  description = "DynamoDB Table ARN"
+  type        = string
+}

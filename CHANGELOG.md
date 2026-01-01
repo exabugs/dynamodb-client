@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-02
+
+### Changed
+
+- **Parameter Store命名規則の統一**: すべてのパラメータを `/infra/` カテゴリに統一
+  - `/infra/dynamodb-client-api-url` - DynamoDB Client API URL（旧: `/app/records-api-url`）
+  - `/infra/dynamodb-client-api-arn` - Lambda ARN（旧: `/lambda/records-function-arn`）
+  - `/infra/dynamodb-table-name` - DynamoDB Table Name
+  - `/infra/dynamodb-table-arn` - DynamoDB Table ARN（新規追加）
+  - dynamodb-clientは**インフラ基盤**を提供するライブラリとして、すべて「インフラ情報」カテゴリに統一
+
+### Breaking Changes
+
+- Parameter Storeのパラメータ名が変更されました
+  - 既存プロジェクトは新しいパラメータ名に移行する必要があります
+  - 詳細は [Parameter Store Migration Guide](./docs/parameter-store-migration.md) を参照
+
 ## [1.0.3] - 2025-12-31
 
 ### Fixed
