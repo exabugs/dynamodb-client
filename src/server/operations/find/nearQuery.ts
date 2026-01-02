@@ -1,0 +1,143 @@
+/**
+ * $near演算子を使用した近隣検索の実装
+ */
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+
+import { DEFAULT_GEOHASH_CONFIG, type NearQuery } from '../../../shared/geohash/index.js';
+import { createLogger } from '../../../shared/index.js';
+import { executeNearSearch } from '../../query/nearSearch.js';
+import {
+  executeDynamoDBOperation,
+  extractCleanRecord,
+  getDBClient,
+  getTableName,
+} from '../../utils/dynamodb.js';
+import type { FindResult } from './types.js';
+
+const logger = createLogger({
+  service: 'near-query',
+  level: (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
+});
+
+/**
+ * $near検索を実行する
+ *
+ * @param resource - リソース名
+ * @param fieldName - 地理座標フィールド名
+ * @param nearQuery - $nearクエリ
+ * @param limit - 取得件数
+ * @param requestId - リクエストID
+ * @returns 検索結果
+ */
+export async function executeNearQuery(
+  resource: string,
+  fieldName: string,
+  nearQuery: NearQuery,
+  limit: number,
+  requestId: string
+): Promise<FindResult> {
+  logger.debug('Executing $near query', {
+    requestId,
+    resource,
+    fieldName,
+    nearQuery,
+    limit,
+  });
+
+  // GeoHashフィールド名を決定
+  const geohashFieldName = `${fieldName}_geohash`;
+
+  // DynamoDBから検索する関数
+  const searchFunction = async (geohashPrefix: string): Promise<any[]> => {
+    const dbClient = getDBClient();
+    const tableName = getTableName();
+
+    // シャドウレコードを検索
+    const queryResult = await executeDynamoDBOperation(
+      () =>
+        dbClient.send(
+          new QueryCommand({
+            TableName: tableName,
+            KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+            ExpressionAttributeValues: {
+              ':pk': resource,
+              ':skPrefix': `${geohashFieldName}#${geohashPrefix}`,
+            },
+            ConsistentRead: false, // シャドウレコードは結果整合性で十分
+          })
+        ),
+      'Query'
+    );
+
+    const shadowRecords = queryResult.Items || [];
+
+    // 本体レコードのIDを抽出
+    const mainRecordIds = shadowRecords
+      .map((item) => {
+        const sk = item.SK as string;
+        const match = sk.match(/^[^#]+#[^#]+#(.+)$/);
+        return match ? match[1] : null;
+      })
+      .filter((id): id is string => id !== null);
+
+    // 本体レコードを取得
+    const mainRecords = await Promise.all(
+      mainRecordIds.map(async (id) => {
+        const result = await executeDynamoDBOperation(
+          () =>
+            dbClient.send(
+              new QueryCommand({
+                TableName: tableName,
+                KeyConditionExpression: 'PK = :pk AND SK = :sk',
+                ExpressionAttributeValues: {
+                  ':pk': resource,
+                  ':sk': `id#${id}`,
+                },
+                ConsistentRead: true,
+              })
+            ),
+          'Query'
+        );
+        return result.Items?.[0];
+      })
+    );
+
+    return mainRecords.filter((item): item is any => item !== undefined);
+  };
+
+  // 9ブロック検索を実行
+  const result = await executeNearSearch(
+    nearQuery,
+    fieldName,
+    limit,
+    searchFunction,
+    DEFAULT_GEOHASH_CONFIG
+  );
+
+  // クリーンなレコードに変換
+  const items = result.documents.map((doc) => {
+    const cleanRecord = extractCleanRecord(doc);
+    // 距離情報を追加
+    return {
+      ...cleanRecord,
+      __distance: doc.__distance,
+    };
+  });
+
+  logger.info('$near query succeeded', {
+    requestId,
+    resource,
+    fieldName,
+    count: items.length,
+    iterations: result.metadata.iterations,
+    candidatesFound: result.metadata.candidatesFound,
+  });
+
+  return {
+    items,
+    pageInfo: {
+      hasNextPage: false, // $near検索はページネーション非対応
+      hasPreviousPage: false,
+    },
+  };
+}

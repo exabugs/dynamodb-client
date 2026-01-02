@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-01-02
+
+### Added
+
+- **$nearオペレータの完全実装**: find操作での地理空間検索を完全サポート
+  - `detectNearQuery()`: $nearオペレータの自動検出（簡易形式・GeoJSON形式）
+  - `executeNearQuery()`: DynamoDB統合による$near検索の実行
+  - `handleFind()`: $near検出時の自動切り替えロジック
+  - 距離情報（`__distance`）の自動付与とソート
+  - `pagination.perPage`を$near検索のlimitとして使用
+  - 包括的なテストカバレッジ（19テスト追加）
+
+### Changed
+
+- **find操作**: $nearオペレータが含まれる場合、自動的に地理空間検索に切り替え
+  - 通常のfind操作との透過的な統合
+  - エラーハンドリングとログ記録の統一
+
+### Technical
+
+- **新規ファイル**: `src/server/operations/find/nearQuery.ts` - DynamoDB統合ロジック
+- **新規ファイル**: `src/server/operations/find/utils.ts` - $near検出ユーティリティ
+- **テスト**: `__tests__/near-search.test.ts` - executeNearSearchのユニットテスト（13テスト）
+- **テスト**: `__tests__/find-near.test.ts` - find操作での$near統合テスト（6テスト）
+- **全テスト**: 334テスト全てパス
+
 ## [1.2.5] - 2026-01-02
 
 ### Fixed

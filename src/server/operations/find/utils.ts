@@ -2,6 +2,7 @@
  * Find操作のユーティリティ関数
  */
 import { ConfigError } from '../../../shared/errors/index.js';
+import type { NearQuery } from '../../../shared/geohash/types.js';
 import { createLogger } from '../../../shared/index.js';
 import { getShadowConfig } from '../../shadow/index.js';
 import type { FindParams } from '../../types.js';
@@ -176,4 +177,57 @@ export function matchesAllFilters(
         return true;
     }
   });
+}
+
+/**
+ * $nearオペレータを検出する
+ *
+ * フィルター条件から$nearオペレータを検出し、NearQuery形式に変換します。
+ *
+ * @param filter - フィルター条件
+ * @returns $nearクエリとフィールド名、または検出されなかった場合はnull
+ *
+ * @example
+ * ```typescript
+ * // GeoJSON形式
+ * const result = detectNearQuery({
+ *   location: {
+ *     $near: {
+ *       $geometry: { type: 'Point', coordinates: [139.7671, 35.6812] },
+ *       $maxDistance: 5000
+ *     }
+ *   }
+ * });
+ * // => { fieldName: 'location', nearQuery: { ... } }
+ *
+ * // 簡易形式
+ * const result = detectNearQuery({
+ *   location: {
+ *     $near: { latitude: 35.6812, longitude: 139.7671, maxDistance: 5000 }
+ *   }
+ * });
+ * // => { fieldName: 'location', nearQuery: { ... } }
+ * ```
+ */
+export function detectNearQuery(
+  filter?: Record<string, unknown>
+): { fieldName: string; nearQuery: NearQuery } | null {
+  if (!filter || Object.keys(filter).length === 0) {
+    return null;
+  }
+
+  for (const [fieldName, value] of Object.entries(filter)) {
+    // 値がオブジェクトで、$nearプロパティを持つ場合
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const nearValue = (value as Record<string, unknown>).$near;
+      if (nearValue && typeof nearValue === 'object') {
+        return {
+          fieldName,
+          nearQuery: nearValue as NearQuery,
+        };
+      }
+    }
+  }
+
+  return null;
 }

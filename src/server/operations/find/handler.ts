@@ -1,16 +1,15 @@
 /**
  * Find操作のメインハンドラー
- * 
+ *
  * 429行の大きなhandleFind関数を単一責任の原則に従って分割したメインエントリーポイント
  */
-
 import { createLogger } from '../../../shared/index.js';
 import { validateSortField } from '../../utils/validation.js';
-
-import type { FindParams, FindResult } from './types.js';
-import { initializeFindConfig, normalizeFindParams } from './utils.js';
 import { executeIdQuery } from './idQuery.js';
+import { executeNearQuery } from './nearQuery.js';
 import { executeShadowQuery } from './shadowQuery.js';
+import type { FindParams, FindResult } from './types.js';
+import { detectNearQuery, initializeFindConfig, normalizeFindParams } from './utils.js';
 
 const logger = createLogger({
   service: 'find-handler',
@@ -19,12 +18,12 @@ const logger = createLogger({
 
 /**
  * Find操作のメインハンドラー
- * 
+ *
  * 責任:
  * - パラメータの初期化と正規化
- * - クエリタイプの判定（ID最適化 vs シャドウクエリ）
+ * - クエリタイプの判定（$near vs ID最適化 vs シャドウクエリ）
  * - 適切なクエリ実行関数への委譲
- * 
+ *
  * @param resource リソース名
  * @param params 検索パラメータ
  * @param requestId リクエストID
@@ -40,6 +39,26 @@ export async function handleFind(
     resource,
     params,
   });
+
+  // $nearオペレータを検出
+  const nearDetection = detectNearQuery(params.filter);
+  if (nearDetection) {
+    logger.debug('$near operator detected, executing near search', {
+      requestId,
+      resource,
+      fieldName: nearDetection.fieldName,
+    });
+
+    // $near検索を実行
+    const limit = params.pagination?.perPage || 10;
+    return executeNearQuery(
+      resource,
+      nearDetection.fieldName,
+      nearDetection.nearQuery,
+      limit,
+      requestId
+    );
+  }
 
   // 設定とパラメータの初期化
   const config = initializeFindConfig();
