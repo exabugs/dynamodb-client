@@ -81,12 +81,10 @@ resource "aws_cloudwatch_log_group" "lambda_records" {
 }
 
 # Lambda関数のZIPファイルを作成
-# source_dirを使用してnode_modulesを含むディレクトリ全体を監視
 data "archive_file" "lambda_records" {
   type        = "zip"
-  source_dir  = "${path.module}/../dist/server"
+  source_file = "${path.module}/../dist/server/handler.cjs"
   output_path = "${path.module}/../dist/server/handler.zip"
-  excludes    = ["handler.zip"]
 }
 
 # Lambda関数

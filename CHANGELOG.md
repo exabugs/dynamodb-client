@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.1] - 2026-01-02
-
-### Fixed
-
-- **Terraform変更検知の修正**: `data.archive_file.lambda_records`を`source_file`から`source_dir`に変更
-  - `node_modules`を含むディレクトリ全体を監視するように修正
-  - 依存関係（`@exabugs/dynamodb-client`等）の変更を正しく検知
-  - Lambda関数の自動再デプロイが正常に動作するように改善
-
 ## [1.2.0] - 2026-01-02
 
 ### Added
