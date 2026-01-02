@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-01-02
+
+### Fixed
+
+- **Lambda関数のデフォルトバージョン**: handler.tsのデフォルトバージョンを1.3.6に更新
+  - 環境変数`DYNAMODB_CLIENT_VERSION`が設定されていない場合のフォールバック値を修正
+  - これにより、Lambda関数のソースコードハッシュが確実に変更される
+
+### Changed
+
+- **パブリッシュ手順の改善**: コメントだけの変更ではビルド成果物が変わらないため、実際のコード変更が必要
+
 ## [1.3.5] - 2026-01-02
 
 ### Changed
 
 - **テストリリース**: publish-and-deploy.mdの手順確認のためのテストリリース
   - handler.tsのバージョンコメントを1.3.5に更新
+  - **注意**: コメントのみの変更のため、ビルド成果物は変わらず
 
 ## [1.3.4] - 2026-01-02
 
