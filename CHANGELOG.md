@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.17] - 2026-01-03
+
+### Fixed
+
+- **デバッグ**: $nearクエリでextractCleanRecordの動作を確認するためのデバッグログを追加
+- nearQuery.tsのsearchFunctionでextractCleanRecord前後のレコード構造をログ出力
+- これにより、data属性からのフィールド抽出が正しく行われているかを確認可能に
+
 ## [1.3.16] - 2026-01-03
 
 ### Fixed

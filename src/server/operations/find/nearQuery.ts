@@ -140,7 +140,35 @@ export async function executeNearQuery(
 
     // data属性からレコードを抽出し、__shadowKeysを除外
     // 本体レコードは { PK, SK, data: { ...actual fields } } という構造
-    return validRecords.map((record) => extractCleanRecord(record));
+    const cleanRecords = validRecords.map((record) => {
+      logger.debug('Before extractCleanRecord', {
+        requestId,
+        resource,
+        recordKeys: Object.keys(record),
+        hasData: 'data' in record,
+      });
+
+      const clean = extractCleanRecord(record);
+
+      logger.debug('After extractCleanRecord', {
+        requestId,
+        resource,
+        cleanKeys: Object.keys(clean),
+        hasLocation: 'location' in clean,
+      });
+
+      return clean;
+    });
+
+    logger.debug('Clean records extracted', {
+      requestId,
+      resource,
+      geohashPrefix,
+      count: cleanRecords.length,
+      sampleKeys: cleanRecords[0] ? Object.keys(cleanRecords[0]) : [],
+    });
+
+    return cleanRecords;
   };
 
   // 9ブロック検索を実行
@@ -153,11 +181,8 @@ export async function executeNearQuery(
   );
 
   // searchFunctionが既にクリーンなレコード（data属性から抽出済み）を返しているので、
-  // 距離情報を追加するだけでよい
-  const items = result.documents.map((doc) => ({
-    ...doc,
-    __distance: doc.__distance,
-  }));
+  // そのまま使用する
+  const items = result.documents;
 
   logger.info('$near query succeeded', {
     requestId,
