@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-01-02
+
+### Fixed
+
+- **$nearオペレータ**: GeoHashシャドウレコード検索の修正
+  - フィールド名を直接使用するように変更（`_geohash`サフィックスを削除）
+  - シャドウレコードの実際の形式に合わせて修正（例: `location#xn74rnmx#id#...`）
+  - これにより$nearオペレータが正しく結果を返すようになりました
+
 ## [1.3.0] - 2026-01-02
 
 ### Added
