@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-02
+
+### Added
+
+- **$nearオペレータ**: MongoDB互換の地理空間検索機能
+  - 簡易形式とGeoJSON形式の両方をサポート
+  - 9ブロック検索アルゴリズム（中心 + 隣接8方向）
+  - 段階的精度緩和（precision 6→5→4）
+  - 距離フィルタリング（maxDistance、minDistance）
+  - 自動距離計算とソート（`__distance`フィールド）
+  - find操作との透過的な統合
+
+- **包括的なテストカバレッジ**: 115の新規テスト追加（355→449テスト）
+  - nearQuery.ts: 100%カバレッジ（21テスト）
+  - filter.ts: 98.37%カバレッジ（54テスト）
+  - find/utils.ts: 100%カバレッジ（40テスト）
+
+### Changed
+
+- **find操作**: $nearオペレータの自動検出と実行
+- **filter.ts**: 複雑なフィルター構文のサポート改善
+
+### Technical
+
+- **新規ファイル**:
+  - `src/server/operations/find/nearQuery.ts` - $near検索の実装
+  - `__tests__/near-query.test.ts` - nearQuery単体テスト
+  - `__tests__/near-search.test.ts` - 9ブロック検索テスト
+  - `__tests__/find-near.test.ts` - find統合テスト
+  - `__tests__/filter-comprehensive.test.ts` - filter包括テスト
+  - `__tests__/find-utils-comprehensive.test.ts` - find/utils包括テスト
+
 ## [1.2.6] - 2026-01-02
 
 ### Added
