@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-01-02
+
+### Fixed
+
+- **ビルド成果物の確実な更新**: v1.2.2で$nearオペレータのコードが含まれていなかった問題を修正
+  - ビルド後に確実にnpmパブリッシュを実行
+  - `dist/server/handler.cjs`に最新のコードが含まれることを確認
+
 ## [1.2.2] - 2026-01-02
 
 ### Fixed
