@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-01-02
+
+### Fixed
+
+- **npmパブリッシュ再実行**: v1.2.4のパブリッシュ失敗により再パブリッシュ
+  - ビルド成果物（`dist/server/query/nearSearch.js`）が正しく含まれることを確認
+  - `$near`オペレータが正常に動作することを確認
+
 ## [1.2.3] - 2026-01-02
 
 ### Fixed
