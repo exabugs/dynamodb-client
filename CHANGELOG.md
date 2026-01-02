@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.20] - 2026-01-03
+
+### Added
+
+- **Geohash検索spec**: dynamodb-clientの汎用機能としてGeohash検索specを追加
+  - `.kiro/specs/dynamodb-client/geohash-search/` ディレクトリに移動
+  - requirements.md, design.md, tasks.md, verification-plan.mdを含む
+
+### Changed
+
+- **$nearクエリインターフェース**: 簡易形式のみに変更
+  - MongoDB互換のGeoJSON形式（`$geometry`）を削除
+  - 簡易形式（`latitude`, `longitude`直接指定）のみを推奨
+  - より直感的で使いやすいインターフェースに統一
+
 ## [1.3.19] - 2026-01-03
 
 ### Changed
