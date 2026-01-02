@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-01-02
+
+### Added
+
+- **バージョンエンドポイント**: `GET /version`エンドポイントを追加
+  - デプロイされたdynamodb-clientのバージョンを確認可能
+  - レスポンス形式: `{ "version": "1.3.2", "timestamp": "2026-01-02T..." }`
+  - Lambda関数のデバッグとバージョン確認に有用
+
 ## [1.3.1] - 2026-01-02
 
 ### Fixed

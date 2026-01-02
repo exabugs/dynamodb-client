@@ -6,8 +6,8 @@
  */
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
-import { createLogger } from '../shared/index.js';
 import { HTTP_STATUS } from '../shared/constants/http.js';
+import { createLogger } from '../shared/index.js';
 import { executeOperation } from './operations/operationDispatcher.js';
 import { handleAuthentication } from './utils/authHandler.js';
 import { handleError } from './utils/errorHandler.js';
@@ -49,6 +49,15 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return createCorsResponse(HTTP_STATUS.OK);
     }
 
+    // バージョンエンドポイント（GET /version）
+    if (
+      event.requestContext.http.method === 'GET' &&
+      event.requestContext.http.path === '/version'
+    ) {
+      const version = process.env.DYNAMODB_CLIENT_VERSION || '1.3.2';
+      return createSuccessResponse({ version, timestamp: new Date().toISOString() }, requestId);
+    }
+
     // POSTメソッドのみ許可
     if (event.requestContext.http.method !== 'POST') {
       throw new Error('Only POST method is allowed');
@@ -76,5 +85,3 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     return handleError(error, requestId);
   }
 }
-
-
