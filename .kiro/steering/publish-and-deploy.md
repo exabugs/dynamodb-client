@@ -34,12 +34,19 @@ overrides:
 
 ### Phase 1: dynamodb-client の変更とパブリッシュ
 
-#### 1.1 変更の実装
+#### 1.1 ソースコードの変更
+
+**重要**: Lambda関数のソースコードハッシュを変更するため、必ず何らかのコード変更を行うこと。
 
 ```bash
 cd dynamodb-client
 
-# コードを修正
+# コードを修正（例: handler.ts にコメントを追加）
+vim src/server/handler.ts
+# 例: バージョン情報のコメントを更新
+# // Version: 1.3.4
+
+# または、実際の機能修正
 vim src/server/operations/find/nearQuery.ts
 
 # テストを実行
@@ -48,6 +55,8 @@ npm test
 # ビルドを実行
 npm run build
 ```
+
+**注意**: バージョン番号だけを変更してもLambda関数のソースコードハッシュは変わりません。必ず`src/`配下のファイルに変更を加えてください。
 
 #### 1.2 バージョンの更新
 
@@ -114,12 +123,15 @@ cd asanowa
 
 # package.json のバージョンを更新
 vim package.json
-# "@exabugs/dynamodb-client": "^1.3.2" → "^1.3.3"
+# "@exabugs/dynamodb-client": "^1.3.3" → "^1.3.4"
 
-# 依存関係を再インストール
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+# 依存関係を強制的に再インストール
+pnpm install --force
 ```
+
+**重要**: `pnpm install --force`を使用することで、キャッシュされたビルド成果物を含めて完全に再インストールします。
+
+**注意**: 各ワークスペースパッケージ（`apps/admin`、`functions/records`など）が古いバージョンを指定していても、実際にデプロイされるのはルートの`package.json`で指定されたバージョンです。全てを統一する必要はありません。
 
 #### 2.2 インストールの確認
 
@@ -127,7 +139,16 @@ pnpm install
 # インストールされたバージョンを確認
 cat node_modules/@exabugs/dynamodb-client/package.json | grep '"version"'
 
-# 期待される出力: "version": "1.3.3",
+# 期待される出力: "version": "1.3.4",
+```
+
+**重要**: 全てのワークスペースパッケージで同じバージョンがインストールされていることを確認してください。
+
+```bash
+# pnpm-lock.yamlで全バージョンを確認
+grep -A 2 "@exabugs/dynamodb-client" pnpm-lock.yaml | grep "version:"
+
+# 期待される出力: 全て version: 1.3.4 であること
 ```
 
 **重要**: ローカルリンクではなく、npmパッケージがインストールされていることを確認してください。
@@ -140,7 +161,20 @@ ls -la node_modules/@exabugs/dynamodb-client
 # lrwxr-xr-x ... node_modules/@exabugs/dynamodb-client -> ../.pnpm/@exabugs+dynamodb-client@1.3.3_...
 ```
 
-#### 2.3 ビルドとデプロイ
+#### 2.3 Terraformモジュールの更新
+
+```bash
+# Terraformモジュールを最新バージョンに更新
+cd infra
+terraform init -upgrade
+cd ..
+```
+
+**重要**: バージョンアップ時は必ず`terraform init -upgrade`を実行してください。これにより、node_modules内のTerraformモジュールパスが最新バージョンに更新されます。
+
+#### 2.4 ビルドとデプロイ
+
+**注意**: `archive_file`を使用しない方式に変更したため、`terraform state rm`は不要になりました。
 
 ```bash
 # ビルド
@@ -152,10 +186,9 @@ make deploy-dev
 
 **デプロイ時の確認事項**:
 - Terraform が Lambda 関数を更新すること
-- 3つの Lambda 関数（records, weather, notification）が更新されること
 - デプロイ完了後、`LastModified` が最新の日時になっていること
 
-#### 2.4 デプロイの確認
+#### 2.5 デプロイの確認
 
 ```bash
 # Lambda関数のバージョンを確認
