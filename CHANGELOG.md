@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.19] - 2026-01-03
+
+### Changed
+
+- デバッグログを削除（v1.3.17で追加した調査用ログを削除）
+
 ## [1.3.18] - 2026-01-03
 
 ### Fixed

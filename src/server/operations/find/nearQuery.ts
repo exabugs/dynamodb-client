@@ -140,25 +140,7 @@ export async function executeNearQuery(
 
     // data属性からレコードを抽出し、__shadowKeysを除外
     // 本体レコードは { PK, SK, data: { ...actual fields } } という構造
-    const cleanRecords = validRecords.map((record) => {
-      logger.debug('Before extractCleanRecord', {
-        requestId,
-        resource,
-        recordKeys: Object.keys(record),
-        hasData: 'data' in record,
-      });
-
-      const clean = extractCleanRecord(record);
-
-      logger.debug('After extractCleanRecord', {
-        requestId,
-        resource,
-        cleanKeys: Object.keys(clean),
-        hasLocation: 'location' in clean,
-      });
-
-      return clean;
-    });
+    const cleanRecords = validRecords.map((record) => extractCleanRecord(record));
 
     logger.debug('Clean records extracted', {
       requestId,
