@@ -111,6 +111,16 @@ export async function executeNearSearch<T extends Record<string, unknown>>(
     .map((doc) => {
       // フィールドから地理座標を取得
       const location = doc[fieldName] as { latitude: number; longitude: number } | undefined;
+
+      // デバッグログ: locationフィールドの内容を確認
+      if (!location) {
+        console.log('[nearSearch] Location field not found:', {
+          fieldName,
+          docKeys: Object.keys(doc),
+          doc: JSON.stringify(doc).substring(0, 200),
+        });
+      }
+
       if (
         !location ||
         typeof location.latitude !== 'number' ||
@@ -126,6 +136,17 @@ export async function executeNearSearch<T extends Record<string, unknown>>(
         location.latitude,
         location.longitude
       );
+
+      // デバッグログ: 距離計算結果
+      console.log('[nearSearch] Distance calculated:', {
+        docId: doc.id,
+        distance,
+        maxDistance,
+        minDistance,
+        willBeFiltered:
+          (maxDistance !== undefined && distance > maxDistance) ||
+          (minDistance !== undefined && distance < minDistance),
+      });
 
       // 距離フィルタリング
       if (maxDistance !== undefined && distance > maxDistance) {
