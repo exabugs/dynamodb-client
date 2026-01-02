@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-01-02
+
+### Changed
+
+- **テストリリース**: publish-and-deploy.mdの手順確認のためのテストリリース
+  - handler.tsのバージョンコメントを1.3.5に更新
+
 ## [1.3.4] - 2026-01-02
 
 ### Changed

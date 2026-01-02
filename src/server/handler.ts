@@ -4,7 +4,7 @@
  * HTTP API（Lambda Function URL）経由でCRUD操作を提供
  * MongoDB風の10操作をサポート
  *
- * Version: 1.3.4
+ * Version: 1.3.5
  */
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
