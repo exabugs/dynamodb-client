@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.13] - 2026-01-03
+
+### Fixed
+
+- **重要**: $nearクエリでdata.\_\_shadowKeysが除外されない問題を修正
+- nearQuery.tsでextractCleanRecordを使用（mainレコードのdata属性から\_\_shadowKeysを除外）
+
 ## [1.3.12] - 2026-01-02
 
 ### Fixed

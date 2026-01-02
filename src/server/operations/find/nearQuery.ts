@@ -8,9 +8,9 @@ import { createLogger } from '../../../shared/index.js';
 import { executeNearSearch } from '../../query/nearSearch.js';
 import {
   executeDynamoDBOperation,
+  extractCleanRecord,
   getDBClient,
   getTableName,
-  removeShadowKeys,
 } from '../../utils/dynamodb.js';
 import type { FindResult } from './types.js';
 
@@ -103,6 +103,7 @@ export async function executeNearQuery(
     });
 
     // 本体レコードを取得
+    // PK: venues, SK: id#<venue-id>
     const mainRecords = await Promise.all(
       mainRecordIds.map(async (id) => {
         const result = await executeDynamoDBOperation(
@@ -112,7 +113,7 @@ export async function executeNearQuery(
                 TableName: tableName,
                 KeyConditionExpression: 'PK = :pk AND SK = :sk',
                 ExpressionAttributeValues: {
-                  ':pk': resource,
+                  ':pk': resource, // venues
                   ':sk': `id#${id}`,
                 },
                 ConsistentRead: true,
@@ -146,10 +147,10 @@ export async function executeNearQuery(
   );
 
   // クリーンなレコードに変換
-  // 注意: searchFunctionが返すレコードは既にクリーンな形式（data属性なし）
+  // mainレコードはdata属性を持つので、extractCleanRecordを使用
   const items = result.documents.map((doc) => {
-    // __shadowKeys等の内部フィールドを除外
-    const cleanRecord = removeShadowKeys(doc);
+    // data.__shadowKeys等の内部フィールドを除外
+    const cleanRecord = extractCleanRecord(doc);
     // 距離情報を追加
     return {
       ...cleanRecord,
