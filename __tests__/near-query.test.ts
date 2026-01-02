@@ -262,7 +262,7 @@ describe('executeNearQuery', () => {
         // searchFunctionを実際に呼び出す
         const results = await searchFn('xn76ur');
         return {
-          documents: results.map((r: any) => ({ ...r.data, __distance: 1000 })),
+          documents: results.map((r: any) => ({ ...r, __distance: 1000 })),
           metadata: {
             iterations: 1,
             candidatesFound: results.length,
@@ -316,7 +316,7 @@ describe('executeNearQuery', () => {
       vi.mocked(executeNearSearch).mockImplementation(async (query, field, limit, searchFn) => {
         const results = await searchFn('xn76ur');
         return {
-          documents: results.map((r: any, i: number) => ({ ...r.data, __distance: i * 1000 })),
+          documents: results.map((r: any, i: number) => ({ ...r, __distance: i * 1000 })),
           metadata: {
             iterations: 1,
             candidatesFound: results.length,
@@ -400,7 +400,7 @@ describe('executeNearQuery', () => {
         return {
           documents: results
             .filter((r: any) => r !== undefined)
-            .map((r: any) => ({ ...r.data, __distance: 1000 })),
+            .map((r: any) => ({ ...r, __distance: 1000 })),
           metadata: {
             iterations: 1,
             candidatesFound: 1,
@@ -757,7 +757,7 @@ describe('executeNearQuery', () => {
         // searchFunctionを実際に呼び出す
         const results = await searchFn('xn76ur');
         return {
-          documents: results.map((r: any) => ({ ...r.data, __distance: 1000 })),
+          documents: results.map((r: any) => ({ ...r, __distance: 1000 })),
           metadata: {
             iterations: 1,
             candidatesFound: results.length,
@@ -813,7 +813,7 @@ describe('executeNearQuery', () => {
       vi.mocked(executeNearSearch).mockImplementation(async (query, field, limit, searchFn) => {
         const results = await searchFn('xn76ur');
         return {
-          documents: results.map((r: any) => ({ ...r.data, __distance: 1000 })),
+          documents: results.map((r: any) => ({ ...r, __distance: 1000 })),
           metadata: {
             iterations: 1,
             candidatesFound: results.length,

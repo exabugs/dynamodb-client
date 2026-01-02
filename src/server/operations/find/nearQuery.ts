@@ -8,9 +8,9 @@ import { createLogger } from '../../../shared/index.js';
 import { executeNearSearch } from '../../query/nearSearch.js';
 import {
   executeDynamoDBOperation,
+  extractCleanRecord,
   getDBClient,
   getTableName,
-  removeShadowKeys,
 } from '../../utils/dynamodb.js';
 import type { FindResult } from './types.js';
 
@@ -138,10 +138,9 @@ export async function executeNearQuery(
       count: validRecords.length,
     });
 
-    // __shadowKeysを除外
-    // searchFunctionが返すレコードは既にクリーンな形式（data属性なし）
-    // extractCleanRecordではなくremoveShadowKeysを使用
-    return validRecords.map((record) => removeShadowKeys(record));
+    // data属性からレコードを抽出し、__shadowKeysを除外
+    // 本体レコードは { PK, SK, data: { ...actual fields } } という構造
+    return validRecords.map((record) => extractCleanRecord(record));
   };
 
   // 9ブロック検索を実行
@@ -153,7 +152,7 @@ export async function executeNearQuery(
     DEFAULT_GEOHASH_CONFIG
   );
 
-  // searchFunctionが既にクリーンなレコードを返しているので、
+  // searchFunctionが既にクリーンなレコード（data属性から抽出済み）を返しているので、
   // 距離情報を追加するだけでよい
   const items = result.documents.map((doc) => ({
     ...doc,

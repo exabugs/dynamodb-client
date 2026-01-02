@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.16] - 2026-01-03
+
+### Fixed
+
+- **重要**: $nearクエリで本体レコードのdata属性からフィールドを正しく抽出するように修正
+- `nearQuery.ts`で`extractCleanRecord()`を使用（`removeShadowKeys()`ではなく）
+- 本体レコードは`{ PK, SK, data: { ...actual fields } }`という構造なので、`data`属性から実際のフィールドを取り出す必要がある
+- これにより、$near検索で正しくレコードデータ（id, name, location等）を取得できるようになった
+
 ## [1.3.15] - 2026-01-03
 
 ### Fixed
