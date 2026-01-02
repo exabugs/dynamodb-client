@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **重要**: $nearクエリでlocationフィールドが見つからない問題を修正
-- nearQuery.tsのsearchFunctionでextractCleanRecordを使用してdata属性を展開
-- これにより、nearSearchがlocationフィールドに直接アクセスできるようになった
+- **重要**: $nearクエリでextractCleanRecordの誤用を修正
+- nearQuery.tsのsearchFunctionでremoveShadowKeysを使用（extractCleanRecordではなく）
+- searchFunctionが返すレコードは既にクリーンな形式（data属性なし）のため、extractCleanRecordを使用すると`undefined`になる問題を解決
+- これにより、$near検索で正しくレコードが返されるようになった
 
 ## [1.3.14] - 2026-01-03
 

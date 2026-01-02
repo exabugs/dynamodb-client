@@ -8,9 +8,9 @@ import { createLogger } from '../../../shared/index.js';
 import { executeNearSearch } from '../../query/nearSearch.js';
 import {
   executeDynamoDBOperation,
-  extractCleanRecord,
   getDBClient,
   getTableName,
+  removeShadowKeys,
 } from '../../utils/dynamodb.js';
 import type { FindResult } from './types.js';
 
@@ -138,9 +138,10 @@ export async function executeNearQuery(
       count: validRecords.length,
     });
 
-    // クリーンなレコードに変換（data属性を展開）
-    // これにより、nearSearchがlocationフィールドに直接アクセスできる
-    return validRecords.map((record) => extractCleanRecord(record));
+    // __shadowKeysを除外
+    // searchFunctionが返すレコードは既にクリーンな形式（data属性なし）
+    // extractCleanRecordではなくremoveShadowKeysを使用
+    return validRecords.map((record) => removeShadowKeys(record));
   };
 
   // 9ブロック検索を実行
