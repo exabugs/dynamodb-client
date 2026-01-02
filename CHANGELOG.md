@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-02
+
+### Added
+
+- **GeoHash地理空間検索**: MongoDB互換の`$near`オペレータを実装
+  - 自動GeoHash変換: `{latitude, longitude}`オブジェクトを自動検出してシャドウインデックス生成
+  - 9ブロック検索: 中心 + 隣接8方向の合計9ブロックを検索して境界をまたぐ検索漏れを防止
+  - 段階的精度緩和: precision 6→5→4と段階的に検索範囲を拡大
+  - 距離計算・ソート: Haversine公式による正確な距離計算と自動ソート
+  - `__distance`フィールド: 検索地点からの距離（メートル）を自動付与
+  - `__geohash`フィールド: 検出されたGeoHashを自動付与
+  - フィールド名非依存: `location`固定ではなく、任意のフィールド名を自動検出
+  - 透過的実装: クライアントはGeoHashを意識せず、通常のオブジェクトとして扱える
+  - 設定可能なパラメータ: `GeoHashConfig`で精度や反復回数をカスタマイズ可能
+
+- **新しいユーティリティ関数**:
+  - `isGeoCoordinates()`: 地理座標オブジェクトの自動検出
+  - `encodeGeoHash()`: 緯度・経度からGeoHashを生成
+  - `decodeGeoHash()`: GeoHashから緯度・経度を復元
+  - `getNeighborGeoHashes()`: 隣接8方向のGeoHashを取得
+  - `calculateDistance()`: Haversine公式による2点間の距離計算
+  - `extractCoordinatesFromNearQuery()`: $nearクエリから座標を抽出
+  - `extractMaxDistanceFromNearQuery()`: $nearクエリから最大距離を抽出
+  - `extractMinDistanceFromNearQuery()`: $nearクエリから最小距離を抽出
+
+- **新しい型定義**:
+  - `GeoCoordinates`: 地理座標オブジェクト型
+  - `NearQuery`: MongoDB互換の$nearクエリ型（GeoJSON形式と簡易形式をサポート）
+  - `DocumentWithDistance`: 距離情報付きドキュメント型
+  - `GeoHashConfig`: GeoHash検索の設定型
+  - `DEFAULT_GEOHASH_CONFIG`: デフォルト設定定数
+
+### Changed
+
+- **シャドウレコード生成**: `generator.ts`を更新して地理座標の自動検出とGeoHashシャドウレコード生成を追加
+  - シャドウインデックスは8文字精度（±19m）で保存
+  - 検索は6文字精度（±610m）で開始し、段階的に緩和
+  - 既存のシャドウ化機能（文字列フィールド等）と共存
+
+### Dependencies
+
+- **追加**: `ngeohash@^0.6.3` - GeoHashエンコード・デコードライブラリ
+- **追加**: `@types/ngeohash@^0.6.8` - ngeohashの型定義
+
+### Notes
+
+- この機能は後方互換性があります。既存のコードは変更なしで動作します。
+- GeoHash検索を使用するには、`{latitude, longitude}`オブジェクトを持つフィールドを作成するだけです。
+- 詳細な使用方法は [GeoHash Search Guide](./docs/geohash-search.md) を参照してください。
+
 ## [1.1.2] - 2025-01-02
 
 ### Fixed

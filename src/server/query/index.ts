@@ -8,3 +8,5 @@ export {
   type DynamoCondition,
   type DynamoQuery,
 } from './converter.js';
+
+export { executeNearSearch, type NearSearchResult } from './nearSearch.js';

@@ -1,14 +1,17 @@
 import type { ShadowFieldType } from '../../shadows/index.js';
-import type { ShadowConfig } from './config.js';
-import { inferFieldType } from './typeInference.js';
 import {
   escapeString as shadowsEscapeString,
-  formatDatetime as shadowsFormatDatetime,
   formatBoolean as shadowsFormatBoolean,
+  formatDatetime as shadowsFormatDatetime,
   generateMainRecordSK as shadowsGenerateMainRecordSK,
 } from '../../shadows/index.js';
-
-
+import {
+  DEFAULT_GEOHASH_CONFIG,
+  encodeGeoHash,
+  isGeoCoordinates,
+} from '../../shared/geohash/index.js';
+import type { ShadowConfig } from './config.js';
+import { inferFieldType } from './typeInference.js';
 
 /**
  * シャドウレコード
@@ -288,6 +291,25 @@ export function generateShadowRecords(
       continue;
     }
 
+    // GeoCoordinates型を検出してGeoHashに変換
+    if (isGeoCoordinates(value)) {
+      const geohash = encodeGeoHash(
+        value.latitude,
+        value.longitude,
+        DEFAULT_GEOHASH_CONFIG.shadowPrecision
+      );
+
+      // GeoHashシャドウキーを生成
+      const sk = `${fieldName}#${geohash}#id#${record.id}`;
+
+      shadows.push({
+        PK: resourceName,
+        SK: sk,
+      });
+
+      continue;
+    }
+
     // 型推論
     const type = inferFieldType(value);
     if (!type) {
@@ -308,5 +330,3 @@ export function generateShadowRecords(
 
   return shadows;
 }
-
-
