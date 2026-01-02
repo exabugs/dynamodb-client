@@ -20,6 +20,9 @@ await esbuild.build({
   sourcemap: true,
   minify: false,
   keepNames: true,
+  define: {
+    'process.env.PACKAGE_VERSION': JSON.stringify(packageJson.version),
+  },
   banner: {
     js: `// ${packageJson.name} v${packageJson.version}\n// Built: ${new Date().toISOString()}`,
   },

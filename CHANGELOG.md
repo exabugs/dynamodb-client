@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.12] - 2026-01-02
+
+### Fixed
+
+- **重要**: /versionエンドポイントのデフォルトバージョンを1.3.12に更新
+- esbuild設定でPACKAGE_VERSIONをdefineに追加（ビルド時にpackage.jsonのバージョンを埋め込み）
+
 ## [1.3.11] - 2026-01-02
 
 ### Fixed
