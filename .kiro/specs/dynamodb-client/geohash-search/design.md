@@ -981,38 +981,29 @@ for (const venue of venues) {
 
 ## 汎用化設計（Phase 10）
 
-### MongoDB互換の$nearオペレータ
+### $nearオペレータ
 
-MongoDBの地理空間クエリ仕様を参考に、`@exabugs/dynamodb-client`に`$near`オペレータを実装します。
+`@exabugs/dynamodb-client`に`$near`オペレータを実装します。
 
 #### インターフェース設計
 
 ```typescript
-// MongoDB互換のクエリインターフェース
-collection.find({
-  location: {
-    $near: {
-      $geometry: {
-        type: 'Point',
-        coordinates: [139.7671, 35.6812]  // [経度, 緯度]
-      },
-      $maxDistance: 5000,  // メートル（オプション）
-      $minDistance: 0      // メートル（オプション）
-    }
-  }
-}).limit(10).toArray();
-
-// 簡易版（GeoJSONなし）
+// 簡易形式（推奨）
 collection.find({
   location: {
     $near: {
       latitude: 35.6812,
       longitude: 139.7671,
       maxDistance: 5000,  // メートル（オプション）
-      limit: 10           // 件数制限（オプション）
+      minDistance: 0      // メートル（オプション）
     }
   }
-}).toArray();
+}).limit(10).toArray();
+```
+
+**注意**: 
+- `limit`は`.limit()`メソッドで指定します（`$near`オブジェクト内ではありません）
+- フィールド名は任意です（`location`以外も使用可能）
 ```
 
 #### レスポンス形式
