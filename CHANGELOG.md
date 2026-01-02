@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.10] - 2026-01-02
+
+### Fixed
+
+- **重要**: nearQuery.tsでextractCleanRecordの誤用を修正
+  - searchFunctionが返すレコードは既にクリーンな形式（data属性なし）
+  - extractCleanRecordではなくremoveShadowKeysを使用するように修正
+  - これにより、$near検索で0件が返される問題を解決
+
 ## [1.3.9] - 2026-01-02
 
 ### Added
