@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.11] - 2026-01-02
+
+### Fixed
+
+- テストコードのモック設定を修正: removeShadowKeysをエクスポートに追加
+
 ## [1.3.10] - 2026-01-02
 
 ### Fixed
