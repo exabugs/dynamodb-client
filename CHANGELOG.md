@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.15] - 2026-01-03
+
+### Fixed
+
+- **重要**: $nearクエリでlocationフィールドが見つからない問題を修正
+- nearQuery.tsのsearchFunctionでextractCleanRecordを使用してdata属性を展開
+- これにより、nearSearchがlocationフィールドに直接アクセスできるようになった
+
 ## [1.3.14] - 2026-01-03
 
 ### Improved

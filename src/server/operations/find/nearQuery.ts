@@ -138,7 +138,9 @@ export async function executeNearQuery(
       count: validRecords.length,
     });
 
-    return validRecords;
+    // クリーンなレコードに変換（data属性を展開）
+    // これにより、nearSearchがlocationフィールドに直接アクセスできる
+    return validRecords.map((record) => extractCleanRecord(record));
   };
 
   // 9ブロック検索を実行
@@ -150,17 +152,12 @@ export async function executeNearQuery(
     DEFAULT_GEOHASH_CONFIG
   );
 
-  // クリーンなレコードに変換
-  // mainレコードはdata属性を持つので、extractCleanRecordを使用
-  const items = result.documents.map((doc) => {
-    // data.__shadowKeys等の内部フィールドを除外
-    const cleanRecord = extractCleanRecord(doc);
-    // 距離情報を追加
-    return {
-      ...cleanRecord,
-      __distance: doc.__distance,
-    };
-  });
+  // searchFunctionが既にクリーンなレコードを返しているので、
+  // 距離情報を追加するだけでよい
+  const items = result.documents.map((doc) => ({
+    ...doc,
+    __distance: doc.__distance,
+  }));
 
   logger.info('$near query succeeded', {
     requestId,
