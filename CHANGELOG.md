@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.18] - 2026-01-03
+
+### Fixed
+
+- **重要**: extractCleanRecord関数でdata属性が存在しない場合の処理を修正
+- シャドーレコードにはdata属性がないため、item自体をフォールバックとして使用
+- これにより$nearクエリでメインレコードが正しく抽出されるようになった
+
 ## [1.3.17] - 2026-01-03
 
 ### Fixed

@@ -62,7 +62,8 @@ export function removeShadowKeys(record: Record<string, unknown>): Record<string
  * @returns クリーンなレコード
  */
 export function extractCleanRecord(item: Record<string, unknown>): Record<string, unknown> {
-  const data = item.data as Record<string, unknown>;
+  // data属性が存在する場合はそこから取得、存在しない場合はitem自体を使用
+  const data = (item.data as Record<string, unknown>) || item;
   return removeShadowKeys(data);
 }
 
