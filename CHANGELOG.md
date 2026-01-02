@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-01-02
+
+### Fixed
+
+- **Terraform設定のリバート**: `source_dir`から`source_file`に戻す
+  - dynamodb-clientはTerraformコードを内包して提供するライブラリ
+  - `source_file`で`handler.cjs`のみを監視するのが正しい設計
+  - asanowaプロジェクト側の変更（node_modules等）は、asanowa側のTerraformで検知すべき
+  - v1.2.1の変更（コミットd535ba3f9019fd9c178998988300c358b4634222）をリバート
+
 ## [1.2.0] - 2026-01-02
 
 ### Added
