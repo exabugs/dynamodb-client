@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-01-02
+
+### Changed
+
+- **手順書の追加**: dynamodb-clientパブリッシュとasanowaデプロイの標準手順を確立
+  - `.kiro/steering/publish-and-deploy.md`を追加
+  - npmパブリッシュからデプロイまでの完全な手順を文書化
+  - トラブルシューティングとチェックリストを含む
+
 ## [1.3.2] - 2026-01-02
 
 ### Added
