@@ -45,7 +45,7 @@ export async function executeNearQuery(
   });
 
   // DynamoDBから検索する関数
-  const searchFunction = async (geohashPrefix: string): Promise<any[]> => {
+  const searchFunction = async (geohashPrefix: string): Promise<Record<string, unknown>[]> => {
     const dbClient = getDBClient();
     const tableName = getTableName();
 
@@ -58,7 +58,8 @@ export async function executeNearQuery(
     });
 
     // シャドウレコードを検索
-    // SKパターン: location#<geohash>#id#<venue-id>
+    // SKプレフィックス: location#<geohash>
+    // 完全なSK: location#<geohash>#id#<venue-id>
     const queryResult = await executeDynamoDBOperation(
       () =>
         dbClient.send(
@@ -85,7 +86,8 @@ export async function executeNearQuery(
     });
 
     // 本体レコードのIDを抽出
-    // SKパターン: location#<geohash>#id#<venue-id>
+    // 完全なSK: location#<geohash>#id#<venue-id>
+    // #id#で分割して venue-id を取得
     const mainRecordIds = shadowRecords
       .map((item) => {
         const sk = item.SK as string;
@@ -125,7 +127,9 @@ export async function executeNearQuery(
       })
     );
 
-    const validRecords = mainRecords.filter((item): item is any => item !== undefined);
+    const validRecords = mainRecords.filter(
+      (item): item is Record<string, unknown> => item !== undefined
+    );
 
     logger.debug('Main records retrieved', {
       requestId,

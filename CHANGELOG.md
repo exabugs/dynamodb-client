@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.14] - 2026-01-03
+
+### Improved
+
+- **コード品質**: $nearクエリの型定義を改善（`any` → `Record<string, unknown>`）
+- **ドキュメント**: nearQuery.tsのコメントを明確化（SKの構造を正確に説明）
+- **型安全性**: 型アサーションを改善して型安全性を向上
+
 ## [1.3.13] - 2026-01-03
 
 ### Fixed
