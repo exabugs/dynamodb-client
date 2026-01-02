@@ -14,24 +14,30 @@ import {
   extractCleanRecord,
   getDBClient,
   getTableName,
+  removeShadowKeys,
 } from '../src/server/utils/dynamodb.js';
 import type { NearQuery } from '../src/shared/geohash/types.js';
 
 // モック
-vi.mock('../src/server/utils/dynamodb.js', () => ({
-  getDBClient: vi.fn(() => ({
-    send: vi.fn(),
-  })),
-  getTableName: vi.fn(() => 'test-table'),
-  executeDynamoDBOperation: vi.fn(),
-  extractCleanRecord: vi.fn((record) => {
-    // dataフィールドを展開してクリーンなレコードを返す
-    if (record.data) {
-      return record.data;
-    }
-    return record;
-  }),
-}));
+vi.mock('../src/server/utils/dynamodb.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/server/utils/dynamodb.js')>();
+  return {
+    getDBClient: vi.fn(() => ({
+      send: vi.fn(),
+    })),
+    getTableName: vi.fn(() => 'test-table'),
+    executeDynamoDBOperation: vi.fn(),
+    extractCleanRecord: vi.fn((record) => {
+      // dataフィールドを展開してクリーンなレコードを返す
+      if (record.data) {
+        return record.data;
+      }
+      return record;
+    }),
+    // removeShadowKeysは実際の実装を使用
+    removeShadowKeys: actual.removeShadowKeys,
+  };
+});
 
 vi.mock('../src/server/query/nearSearch.js', () => ({
   executeNearSearch: vi.fn(),
