@@ -44,15 +44,13 @@ export async function executeNearQuery(
     limit,
   });
 
-  // GeoHashフィールド名を決定
-  const geohashFieldName = `${fieldName}_geohash`;
-
   // DynamoDBから検索する関数
   const searchFunction = async (geohashPrefix: string): Promise<any[]> => {
     const dbClient = getDBClient();
     const tableName = getTableName();
 
     // シャドウレコードを検索
+    // フィールド名をそのまま使用（例: location#xn74rnmx#id#...）
     const queryResult = await executeDynamoDBOperation(
       () =>
         dbClient.send(
@@ -61,7 +59,7 @@ export async function executeNearQuery(
             KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
             ExpressionAttributeValues: {
               ':pk': resource,
-              ':skPrefix': `${geohashFieldName}#${geohashPrefix}`,
+              ':skPrefix': `${fieldName}#${geohashPrefix}`,
             },
             ConsistentRead: false, // シャドウレコードは結果整合性で十分
           })
