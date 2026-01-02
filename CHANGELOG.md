@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.4] - 2026-01-02
+
+### Changed
+
+- **手順書の改善**: Lambda関数のソースコードハッシュ変更を確実にするため、Phase 1の最初にソースコード変更ステップを追加
+  - バージョン番号だけの変更ではTerraformが更新を検知しないため、必ず`src/`配下のファイルに変更を加えることを明記
+  - handler.tsにバージョンコメントを追加する例を提示
+
 ## [1.3.3] - 2026-01-02
 
 ### Changed
