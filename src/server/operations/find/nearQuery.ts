@@ -49,8 +49,16 @@ export async function executeNearQuery(
     const dbClient = getDBClient();
     const tableName = getTableName();
 
+    logger.debug('Searching shadow records', {
+      requestId,
+      resource,
+      fieldName,
+      geohashPrefix,
+      skPrefix: `${fieldName}#${geohashPrefix}`,
+    });
+
     // シャドウレコードを検索
-    // フィールド名をそのまま使用（例: location#xn74rnmx#id#...）
+    // SKパターン: location#<geohash>#id#<venue-id>
     const queryResult = await executeDynamoDBOperation(
       () =>
         dbClient.send(
@@ -69,14 +77,30 @@ export async function executeNearQuery(
 
     const shadowRecords = queryResult.Items || [];
 
+    logger.debug('Shadow records found', {
+      requestId,
+      resource,
+      geohashPrefix,
+      count: shadowRecords.length,
+    });
+
     // 本体レコードのIDを抽出
+    // SKパターン: location#<geohash>#id#<venue-id>
     const mainRecordIds = shadowRecords
       .map((item) => {
         const sk = item.SK as string;
-        const match = sk.match(/^[^#]+#[^#]+#(.+)$/);
-        return match ? match[1] : null;
+        // location#xn74rnmx#id#venue-001 → venue-001
+        const parts = sk.split('#id#');
+        return parts.length === 2 ? parts[1] : null;
       })
       .filter((id): id is string => id !== null);
+
+    logger.debug('Main record IDs extracted', {
+      requestId,
+      resource,
+      geohashPrefix,
+      ids: mainRecordIds,
+    });
 
     // 本体レコードを取得
     const mainRecords = await Promise.all(
@@ -100,7 +124,16 @@ export async function executeNearQuery(
       })
     );
 
-    return mainRecords.filter((item): item is any => item !== undefined);
+    const validRecords = mainRecords.filter((item): item is any => item !== undefined);
+
+    logger.debug('Main records retrieved', {
+      requestId,
+      resource,
+      geohashPrefix,
+      count: validRecords.length,
+    });
+
+    return validRecords;
   };
 
   // 9ブロック検索を実行

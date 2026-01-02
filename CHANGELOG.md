@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.7] - 2026-01-02
+
+### Fixed
+
+- **$nearクエリのシャドーレコード検索**: SKプレフィックスパターンを修正
+  - 修正前: `${fieldName}#${geohashPrefix}` → 修正後: `${fieldName}#${geohashPrefix}#id#`
+  - シャドーレコードのSKパターン `location#<geohash>#id#<venue-id>` に正しく対応
+  - これにより、$nearクエリが正常に動作し、距離順にソートされた開催地一覧を取得可能に
+
+### Added
+
+- **$nearクエリのデバッグログ**: 各ステップでログを出力して問題追跡を容易に
+  - シャドーレコード検索時のSKプレフィックスをログ出力
+  - 検索結果の件数をログ出力
+  - 本体レコード取得時のIDリストをログ出力
+
 ## [1.3.6] - 2026-01-02
 
 ### Fixed
