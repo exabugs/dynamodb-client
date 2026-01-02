@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.9] - 2026-01-02
+
+### Added
+
+- 自動テストケースを追加: DynamoDBレコード構造でのlocationフィールド取得テスト
+- 自動テストケースを追加: DynamoDB内部フィールド（PK, SK）が含まれる場合のテスト
+
+### Fixed
+
+- nearSearch.tsのデバッグログを改善: locationフィールドが見つからない場合の詳細ログ
+- nearSearch.tsのデバッグログを改善: 距離計算結果とフィルタリング判定のログ
+
 ## [1.3.8] - 2026-01-02
 
 ### Fixed

@@ -280,6 +280,95 @@ describe('executeNearSearch', () => {
       expect(result.documents[0].id).toBe('venue-1');
     });
 
+    it('DynamoDBレコード構造でlocationフィールドを正しく取得できる', async () => {
+      const nearQuery: NearQuery = {
+        latitude: 43.068661,
+        longitude: 141.350755,
+      };
+
+      // 実際のDynamoDBレコード構造を再現
+      const mockVenues = [
+        {
+          PK: 'venues',
+          SK: 'id#test-venue-005',
+          id: 'test-venue-005',
+          name: '中島公園',
+          location: {
+            latitude: 43.051389,
+            longitude: 141.354167,
+          },
+          status: 'active',
+          isTestData: true,
+        },
+        {
+          PK: 'venues',
+          SK: 'id#test-venue-010',
+          id: 'test-venue-010',
+          name: '大通公園',
+          location: {
+            latitude: 43.060833,
+            longitude: 141.356389,
+          },
+          status: 'active',
+          isTestData: true,
+        },
+      ];
+
+      const searchFunction = async () => mockVenues;
+
+      const result = await executeNearSearch(nearQuery, 'location', 10, searchFunction);
+
+      // locationフィールドが正しく取得され、距離計算が実行されることを確認
+      expect(result.documents.length).toBe(2);
+      expect(result.documents[0].__distance).toBeDefined();
+      expect(result.documents[1].__distance).toBeDefined();
+
+      // 距離でソートされていることを確認
+      expect(result.documents[0].__distance!).toBeLessThanOrEqual(result.documents[1].__distance!);
+
+      // 札幌駅から各公園までの距離を確認
+      // 大通公園: 約1km、中島公園: 約2km
+      expect(result.documents[0].__distance!).toBeGreaterThan(500);
+      expect(result.documents[0].__distance!).toBeLessThan(1500);
+      expect(result.documents[1].__distance!).toBeGreaterThan(1500);
+      expect(result.documents[1].__distance!).toBeLessThan(2500);
+    });
+
+    it('DynamoDB内部フィールド（PK, SK）が含まれていてもlocationを取得できる', async () => {
+      const nearQuery: NearQuery = {
+        latitude: 35.6812,
+        longitude: 139.7671,
+      };
+
+      // DynamoDB内部フィールドを含むレコード
+      const mockVenues = [
+        {
+          PK: 'venues',
+          SK: 'id#venue-001',
+          id: 'venue-001',
+          name: 'Test Venue',
+          location: {
+            latitude: 35.682,
+            longitude: 139.768,
+          },
+          __geohash: 'xn76urx6',
+          __shadowKeys: ['location#xn76urx6#id#venue-001'],
+        },
+      ];
+
+      const searchFunction = async () => mockVenues;
+
+      const result = await executeNearSearch(nearQuery, 'location', 10, searchFunction);
+
+      // locationフィールドが正しく取得されることを確認
+      expect(result.documents.length).toBe(1);
+      expect(result.documents[0].__distance).toBeDefined();
+      expect(result.documents[0].location).toEqual({
+        latitude: 35.682,
+        longitude: 139.768,
+      });
+    });
+
     it('GeoJSON形式のクエリで検索できる', async () => {
       const nearQuery: NearQuery = {
         $geometry: {
