@@ -1,15 +1,16 @@
 /**
  * シャドウジェネレーターのテスト
  */
-import { describe, it, expect } from 'vitest';
-import {
-  truncateString,
-  formatNumberWithOffset,
-  normalizeJson,
-  formatFieldValue,
-  generateShadowRecords,
-} from '../generator.js';
+import { describe, expect, it } from 'vitest';
+
 import type { ShadowConfig } from '../config.js';
+import {
+  formatFieldValue,
+  formatNumberWithOffset,
+  generateShadowRecords,
+  normalizeJson,
+  truncateString,
+} from '../generator.js';
 
 const mockConfig: ShadowConfig = {
   createdAtField: 'createdAt',
@@ -144,16 +145,11 @@ describe('formatFieldValue', () => {
     expect(encoder.encode(result).length).toBeLessThanOrEqual(200);
   });
 
-  it('object型を200バイトで切り詰める', () => {
-    const obj = { category: 'tech', priority: 5 };
-    const result = formatFieldValue('object', obj, mockConfig);
-    const encoder = new TextEncoder();
-    expect(encoder.encode(result).length).toBeLessThanOrEqual(200);
-  });
+  // object型はシャドウ化しないため、このテストは削除
 });
 
 describe('generateShadowRecords', () => {
-  it('すべての型のフィールドに対してシャドウレコードを生成する', () => {
+  it('すべての型のフィールドに対してシャドウレコードを生成する（オブジェクト型は除外）', () => {
     const record = {
       id: '01HQXYZ123',
       title: 'Article',
@@ -161,17 +157,19 @@ describe('generateShadowRecords', () => {
       published: true,
       createdAt: '2024-01-15T10:30:00.000Z',
       tags: ['tech', 'aws'],
-      metadata: { category: 'tech' },
+      metadata: { category: 'tech' }, // オブジェクト型は除外される
     };
 
     const shadows = generateShadowRecords(record, 'articles', mockConfig);
 
-    expect(shadows).toHaveLength(6); // 6つのフィールド（idを除く）
+    expect(shadows).toHaveLength(5); // 5つのフィールド（idとmetadataを除く）
     expect(shadows.every((s) => s.PK === 'articles')).toBe(true);
     // シャドウレコードにはdataフィールドがない（IDはSKから抽出）
     expect(shadows.every((s) => s.SK.includes('#id#01HQXYZ123'))).toBe(true);
     // idフィールドのシャドウレコードは生成されない
     expect(shadows.find((s) => s.SK.startsWith('id#'))).toBeUndefined();
+    // metadataフィールドのシャドウレコードは生成されない（オブジェクト型）
+    expect(shadows.find((s) => s.SK.startsWith('metadata#'))).toBeUndefined();
   });
 
   it('__プレフィックスのフィールドを除外する', () => {

@@ -213,8 +213,7 @@ export function formatFieldValue(
       return formatDatetime(value as string | Date);
     case 'boolean':
       return formatBoolean(value as boolean);
-    case 'array':
-    case 'object': {
+    case 'array': {
       // JSON文字列化して2倍のバイト制限で切り詰め
       const normalized = normalizeJson(value);
       const jsonStr = JSON.stringify(normalized);
@@ -291,24 +290,31 @@ export function generateShadowRecords(
       continue;
     }
 
-    // GeoCoordinates型を検出してGeoHashに変換
-    if (isGeoCoordinates(value)) {
-      const geohash = encodeGeoHash(
-        value.latitude,
-        value.longitude,
-        DEFAULT_GEOHASH_CONFIG.shadowPrecision
-      );
+    // オブジェクト型は除外（仕様: オブジェクト型はシャドウ化しない）
+    // 理由: オブジェクトは構造が複雑で、シャドウキーとして適切でない
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      // GeoCoordinates型は例外として処理
+      if (isGeoCoordinates(value)) {
+        const geohash = encodeGeoHash(
+          value.latitude,
+          value.longitude,
+          DEFAULT_GEOHASH_CONFIG.shadowPrecision
+        );
 
-      // GeoHashシャドウキーを生成
-      const sk = `${fieldName}#${geohash}#id#${record.id}`;
+        // GeoHashシャドウキーを生成
+        const sk = `${fieldName}#${geohash}#id#${record.id}`;
 
-      shadows.push({
-        PK: resourceName,
-        SK: sk,
-      });
-
+        shadows.push({
+          PK: resourceName,
+          SK: sk,
+        });
+      }
+      // その他のオブジェクト型はスキップ
       continue;
     }
+
+    // GeoCoordinates型を検出してGeoHashに変換（上記で処理済み）
+    // この時点では配列とプリミティブ型のみが残る
 
     // 型推論
     const type = inferFieldType(value);

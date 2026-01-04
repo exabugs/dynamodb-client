@@ -54,9 +54,10 @@ export function inferFieldType(value: unknown): ShadowFieldType | null {
     return 'array';
   }
 
-  // object型
+  // object型はシャドウ化しない（仕様）
+  // 理由: オブジェクトは構造が複雑で、シャドウキーとして適切でない
   if (typeof value === 'object') {
-    return 'object';
+    return null;
   }
 
   return null;

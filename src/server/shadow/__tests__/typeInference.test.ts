@@ -1,8 +1,9 @@
 /**
  * 型推論のテスト
  */
-import { describe, it, expect } from 'vitest';
-import { inferFieldType, extractShadowableFields } from '../typeInference.js';
+import { describe, expect, it } from 'vitest';
+
+import { extractShadowableFields, inferFieldType } from '../typeInference.js';
 
 describe('inferFieldType', () => {
   it('string型を正しく推論する', () => {
@@ -33,9 +34,9 @@ describe('inferFieldType', () => {
     expect(inferFieldType([1, 2, 3])).toBe('array');
   });
 
-  it('object型を正しく推論する', () => {
-    expect(inferFieldType({})).toBe('object');
-    expect(inferFieldType({ key: 'value' })).toBe('object');
+  it('object型はシャドウ化しない（nullを返す）', () => {
+    expect(inferFieldType({})).toBeNull();
+    expect(inferFieldType({ key: 'value' })).toBeNull();
   });
 
   it('null/undefinedはnullを返す', () => {
@@ -45,7 +46,7 @@ describe('inferFieldType', () => {
 });
 
 describe('extractShadowableFields', () => {
-  it('すべての型のフィールドを抽出する', () => {
+  it('すべての型のフィールドを抽出する（オブジェクト型は除外）', () => {
     const record = {
       id: '01HQXYZ123',
       title: 'Article',
@@ -53,7 +54,7 @@ describe('extractShadowableFields', () => {
       published: true,
       createdAt: '2024-01-15T10:30:00.000Z',
       tags: ['tech', 'aws'],
-      metadata: { category: 'tech' },
+      metadata: { category: 'tech' }, // オブジェクト型は除外される
     };
 
     const fields = extractShadowableFields(record);
@@ -65,7 +66,7 @@ describe('extractShadowableFields', () => {
       published: 'boolean',
       createdAt: 'datetime',
       tags: 'array',
-      metadata: 'object',
+      // metadata は除外される（オブジェクト型）
     });
   });
 
