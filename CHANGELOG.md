@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.21] - 2026-01-04
+
+### Changed
+
+- **Shadow仕様変更**: オブジェクト型はシャドウを作成しない仕様に変更
+  - `inferFieldType`: オブジェクト型に対して`null`を返すように変更
+  - `generateShadowRecords`: オブジェクト型を明示的にスキップ
+  - `formatFieldValue`: `object`型のケースを削除
+  - 理由: オブジェクトは構造が複雑で、シャドウキーとして適切でない
+  - 例外: GeoCoordinates型（`{latitude, longitude}`）は地理空間検索用にGeoHashシャドウを生成
+
 ## [1.3.20] - 2026-01-03
 
 ### Added
