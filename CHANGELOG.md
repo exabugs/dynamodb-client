@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.23] - 2026-01-05
+
+### Added
+
+- **テストファイル**: `$setOnInsert`オペレータの包括的なテストを追加
+  - `__tests__/operations/updateOne-setOnInsert.test.ts` (279行)
+  - `__tests__/operations/updateMany-setOnInsert.test.ts` (166行)
+
 ## [1.3.22] - 2026-01-05
 
 ### Added
