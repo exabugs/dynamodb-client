@@ -103,6 +103,8 @@ export type Filter<T> = {
 export interface UpdateOperators<T> {
   /** フィールドを設定 */
   $set?: Partial<T>;
+  /** upsert時のinsert専用フィールド（レコードが存在しない場合のみ適用） */
+  $setOnInsert?: Partial<T>;
   /** フィールドを削除 */
   $unset?: (keyof T)[];
   /** 数値をインクリメント（負の値でデクリメント） */

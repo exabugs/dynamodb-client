@@ -134,13 +134,14 @@ export async function handleUpdateOne(
  * upsertで新規作成
  *
  * 処理フロー:
- * 1. createdAt と updatedAt を自動設定
- * 2. シャドーレコードを生成
- * 3. TransactWriteItemsでメインレコード + シャドーレコードを一括作成
+ * 1. $set と $setOnInsert をマージ（$set が優先）
+ * 2. createdAt と updatedAt を自動設定
+ * 3. シャドーレコードを生成
+ * 4. TransactWriteItemsでメインレコード + シャドーレコードを一括作成
  *
  * @param resource - リソース名
  * @param id - レコードID
- * @param data - レコードデータ
+ * @param data - レコードデータ（UpdateOperators形式）
  * @param requestId - リクエストID
  * @returns 作成されたレコード（__upsertedIdフラグ付き）
  */
@@ -150,8 +151,18 @@ async function handleUpsertCreate(
   data: Record<string, unknown>,
   requestId: string
 ): Promise<UpdateOneResult> {
+  // UpdateOperators形式の場合、$set と $setOnInsert をマージ
+  const $set = (data.$set as Record<string, unknown>) || {};
+  const $setOnInsert = (data.$setOnInsert as Record<string, unknown>) || {};
+
+  // $set が $setOnInsert より優先される
+  const mergedData = {
+    ...$setOnInsert,
+    ...$set,
+  };
+
   // createdAt と updatedAt を自動設定
-  const recordData = addCreateTimestamps({ ...data, id });
+  const recordData = addCreateTimestamps({ ...mergedData, id });
 
   // シャドー設定を取得
   const shadowConfig = getShadowConfig();
@@ -219,16 +230,17 @@ async function handleUpsertCreate(
  * upsertで更新
  *
  * 処理フロー:
- * 1. JSON Merge Patchを適用
- * 2. updatedAt を更新
- * 3. 新しいシャドーSKを生成
- * 4. 旧シャドーと新シャドーの差分を計算
- * 5. TransactWriteItemsでメインレコード更新 + 旧シャドー削除 + 新シャドー追加
+ * 1. UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+ * 2. JSON Merge Patchを適用
+ * 3. updatedAt を更新
+ * 4. 新しいシャドーSKを生成
+ * 5. 旧シャドーと新シャドーの差分を計算
+ * 6. TransactWriteItemsでメインレコード更新 + 旧シャドー削除 + 新シャドー追加
  *
  * @param resource - リソース名
  * @param id - レコードID
  * @param existingItem - 既存のDynamoDBアイテム
- * @param patchData - パッチデータ
+ * @param patchData - パッチデータ（UpdateOperators形式または通常のパッチ）
  * @param requestId - リクエストID
  * @returns 更新されたレコード
  */
@@ -242,8 +254,11 @@ async function handleUpsertUpdate(
   const existingData = existingItem.data as Record<string, unknown>;
   const oldShadowKeys = (existingData.__shadowKeys as string[]) || [];
 
+  // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+  const actualPatchData = patchData.$set ? (patchData.$set as Record<string, unknown>) : patchData;
+
   // JSON Merge Patchを適用
-  const mergedData = applyJsonMergePatch(removeShadowKeys(existingData), patchData);
+  const mergedData = applyJsonMergePatch(removeShadowKeys(existingData), actualPatchData);
 
   // updatedAt を更新
   const updatedData = addUpdateTimestamp({

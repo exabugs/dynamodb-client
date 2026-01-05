@@ -6,7 +6,7 @@
  */
 import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import { createLogger, ErrorCode } from '../../shared/index.js';
+import { ErrorCode, createLogger } from '../../shared/index.js';
 import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
 import { calculateShadowDiff, generateMainRecordSK } from '../shadow/index.js';
 import type { OperationError, UpdateManyParams, UpdateManyResult } from '../types.js';
@@ -175,8 +175,13 @@ export async function handleUpdateMany(
       const id = existingData.id as string;
       const oldShadowKeys = (existingData.__shadowKeys as string[]) || [];
 
+      // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+      const actualPatchData = patchData.$set
+        ? (patchData.$set as Record<string, unknown>)
+        : patchData;
+
       // JSON Merge Patchを適用
-      const mergedData = applyJsonMergePatch(removeShadowKeys(existingData), patchData);
+      const mergedData = applyJsonMergePatch(removeShadowKeys(existingData), actualPatchData);
 
       // updatedAt を更新（タイムスタンプフィールド名は動的に取得）
       const updatedData: Record<string, unknown> = addUpdateTimestamp({

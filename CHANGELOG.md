@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.22] - 2026-01-05
+
+### Added
+
+- **$setOnInsert オペレータ**: MongoDB互換のupsert専用フィールド設定機能
+  - upsert時のinsert専用フィールドを指定可能（`$setOnInsert`）
+  - update時は`$setOnInsert`が無視され、`$set`のみが適用される
+  - `$set`と`$setOnInsert`で同じフィールドを指定した場合、`$set`が優先
+  - タイムスタンプ管理（`createdAt`は初回のみ、`updatedAt`は常に更新）が明確に
+  - MongoDB公式ドキュメントと完全互換
+
+### Changed
+
+- **UpdateOperators型**: `$setOnInsert?: Partial<T>` フィールドを追加
+- **handleUpsertCreate**: `$set`と`$setOnInsert`をマージして新規作成（`$set`が優先）
+- **handleUpsertUpdate**: `$setOnInsert`を無視して`$set`のみを適用
+
+### Documentation
+
+- **API.md**: `$setOnInsert`オペレータの詳細な説明を追加
+  - 動作仕様（insert時/update時の挙動）
+  - 使用例とコードスニペット
+  - MongoDB互換性の説明
+  - ユースケース（タイムスタンプ管理、デフォルト値設定、初期ステータス）
+
+### Technical
+
+- **テスト**: 包括的なテストカバレッジ（単体テスト・統合テスト）
+  - insert時に`$set`と`$setOnInsert`の両方を適用するテスト
+  - update時に`$setOnInsert`を無視するテスト
+  - `$set`が`$setOnInsert`より優先されるテスト
+  - `createdAt`の保持テスト
+  - シャドウレコード生成の確認
+  - 後方互換性テスト（従来のパッチ形式）
+
 ## [1.3.21] - 2026-01-04
 
 ### Changed

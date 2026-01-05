@@ -776,8 +776,10 @@ MongoDB風の更新演算子を提供します。
 
 ```typescript
 interface UpdateOperators<T> {
-  /** フィールドを設定 */
+  /** フィールドを設定（insert/update両方で適用） */
   $set?: Partial<T>;
+  /** upsert時のinsert専用フィールド（updateでは無視される） */
+  $setOnInsert?: Partial<T>;
   /** フィールドを削除 */
   $unset?: (keyof T)[];
   /** 数値をインクリメント（負の値でデクリメント） */
@@ -809,7 +811,55 @@ const update: UpdateOperators<Product> = {
   $inc: { viewCount: 1 },
   $unset: ['draft']
 };
+
+// $setOnInsert: upsert時のinsert専用フィールド
+const update: UpdateOperators<Product> = {
+  $set: { updatedAt: new Date().toISOString() },
+  $setOnInsert: { createdAt: new Date().toISOString(), status: 'active' }
+};
 ```
+
+#### $setOnInsert オペレータ
+
+`$setOnInsert` は、upsert操作でレコードが新規作成される場合のみフィールドを設定します。レコードが既に存在する場合は無視されます。
+
+**動作:**
+
+- **insert時**: `$set` と `$setOnInsert` の両方が適用されます
+- **update時**: `$set` のみが適用され、`$setOnInsert` は無視されます
+- **優先順位**: 同じフィールドを指定した場合、`$set` が優先されます
+
+**使用例:**
+
+```typescript
+// 基本的な使用方法
+await products.updateOne(
+  { id: 'product-123' },
+  {
+    $set: { updatedAt: new Date().toISOString() },
+    $setOnInsert: { createdAt: new Date().toISOString(), status: 'active' },
+  },
+  { upsert: true }
+);
+
+// レコードが存在しない場合（insert）:
+// { id: 'product-123', createdAt: '...', status: 'active', updatedAt: '...' }
+
+// レコードが存在する場合（update）:
+// { id: 'product-123', createdAt: '(既存値)', status: '(既存値)', updatedAt: '(新しい値)' }
+```
+
+**MongoDB互換性:**
+
+この実装は、MongoDBの `$setOnInsert` オペレータと完全に互換性があります：
+
+- [MongoDB $setOnInsert Documentation](https://www.mongodb.com/docs/manual/reference/operator/update/setOnInsert/)
+
+**ユースケース:**
+
+1. **タイムスタンプ管理**: `createdAt` は初回のみ設定、`updatedAt` は常に更新
+2. **デフォルト値設定**: 新規作成時のみデフォルト値を設定
+3. **初期ステータス**: 新規レコードには初期ステータスを設定、既存レコードは保持
 
 ### UpdateOneOptions
 
