@@ -193,7 +193,7 @@ const article = await articles.findOne({ title: 'Hello DynamoDB' });
 
 - **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design
 - **[Client Usage](docs/CLIENT_USAGE.md)** - Client-side API guide
-- **[React Admin Integration](docs/react-admin-integration.md)** - Admin UI setup
+- **[React Admin Integration](docs/react-admin-integration.md)** - Admin UI setup and many-to-many relationships
 - **[Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
 - **[Terraform Modules](terraform/README.md)** - Infrastructure as Code
 

@@ -21,4 +21,10 @@
  */
 
 export { createDataProvider } from './dataProvider.js';
-export type { TokenProvider, DataProviderOptions } from './types.js';
+export type {
+  DataProviderOptions,
+  ReferenceManyToManyFieldProps,
+  ReferenceManyToManyInputProps,
+  TokenProvider,
+} from './types.js';
+export { ReferenceManyToManyField, ReferenceManyToManyInput } from './components/index.js';

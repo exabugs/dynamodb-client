@@ -447,6 +447,351 @@ if (nextTokenCache[resource]?._cacheKey !== cacheKey) {
 }
 ```
 
+## 多対多関係の実装
+
+DynamoDB Clientは、中間テーブルを使用した多対多関係をサポートするための専用コンポーネントを提供します。
+
+### 概要
+
+多対多関係（N-to-N）は、2つのリソース間の関連を中間テーブル（ジャンクションテーブル）で管理します。
+
+**例**: Venue（開催地）とUser（ユーザー）の多対多関係
+
+```
+venues (開催地)
+├── id: "venue_001"
+├── name: "新宿御苑"
+└── ...
+
+users (ユーザー)
+├── id: "user_001"
+├── name: "田中太郎"
+└── ...
+
+venueManagers (中間テーブル)
+├── id: "user_001_venue_001"
+├── userId: "user_001"
+├── venueId: "venue_001"
+└── ...
+```
+
+### 提供されるコンポーネント
+
+#### 1. ReferenceManyToManyField（表示用）
+
+Show/List画面で多対多関係を表示するコンポーネント。
+
+```typescript
+import { ReferenceManyToManyField } from '@exabugs/dynamodb-client/integrations/react-admin';
+import { ChipField, SingleFieldList } from 'react-admin';
+
+// Venue Show画面で管理者一覧を表示
+<ReferenceManyToManyField
+  reference="users"           // 参照先リソース
+  through="venueManagers"     // 中間テーブル
+  using="venueId,userId"      // 中間テーブルのフィールド（起点,参照先）
+  label="管理者"
+>
+  <SingleFieldList>
+    <ChipField source="name" />
+  </SingleFieldList>
+</ReferenceManyToManyField>
+```
+
+**プロパティ**:
+
+| プロパティ  | 型           | 必須 | 説明                                                                                   |
+| ----------- | ------------ | ---- | -------------------------------------------------------------------------------------- |
+| `reference` | string       | ✅   | 参照先リソース名（例: "users"）                                                        |
+| `through`   | string       | ✅   | 中間テーブルのリソース名（例: "venueManagers"）                                        |
+| `using`     | string       | ✅   | 中間テーブルのフィールド名（カンマ区切り）<br/>形式: "起点フィールド,参照先フィールド" |
+| `label`     | string       | -    | フィールドのラベル                                                                     |
+| `children`  | ReactElement | ✅   | 表示用の子コンポーネント                                                               |
+
+#### 2. ReferenceManyToManyInput（編集用）
+
+Edit/Create画面で多対多関係を編集するコンポーネント。
+
+```typescript
+import { ReferenceManyToManyInput } from '@exabugs/dynamodb-client/integrations/react-admin';
+import { AutocompleteArrayInput } from 'react-admin';
+
+// Venue Edit画面で管理者を追加・削除
+<ReferenceManyToManyInput
+  reference="users"           // 参照先リソース
+  through="venueManagers"     // 中間テーブル
+  using="venueId,userId"      // 中間テーブルのフィールド（起点,参照先）
+  label="管理者"
+>
+  <AutocompleteArrayInput optionText="name" />
+</ReferenceManyToManyInput>
+```
+
+**プロパティ**:
+
+| プロパティ  | 型           | 必須 | 説明                                                                                   |
+| ----------- | ------------ | ---- | -------------------------------------------------------------------------------------- |
+| `reference` | string       | ✅   | 参照先リソース名（例: "users"）                                                        |
+| `through`   | string       | ✅   | 中間テーブルのリソース名（例: "venueManagers"）                                        |
+| `using`     | string       | ✅   | 中間テーブルのフィールド名（カンマ区切り）<br/>形式: "起点フィールド,参照先フィールド" |
+| `label`     | string       | -    | フィールドのラベル                                                                     |
+| `children`  | ReactElement | ✅   | 入力用の子コンポーネント                                                               |
+
+### 完全な実装例
+
+#### 型定義
+
+```typescript
+// Venue（開催地）
+interface Venue {
+  id: string;
+  name: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// User（ユーザー）
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// VenueManager（中間テーブル）
+interface VenueManager {
+  id: string; // "${userId}_${venueId}" 形式
+  userId: string; // ユーザーID
+  venueId: string; // 開催地ID
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### Venue Show画面
+
+```typescript
+import { Show, SimpleShowLayout, TextField, DateField } from 'react-admin';
+import { ReferenceManyToManyField } from '@exabugs/dynamodb-client/integrations/react-admin';
+import { ChipField, SingleFieldList } from 'react-admin';
+
+export const VenueShow = () => (
+  <Show>
+    <SimpleShowLayout>
+      <TextField source="name" label="開催地名" />
+      <TextField source="address" label="住所" />
+
+      {/* 管理者一覧を表示 */}
+      <ReferenceManyToManyField
+        reference="users"
+        through="venueManagers"
+        using="venueId,userId"
+        label="管理者"
+      >
+        <SingleFieldList>
+          <ChipField source="name" />
+        </SingleFieldList>
+      </ReferenceManyToManyField>
+
+      <DateField source="createdAt" label="作成日時" showTime />
+      <DateField source="updatedAt" label="更新日時" showTime />
+    </SimpleShowLayout>
+  </Show>
+);
+```
+
+#### Venue Edit画面
+
+```typescript
+import { Edit, SimpleForm, TextInput, DateField } from 'react-admin';
+import { ReferenceManyToManyInput } from '@exabugs/dynamodb-client/integrations/react-admin';
+import { AutocompleteArrayInput } from 'react-admin';
+
+export const VenueEdit = () => (
+  <Edit>
+    <SimpleForm>
+      <TextInput source="name" label="開催地名" />
+      <TextInput source="address" label="住所" />
+
+      {/* 管理者を追加・削除 */}
+      <ReferenceManyToManyInput
+        reference="users"
+        through="venueManagers"
+        using="venueId,userId"
+        label="管理者"
+      >
+        <AutocompleteArrayInput optionText="name" />
+      </ReferenceManyToManyInput>
+
+      <DateField source="createdAt" label="作成日時" showTime />
+      <DateField source="updatedAt" label="更新日時" showTime />
+    </SimpleForm>
+  </Edit>
+);
+```
+
+#### User Show画面（逆方向の関連）
+
+```typescript
+import { Show, SimpleShowLayout, TextField, DateField } from 'react-admin';
+import { ReferenceManyToManyField } from '@exabugs/dynamodb-client/integrations/react-admin';
+import { ChipField, SingleFieldList } from 'react-admin';
+
+export const UserShow = () => (
+  <Show>
+    <SimpleShowLayout>
+      <TextField source="name" label="ユーザー名" />
+      <TextField source="email" label="メールアドレス" />
+
+      {/* 管理している開催地一覧を表示 */}
+      <ReferenceManyToManyField
+        reference="venues"
+        through="venueManagers"
+        using="userId,venueId"  // 逆方向: userId → venueId
+        label="管理している開催地"
+      >
+        <SingleFieldList>
+          <ChipField source="name" />
+        </SingleFieldList>
+      </ReferenceManyToManyField>
+
+      <DateField source="createdAt" label="作成日時" showTime />
+      <DateField source="updatedAt" label="更新日時" showTime />
+    </SimpleShowLayout>
+  </Show>
+);
+```
+
+### 動作の仕組み
+
+#### ReferenceManyToManyField（表示）
+
+1. **起点レコードの取得**: `useRecordContext()`で現在のレコード（例: Venue）を取得
+2. **中間レコードの取得**: `through`テーブルから起点フィールドでフィルタリング
+   ```typescript
+   // venueId = "venue_001" の中間レコードを取得
+   dataProvider.getList('venueManagers', {
+     filter: { venueId: 'venue_001' },
+     pagination: { page: 1, perPage: 1000 },
+   });
+   ```
+3. **参照先IDの抽出**: 中間レコードから参照先フィールドの値を抽出
+   ```typescript
+   // userId の配列を抽出: ["user_001", "user_002", ...]
+   const userIds = junctionRecords.map((r) => r.userId);
+   ```
+4. **参照先レコードの取得**: `reference`テーブルから一括取得
+   ```typescript
+   // ユーザー情報を一括取得
+   dataProvider.getMany('users', { ids: userIds });
+   ```
+5. **子コンポーネントへ渡す**: 取得したレコードを子コンポーネントに渡して表示
+
+#### ReferenceManyToManyInput（編集）
+
+1. **現在の関連を取得**: ReferenceManyToManyFieldと同じ手順で現在の関連を取得
+2. **ユーザーの選択を監視**: 子コンポーネント（AutocompleteArrayInput）の変更を監視
+3. **差分を計算**: 追加されたIDと削除されたIDを計算
+   ```typescript
+   const addedIds = newIds.filter((id) => !currentIds.includes(id));
+   const removedIds = currentIds.filter((id) => !newIds.includes(id));
+   ```
+4. **中間レコードを作成**: 追加されたIDに対して中間レコードを作成
+   ```typescript
+   // 追加: venueId="venue_001", userId="user_003"
+   dataProvider.createMany('venueManagers', {
+     data: [{ id: 'user_003_venue_001', userId: 'user_003', venueId: 'venue_001' }],
+   });
+   ```
+5. **中間レコードを削除**: 削除されたIDに対して中間レコードを削除
+   ```typescript
+   // 削除: id="user_002_venue_001"
+   dataProvider.deleteMany('venueManagers', {
+     ids: ['user_002_venue_001'],
+   });
+   ```
+6. **UIを更新**: `useRefresh()`でリストを再読み込み
+
+### エラーハンドリング
+
+コンポーネントは以下のエラーを自動的に処理します：
+
+1. **usingプロパティの形式エラー**
+
+   ```
+   Error: 'using' prop must be in format 'sourceField,targetField'
+   ```
+
+2. **起点フィールドの不在エラー**
+
+   ```
+   Error: Source field 'venueId' not found in current record
+   ```
+
+3. **DataProviderエラー**
+   - ネットワークエラー
+   - 認証エラー
+   - サーバーエラー
+
+エラーが発生した場合、ユーザーフレンドリーなメッセージが表示されます。
+
+### パフォーマンス最適化
+
+#### バッチ処理
+
+複数の参照先レコードを一度に取得するため、`getMany`を使用します：
+
+```typescript
+// ❌ 非効率: 1件ずつ取得
+for (const id of userIds) {
+  await dataProvider.getOne('users', { id });
+}
+
+// ✅ 効率的: 一括取得
+await dataProvider.getMany('users', { ids: userIds });
+```
+
+#### リクエストキャンセル
+
+コンポーネントがアンマウントされた場合、進行中のリクエストを自動的にキャンセルします。
+
+### 注意事項
+
+1. **中間テーブルのID形式**: `"${sourceId}_${targetId}"` 形式を推奨
+
+   ```typescript
+   // 推奨: userId_venueId
+   id: 'user_001_venue_001';
+
+   // 非推奨: ランダムID
+   id: '01HQXYZ123';
+   ```
+
+2. **usingプロパティの順序**: 必ず "起点フィールド,参照先フィールド" の順序
+
+   ```typescript
+   // Venue → User の場合
+   using = 'venueId,userId';
+
+   // User → Venue の場合（逆方向）
+   using = 'userId,venueId';
+   ```
+
+3. **DataProviderの要件**: `createMany`と`deleteMany`メソッドが必要
+   ```typescript
+   const dataProvider = {
+     // ... 他のメソッド
+     createMany: async (resource, params) => {
+       /* 実装 */
+     },
+     deleteMany: async (resource, params) => {
+       /* 実装 */
+     },
+   };
+   ```
+
 ## まとめ
 
 DynamoDB ClientのMongoDB風インターフェースをreact-adminで使用する際の重要なポイント：
@@ -456,5 +801,6 @@ DynamoDB ClientのMongoDB風インターフェースをreact-adminで使用す�
 3. **hasNextPage判定**: フィルタリング前のクエリ結果で判定
 4. **FindOptions**: `sort`, `limit`, `nextToken`をすべて含める
 5. **pageInfo**: react-admin v5では`total`は不要
+6. **多対多関係**: `ReferenceManyToManyField`と`ReferenceManyToManyInput`を使用
 
-これらのベストプラクティスに従うことで、DynamoDB ClientとInfiniteListを組み合わせた、スムーズな無限スクロールUIを実装できます。
+これらのベストプラクティスに従うことで、DynamoDB ClientとInfiniteListを組み合わせた、スムーズな無限スクロールUIと多対多関係の管理を実装できます。

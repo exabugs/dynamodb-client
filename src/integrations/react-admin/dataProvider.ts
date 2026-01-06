@@ -369,6 +369,33 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
     },
 
     /**
+     * createMany - 複数レコード一括作成
+     */
+    createMany: async <RecordType extends { id: string | number } = any>(
+      resource: string,
+      params: { data: Partial<RecordType>[] }
+    ) => {
+      const client = createClient();
+      await client.connect();
+
+      try {
+        const db = client.db();
+        const collection = db.collection(resource);
+
+        // 複数レコードを挿入
+        const result = await collection.insertMany(params.data as any);
+
+        // 挿入されたレコードを取得
+        const insertedIds = Object.values(result.insertedIds);
+        const items = await collection.find({ id: { $in: insertedIds } }).toArray();
+
+        return { data: items as RecordType[] };
+      } finally {
+        await client.close();
+      }
+    },
+
+    /**
      * update - 単一レコード更新
      */
     update: async <RecordType extends { id: string | number } = any>(

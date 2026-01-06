@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.24] - 2026-01-06
+
+### Added
+
+- **React-Admin多対多関係コンポーネント**: 中間テーブルを使用した多対多関係をサポート
+  - `ReferenceManyToManyField`: Show/List画面で多対多関係を表示
+  - `ReferenceManyToManyInput`: Edit/Create画面で多対多関係を編集
+  - `createMany`: DataProviderに複数レコード一括作成メソッドを追加
+  - 完全なTypeScript型定義とエラーハンドリング
+  - パフォーマンス最適化（バッチ処理、リクエストキャンセル）
+
+### Changed
+
+- **ドキュメント**: `docs/react-admin-integration.md`に多対多関係の詳細セクションを追加
+- **TypeScript設定**: `tsconfig.base.json`にJSXサポートを追加（`"jsx": "react-jsx"`）
+- **Lint設定**: max-warningsを35から41に更新（React-Admin型制約による警告を許容）
+
 ## [1.3.23] - 2026-01-05
 
 ### Added

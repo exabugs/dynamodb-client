@@ -48,3 +48,87 @@ export interface DataProviderOptions {
   /** デフォルトのソート順（オプション、デフォルト: 'ASC'） */
   defaultSortOrder?: 'ASC' | 'DESC';
 }
+
+/**
+ * ReferenceManyToManyField プロパティ
+ *
+ * 多対多関係を表示するためのフィールドコンポーネント。
+ * 中間テーブルを経由して関連レコードを取得し、子コンポーネントに渡します。
+ *
+ * @example
+ * ```typescript
+ * <ReferenceManyToManyField
+ *   reference="users"
+ *   through="venueManagers"
+ *   using="venueId,userId"
+ *   label="管理者"
+ * >
+ *   <Datagrid>
+ *     <TextField source="nickname" />
+ *   </Datagrid>
+ * </ReferenceManyToManyField>
+ * ```
+ */
+export interface ReferenceManyToManyFieldProps {
+  /** ターゲットリソース名（例: 'users'） */
+  reference: string;
+
+  /** 中間テーブル名（例: 'venueManagers'） */
+  through: string;
+
+  /** キーのペア（例: 'venueId,userId'） */
+  using: string;
+
+  /** 起点フィールド名（デフォルト: 'id'） */
+  source?: string;
+
+  /** 子コンポーネント（例: <Datagrid>） */
+  children: React.ReactElement;
+
+  /** ラベル */
+  label?: string;
+
+  /** ソート設定 */
+  sort?: { field: string; order: 'ASC' | 'DESC' };
+
+  /** ページサイズ */
+  perPage?: number;
+}
+
+/**
+ * ReferenceManyToManyInput プロパティ
+ *
+ * 多対多関係を編集するための入力コンポーネント。
+ * 中間テーブルを経由して関連レコードを追加・削除します。
+ *
+ * @example
+ * ```typescript
+ * <ReferenceManyToManyInput
+ *   reference="users"
+ *   through="venueManagers"
+ *   using="venueId,userId"
+ *   label="管理者"
+ * >
+ *   <AutocompleteArrayInput optionText="nickname" />
+ * </ReferenceManyToManyInput>
+ * ```
+ */
+export interface ReferenceManyToManyInputProps {
+  /** ターゲットリソース名（例: 'users'） */
+  reference: string;
+
+  /** 中間テーブル名（例: 'venueManagers'） */
+  through: string;
+
+  /** キーのペア（例: 'venueId,userId'） */
+  using: string;
+
+  /** 起点フィールド名（デフォルト: 'id'） */
+  source?: string;
+
+  /** 子コンポーネント（例: <AutocompleteArrayInput>） */
+  children: React.ReactElement;
+
+  /** ラベル */
+  label?: string;
+}
