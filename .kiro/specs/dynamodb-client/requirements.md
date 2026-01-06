@@ -371,3 +371,20 @@ v0.3.0以降、自動シャドウ化機能により、設定ファイルのメ�
 8. THE バージョン SHALL メジャーバージョンアップ（v1.0.0）を行う
 9. THE マイグレーションガイド SHALL 既存コードの更新方法を提供する
 10. THE 実装 SHALL MongoDBの公式ドキュメントと一致する動作を提供する
+
+### 要件27: $setOnInsert オペレータのサポート
+
+**ユーザーストーリー:** 開発者として、MongoDB風の `$setOnInsert` オペレータを使用することで、upsert時にinsert専用のフィールド（createdAtなど）とupdate専用のフィールド（updatedAtなど）を明確に分けて指定したい
+
+#### 受入基準
+
+1. WHEN updateOneで `{ upsert: true }` と `$setOnInsert` を指定する THEN レコードが存在しない場合のみ `$setOnInsert` のフィールドを適用する
+2. WHEN updateOneで `{ upsert: true }` と `$setOnInsert` を指定する THEN レコードが存在する場合は `$setOnInsert` のフィールドを無視する
+3. WHEN updateOneで `{ upsert: true }` と `$set` と `$setOnInsert` を同時に指定する THEN insert時は両方のフィールドを適用する
+4. WHEN updateOneで `{ upsert: true }` と `$set` と `$setOnInsert` を同時に指定する THEN update時は `$set` のみを適用する
+5. WHEN `$setOnInsert` で `createdAt` を指定する THEN insert時のみ設定され、update時は既存値を保持する
+6. WHEN `$setOnInsert` と `$set` で同じフィールドを指定する THEN `$set` が優先される
+7. THE UpdateOperators SHALL `$setOnInsert` プロパティをサポートする
+8. THE UpdateOperators SHALL `$setOnInsert` の型を `Partial<TSchema>` として定義する
+9. THE サーバー実装 SHALL insert時のみ `$setOnInsert` のフィールドをマージする
+10. THE サーバー実装 SHALL MongoDB互換の動作を提供する

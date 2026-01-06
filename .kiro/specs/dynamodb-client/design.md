@@ -533,6 +533,7 @@ export type Filter<T> = {
  */
 export interface UpdateOperators<T> {
   $set?: Partial<T>;                    // フィールドを設定
+  $setOnInsert?: Partial<T>;            // upsert時のinsert専用フィールド
   $unset?: (keyof T)[];                 // フィールドを削除
   $inc?: Partial<Record<keyof T, number>>; // 数値をインクリメント
 }
@@ -665,6 +666,18 @@ await articles.updateMany(
   { status: 'draft' },
   { $set: { status: 'published', publishedAt: new Date().toISOString() } }
 );
+
+// upsert with $setOnInsert（insert時のみ適用されるフィールド）
+await articles.updateOne(
+  { id: 'article-123' },
+  {
+    $set: { updatedAt: new Date().toISOString() },
+    $setOnInsert: { createdAt: new Date().toISOString(), status: 'draft' }
+  },
+  { upsert: true }
+);
+// レコードが存在しない場合: createdAt, status, updatedAt が設定される
+// レコードが存在する場合: updatedAt のみが更新される
 ```
 
 ### Lambda（IAM認証）
@@ -1848,6 +1861,391 @@ logger.info('Record created successfully', {
 3. **再利用性**: 共通ロジックの抽出により、コードの再利用が促進される
 4. **可読性の向上**: 構造化されたコードにより、理解が容易になる
 5. **拡張性**: 明確なアーキテクチャにより、新機能の追加が容易になる
+
+## $setOnInsert オペレータの実装設計
+
+### 概要
+
+MongoDB互換の `$setOnInsert` オペレータを実装し、upsert時にinsert専用のフィールドとupdate専用のフィールドを明確に分けて指定できるようにします。
+
+### 動作仕様
+
+#### 基本動作
+
+```typescript
+await collection.updateOne(
+  { id: 'user-123' },
+  {
+    $set: { updatedAt: new Date().toISOString() },
+    $setOnInsert: { createdAt: new Date().toISOString(), status: 'active' }
+  },
+  { upsert: true }
+);
+```
+
+**レコードが存在しない場合（insert）**:
+- `$set` のフィールドを適用: `updatedAt`
+- `$setOnInsert` のフィールドを適用: `createdAt`, `status`
+- 結果: `{ id: 'user-123', createdAt: '...', status: 'active', updatedAt: '...' }`
+
+**レコードが存在する場合（update）**:
+- `$set` のフィールドのみを適用: `updatedAt`
+- `$setOnInsert` のフィールドは無視
+- 結果: `{ id: 'user-123', createdAt: '(既存値)', status: '(既存値)', updatedAt: '(新しい値)' }`
+
+#### フィールドの優先順位
+
+`$set` と `$setOnInsert` で同じフィールドを指定した場合、`$set` が優先されます：
+
+```typescript
+await collection.updateOne(
+  { id: 'user-123' },
+  {
+    $set: { status: 'inactive' },
+    $setOnInsert: { status: 'active' }  // 無視される
+  },
+  { upsert: true }
+);
+```
+
+**結果**:
+- insert時: `status: 'inactive'` （`$set` が優先）
+- update時: `status: 'inactive'` （`$set` のみ適用）
+
+### サーバー側実装
+
+#### 型定義の更新
+
+```typescript
+// src/shared/types/index.ts
+
+/**
+ * updateOne パラメータ
+ */
+export interface UpdateOneParams {
+  /** 更新対象のレコードID */
+  id: string;
+  /** 更新データ（JSON Merge Patch形式） */
+  data: Record<string, unknown>;
+  /** オプション */
+  options?: {
+    /** レコードが存在しない場合に新規作成するか */
+    upsert?: boolean;
+  };
+}
+
+/**
+ * 更新演算子（MongoDB互換）
+ */
+export interface UpdateOperators<T> {
+  /** フィールドを設定（insert/update両方で適用） */
+  $set?: Partial<T>;
+  /** upsert時のinsert専用フィールド */
+  $setOnInsert?: Partial<T>;
+  /** フィールドを削除 */
+  $unset?: (keyof T)[];
+  /** 数値をインクリメント */
+  $inc?: Partial<Record<keyof T, number>>;
+}
+```
+
+#### handleUpdateOne の実装
+
+```typescript
+// src/server/operations/updateOne.ts
+
+export async function handleUpdateOne(
+  resource: string,
+  params: UpdateOneParams,
+  requestId: string
+): Promise<UpdateOneResult> {
+  const { id, data: patchData, options } = params;
+  const upsert = options?.upsert ?? false;
+
+  logger.debug('Executing updateOne', {
+    requestId,
+    resource,
+    id,
+    upsert,
+  });
+
+  // 既存レコードの取得
+  const existingItem = await getMainRecord(resource, id);
+
+  if (!existingItem) {
+    if (!upsert) {
+      throw new ItemNotFoundError(`Record not found: ${id}`);
+    }
+    // upsert: insert
+    return await handleUpsertCreate(resource, id, patchData, requestId);
+  }
+
+  // upsert: update
+  return await handleUpsertUpdate(resource, id, existingItem, patchData, requestId);
+}
+
+/**
+ * upsert時のinsert処理
+ */
+async function handleUpsertCreate(
+  resource: string,
+  id: string,
+  patchData: Record<string, unknown>,
+  requestId: string
+): Promise<UpdateOneResult> {
+  // $set と $setOnInsert をマージ
+  const { $set, $setOnInsert, $unset, $inc } = patchData as UpdateOperators<any>;
+  
+  // $set が優先される
+  const mergedData = {
+    ...($setOnInsert || {}),
+    ...($set || {}),
+  };
+
+  // createdAt と updatedAt を自動設定
+  const recordData = addCreateTimestamps({ ...mergedData, id });
+
+  // シャドウレコードを生成
+  const shadowRecords = await generateShadowRecords(recordData, resource);
+  const shadowKeys = shadowRecords.map((s) => s.SK);
+
+  // メタデータを追加
+  const finalData = {
+    ...recordData,
+    __shadowKeys: shadowKeys,
+    __configVersion: getShadowConfigVersion(),
+    __configHash: getShadowConfigHash(),
+  };
+
+  // DynamoDBに書き込み
+  await executeDynamoDBOperation(
+    'TransactWriteItems',
+    {
+      TransactItems: [
+        {
+          Put: {
+            TableName: getTableName(),
+            Item: marshall({
+              PK: resource,
+              SK: generateMainRecordSK(id),
+              data: finalData,
+            }),
+          },
+        },
+        ...shadowRecords.map((shadow) => ({
+          Put: {
+            TableName: getTableName(),
+            Item: marshall(shadow),
+          },
+        })),
+      ],
+    },
+    requestId
+  );
+
+  logger.info('updateOne upsert created', {
+    requestId,
+    resource,
+    id,
+    shadowCount: shadowRecords.length,
+  });
+
+  return finalData;
+}
+
+/**
+ * upsert時のupdate処理
+ */
+async function handleUpsertUpdate(
+  resource: string,
+  id: string,
+  existingItem: any,
+  patchData: Record<string, unknown>,
+  requestId: string
+): Promise<UpdateOneResult> {
+  const existingData = existingItem.data as Record<string, unknown>;
+  const oldShadowKeys = (existingData.__shadowKeys as string[]) || [];
+
+  // $setOnInsert は無視、$set のみを適用
+  const { $set, $unset, $inc } = patchData as UpdateOperators<any>;
+
+  // JSON Merge Patchを適用
+  const mergedData = applyJsonMergePatch(existingData, $set || {});
+
+  // updatedAt を自動更新
+  mergedData.updatedAt = new Date().toISOString();
+
+  // シャドウレコードを再生成
+  const newShadowRecords = await generateShadowRecords(mergedData, resource);
+  const newShadowKeys = newShadowRecords.map((s) => s.SK);
+
+  // シャドウ差分を計算
+  const shadowDiff = calculateShadowDiff(oldShadowKeys, newShadowKeys);
+
+  // メタデータを更新
+  mergedData.__shadowKeys = newShadowKeys;
+  mergedData.__configVersion = getShadowConfigVersion();
+  mergedData.__configHash = getShadowConfigHash();
+
+  // DynamoDBに書き込み
+  const transactItems = [
+    {
+      Put: {
+        TableName: getTableName(),
+        Item: marshall({
+          PK: resource,
+          SK: generateMainRecordSK(id),
+          data: mergedData,
+        }),
+      },
+    },
+    ...shadowDiff.toDelete.map((sk) => ({
+      Delete: {
+        TableName: getTableName(),
+        Key: marshall({ PK: resource, SK: sk }),
+      },
+    })),
+    ...shadowDiff.toAdd.map((sk) => {
+      const shadow = newShadowRecords.find((s) => s.SK === sk)!;
+      return {
+        Put: {
+          TableName: getTableName(),
+          Item: marshall(shadow),
+        },
+      };
+    }),
+  ];
+
+  await executeDynamoDBOperation(
+    'TransactWriteItems',
+    { TransactItems: transactItems },
+    requestId
+  );
+
+  logger.info('updateOne upsert updated', {
+    requestId,
+    resource,
+    id,
+    shadowsDeleted: shadowDiff.toDelete.length,
+    shadowsAdded: shadowDiff.toAdd.length,
+  });
+
+  return mergedData;
+}
+```
+
+### クライアント側実装
+
+クライアント側は型定義のみを更新し、サーバー側に処理を委譲します：
+
+```typescript
+// src/client/Collection.ts
+
+async updateOne(
+  filter: Filter<TSchema>,
+  update: UpdateOperators<TSchema>,
+  options?: { upsert?: boolean }
+): Promise<UpdateResult> {
+  const response = await this.request('updateOne', { filter, update, options });
+  const result = response as {
+    matchedCount: number;
+    modifiedCount: number;
+    upsertedId?: string;
+  };
+
+  return {
+    acknowledged: true,
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+    upsertedId: result.upsertedId,
+  };
+}
+```
+
+### テスト設計
+
+#### 単体テスト
+
+```typescript
+// __tests__/updateOne.test.ts
+
+describe('updateOne with $setOnInsert', () => {
+  it('insert時に$setと$setOnInsertの両方を適用する', async () => {
+    const result = await collection.updateOne(
+      { id: 'new-user' },
+      {
+        $set: { updatedAt: '2025-01-05T10:00:00Z' },
+        $setOnInsert: { createdAt: '2025-01-05T10:00:00Z', status: 'active' }
+      },
+      { upsert: true }
+    );
+
+    expect(result.upsertedId).toBe('new-user');
+    
+    const record = await collection.findOne({ id: 'new-user' });
+    expect(record).toMatchObject({
+      id: 'new-user',
+      createdAt: '2025-01-05T10:00:00Z',
+      status: 'active',
+      updatedAt: '2025-01-05T10:00:00Z',
+    });
+  });
+
+  it('update時に$setOnInsertを無視する', async () => {
+    // 既存レコードを作成
+    await collection.insertOne({
+      id: 'existing-user',
+      createdAt: '2025-01-01T00:00:00Z',
+      status: 'inactive',
+    });
+
+    // updateOne with $setOnInsert
+    await collection.updateOne(
+      { id: 'existing-user' },
+      {
+        $set: { updatedAt: '2025-01-05T10:00:00Z' },
+        $setOnInsert: { createdAt: '2025-01-05T10:00:00Z', status: 'active' }
+      },
+      { upsert: true }
+    );
+
+    const record = await collection.findOne({ id: 'existing-user' });
+    expect(record).toMatchObject({
+      id: 'existing-user',
+      createdAt: '2025-01-01T00:00:00Z',  // 既存値を保持
+      status: 'inactive',                  // 既存値を保持
+      updatedAt: '2025-01-05T10:00:00Z',  // 更新
+    });
+  });
+
+  it('$setが$setOnInsertより優先される', async () => {
+    const result = await collection.updateOne(
+      { id: 'new-user' },
+      {
+        $set: { status: 'inactive' },
+        $setOnInsert: { status: 'active' }
+      },
+      { upsert: true }
+    );
+
+    const record = await collection.findOne({ id: 'new-user' });
+    expect(record.status).toBe('inactive');  // $setが優先
+  });
+});
+```
+
+### MongoDB互換性
+
+この実装は、MongoDBの `$setOnInsert` オペレータと完全に互換性があります：
+
+- [MongoDB $setOnInsert Documentation](https://www.mongodb.com/docs/manual/reference/operator/update/setOninsert/)
+
+### 期待される効果
+
+1. **明確な意図**: insert時とupdate時で異なるフィールドを明示的に指定可能
+2. **MongoDB互換性**: MongoDBの知識をそのまま活用可能
+3. **コードの可読性**: `createdAt` と `updatedAt` の扱いが明確
+4. **保守性**: upsert処理のロジックが整理される
 
 ## Find操作のリファクタリング設計
 
