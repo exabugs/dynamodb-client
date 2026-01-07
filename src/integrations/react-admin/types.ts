@@ -112,6 +112,20 @@ export interface ReferenceManyToManyFieldProps {
  *   <AutocompleteArrayInput optionText="nickname" />
  * </ReferenceManyToManyInput>
  * ```
+ *
+ * @example
+ * ```typescript
+ * // filterを使用した例
+ * <ReferenceManyToManyInput
+ *   reference="venues"
+ *   through="venueManagers"
+ *   using="userId,venueId"
+ *   label="管理会場"
+ *   filter={{ location: { $near: { latitude: 35.6, longitude: 139.7 } } }}
+ * >
+ *   <AutocompleteArrayInput optionText="name" />
+ * </ReferenceManyToManyInput>
+ * ```
  */
 export interface ReferenceManyToManyInputProps {
   /** ターゲットリソース名（例: 'users'） */
@@ -131,4 +145,7 @@ export interface ReferenceManyToManyInputProps {
 
   /** ラベル */
   label?: string;
+
+  /** 常に適用されるフィルタ（オプション） */
+  filter?: Record<string, unknown>;
 }

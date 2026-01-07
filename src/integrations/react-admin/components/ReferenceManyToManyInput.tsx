@@ -32,7 +32,10 @@ import type { ReferenceManyToManyInputProps } from '../types.js';
  * DataProviderが保存時に自動的に中間テーブルを更新します。
  */
 export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): ReactElement => {
-  const { reference, through, using, source = 'id', children, label } = props;
+  const { reference, through, using, source = 'id', children, label, filter } = props;
+
+  // デバッグ: filterを確認
+  console.log('ReferenceManyToManyInput filter:', JSON.stringify(filter, null, 2));
 
   const record = useRecordContext();
   const dataProvider = useDataProvider();
@@ -117,7 +120,7 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
   // フォーム状態として管理
   // DataProviderのupdateメソッドが自動的に中間テーブルを更新します
   return (
-    <ReferenceArrayInput source={fieldName} reference={reference} label={label}>
+    <ReferenceArrayInput source={fieldName} reference={reference} label={label} filter={filter}>
       {cloneElement(children, {
         defaultValue: initialIds,
       } as any)}

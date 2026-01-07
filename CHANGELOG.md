@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.28] - 2026-01-07
+
+### Added
+
+- **React-Admin多対多関係コンポーネント**: `ReferenceManyToManyInput`に`filter`プロパティを追加
+  - `filter?: Record<string, unknown>`プロパティで任意のフィルター条件を指定可能
+  - `$near`オペレータによる地理的近傍探査をサポート
+  - 使用例: `filter={{ location: { $near: { latitude: 35.6895, longitude: 139.6917, maxDistance: 5000 } } }}`
+  - `ReferenceArrayInput`に透過的に渡され、Records Lambda APIで処理される
+
 ## [1.3.27] - 2026-01-07
 
 ### Changed
