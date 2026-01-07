@@ -202,6 +202,14 @@ interface ReferenceManyToManyInputProps {
 }
 ```
 
+#### 実装方針
+
+**重要**: フォーム保存時にコミットする設計に変更
+
+1. **選択時**: フォーム状態のみ更新（DB更新なし）
+2. **保存時**: `transform`関数で中間テーブルを更新
+3. **キャンセル時**: フォーム状態をリセット（DB更新なし）
+
 #### 実装
 
 ```typescript
@@ -209,10 +217,9 @@ import {
   useRecordContext,
   useDataProvider,
   useNotify,
-  useRefresh,
-  useInput,
+  ReferenceArrayInput,
 } from 'react-admin';
-import { useState, useEffect, cloneElement, ReactElement } from 'react';
+import { useState, useEffect, cloneElement, ReactElement, useCallback } from 'react';
 
 export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps) => {
   const {
@@ -227,22 +234,32 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps) =
   const record = useRecordContext();
   const dataProvider = useDataProvider();
   const notify = useNotify();
-  const refresh = useRefresh();
-  const [currentIds, setCurrentIds] = useState<string[]>([]);
+  const [initialIds, setInitialIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   // usingプロパティをパース
-  const [sourceKey, targetKey] = using.split(',').map(k => k.trim());
+  const keys = using.split(',').map(k => k.trim());
+  if (keys.length !== 2) {
+    throw new Error(`Invalid using format: "${using}". Expected "sourceKey,targetKey"`);
+  }
+  const [sourceKey, targetKey] = keys;
 
+  // 初期値を取得（マウント時のみ）
   useEffect(() => {
-    if (!record) return;
+    if (!record) {
+      setLoading(false);
+      return;
+    }
 
     const fetchCurrentRelations = async () => {
       try {
         setLoading(true);
 
         const sourceId = record[source];
-        if (!sourceId) return;
+        if (!sourceId) {
+          setInitialIds([]);
+          return;
+        }
 
         // 現在の関連を取得
         const { data: junctionRecords } = await dataProvider.getList(through, {
@@ -252,79 +269,134 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps) =
         });
 
         const ids = junctionRecords.map((r: any) => r[targetKey]).filter(Boolean);
-        setCurrentIds(ids);
+        setInitialIds(ids);
       } catch (error) {
-        notify(`関連の取得に失敗しました: ${error}`, { type: 'error' });
+        notify(`関連の取得に失敗しました: ${(error as Error).message}`, { type: 'error' });
+        setInitialIds([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCurrentRelations();
-  }, [record, through, using, source, dataProvider, sourceKey, targetKey, notify]);
-
-  const handleChange = async (newIds: string[]) => {
-    if (!record) return;
-
-    const sourceId = record[source];
-    if (!sourceId) return;
-
-    try {
-      // 追加された関連
-      const addedIds = newIds.filter(id => !currentIds.includes(id));
-      
-      // 削除された関連
-      const removedIds = currentIds.filter(id => !newIds.includes(id));
-
-      // 追加処理
-      if (addedIds.length > 0) {
-        const junctionRecords = addedIds.map(targetId => ({
-          [sourceKey]: sourceId,
-          [targetKey]: targetId,
-        }));
-
-        await dataProvider.createMany(through, { data: junctionRecords });
-      }
-
-      // 削除処理
-      if (removedIds.length > 0) {
-        // 削除する中間レコードのIDを取得
-        const { data: junctionRecords } = await dataProvider.getList(through, {
-          filter: {
-            [sourceKey]: sourceId,
-            [targetKey]: { $in: removedIds },
-          },
-          pagination: { page: 1, perPage: 1000 },
-          sort: { field: 'id', order: 'ASC' },
-        });
-
-        const junctionIds = junctionRecords.map((r: any) => r.id);
-        if (junctionIds.length > 0) {
-          await dataProvider.deleteMany(through, { ids: junctionIds });
-        }
-      }
-
-      setCurrentIds(newIds);
-      notify('関連を更新しました', { type: 'success' });
-      refresh();
-    } catch (error) {
-      notify(`関連の更新に失敗しました: ${error}`, { type: 'error' });
-    }
-  };
+  }, [record?.[source]]); // recordIdが変わった時のみ再フェッチ
 
   if (loading) {
     return <div>読み込み中...</div>;
   }
 
-  // 子コンポーネントにデータを渡す
-  return cloneElement(children, {
-    source: 'relatedIds',
-    label,
-    value: currentIds,
-    onChange: handleChange,
-    reference,
-  });
+  // ReferenceArrayInputでラップして、選択肢を自動取得
+  // フォーム状態として管理（DB更新はしない）
+  return (
+    <ReferenceArrayInput
+      source={`__manyToMany_${through}_${targetKey}`}
+      reference={reference}
+      label={label}
+      defaultValue={initialIds}
+    >
+      {children}
+    </ReferenceArrayInput>
+  );
 };
+```
+
+#### 保存時の処理
+
+親フォームの`transform`関数で中間テーブルを更新：
+
+```typescript
+// Users.tsx または Venues.tsx
+import { Edit, SimpleForm, useDataProvider, useNotify } from 'react-admin';
+
+export const VenueEdit = () => {
+  const dataProvider = useDataProvider();
+  const notify = useNotify();
+
+  const transform = async (data: any) => {
+    const { __manyToMany_venueManagers_userId, ...rest } = data;
+    
+    // 中間テーブルを更新
+    if (__manyToMany_venueManagers_userId !== undefined) {
+      try {
+        await updateManyToManyRelations(
+          dataProvider,
+          'venueManagers',
+          'venueId',
+          'userId',
+          rest.id,
+          __manyToMany_venueManagers_userId
+        );
+      } catch (error) {
+        notify(`関連の更新に失敗しました: ${error}`, { type: 'error' });
+        throw error;
+      }
+    }
+    
+    return rest;
+  };
+
+  return (
+    <Edit transform={transform}>
+      <SimpleForm>
+        <TextInput source="name" />
+        <ReferenceManyToManyInput
+          reference="users"
+          through="venueManagers"
+          using="venueId,userId"
+          label="管理者"
+        >
+          <AutocompleteArrayInput optionText="nickname" />
+        </ReferenceManyToManyInput>
+      </SimpleForm>
+    </Edit>
+  );
+};
+
+// ヘルパー関数
+async function updateManyToManyRelations(
+  dataProvider: any,
+  through: string,
+  sourceKey: string,
+  targetKey: string,
+  sourceId: string,
+  newIds: string[]
+) {
+  // 現在の関連を取得
+  const { data: currentJunctions } = await dataProvider.getList(through, {
+    filter: { [sourceKey]: sourceId },
+    pagination: { page: 1, perPage: 1000 },
+    sort: { field: 'id', order: 'ASC' },
+  });
+
+  const currentIds = currentJunctions.map((r: any) => r[targetKey]);
+
+  // 追加された関連
+  const addedIds = newIds.filter(id => !currentIds.includes(id));
+
+  // 削除された関連
+  const removedIds = currentIds.filter(id => !newIds.includes(id));
+
+  // 追加処理
+  if (addedIds.length > 0) {
+    for (const targetId of addedIds) {
+      await dataProvider.create(through, {
+        data: { [sourceKey]: sourceId, [targetKey]: targetId },
+      });
+    }
+  }
+
+  // 削除処理
+  if (removedIds.length > 0) {
+    const junctionsToDelete = currentJunctions.filter((r: any) =>
+      removedIds.includes(r[targetKey])
+    );
+    const idsToDelete = junctionsToDelete.map((r: any) => r.id);
+    
+    if (idsToDelete.length > 0) {
+      await dataProvider.deleteMany(through, { ids: idsToDelete });
+    }
+  }
+}
 ```
 
 ## DataProvider拡張

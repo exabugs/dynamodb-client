@@ -18,9 +18,9 @@
  * </ReferenceManyToManyField>
  * ```
  */
-import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
-import { useDataProvider, useRecordContext } from 'react-admin';
+import { ListContextProvider, useDataProvider, useRecordContext } from 'react-admin';
 
 import type { ReferenceManyToManyFieldProps } from '../types.js';
 
@@ -175,10 +175,39 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
   }
 
   // 子コンポーネントにデータを渡す
-  return cloneElement(children, {
-    data,
-    total,
-    loaded: true,
-    loading: false,
-  } as any);
+  // ListContextProviderでラップして、Datagridなどのリストコンポーネントが動作するようにする
+  return (
+    <ListContextProvider
+      value={{
+        data,
+        total,
+        isLoading: false,
+        isFetching: false,
+        isPending: false,
+        error: null,
+        resource: reference,
+        sort,
+        page: 1,
+        perPage: data.length,
+        setSort: () => {},
+        setPage: () => {},
+        setPerPage: () => {},
+        setFilters: () => {},
+        displayedFilters: {},
+        filterValues: {},
+        showFilter: () => {},
+        hideFilter: () => {},
+        refetch: () => {},
+        hasNextPage: false,
+        hasPreviousPage: false,
+        selectedIds: [],
+        onSelect: () => {},
+        onSelectAll: () => {},
+        onToggleItem: () => {},
+        onUnselectItems: () => {},
+      }}
+    >
+      {children}
+    </ListContextProvider>
+  );
 };

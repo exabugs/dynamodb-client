@@ -36,10 +36,11 @@ dynamodb-clientライブラリは、MongoDB風インターフェースでLambda�
 #### 受入基準
 
 1. WHEN ReferenceManyToManyInputがレンダリングされる THEN THE System SHALL 現在の関連レコードを表示する
-2. WHEN ユーザーが新しい関連を追加する THEN THE System SHALL 中間レコードを作成する
-3. WHEN ユーザーが関連を削除する THEN THE System SHALL 対応する中間レコードを削除する
-4. WHEN 複数の関連が追加される THEN THE System SHALL 複数の中間レコードを一括作成する
-5. WHEN 複数の関連が削除される THEN THE System SHALL 複数の中間レコードを一括削除する
+2. WHEN ユーザーが新しい関連を追加する THEN THE System SHALL フォーム状態を更新する（DB更新はしない）
+3. WHEN ユーザーが関連を削除する THEN THE System SHALL フォーム状態を更新する（DB更新はしない）
+4. WHEN 親フォームの保存ボタンが押される THEN THE System SHALL 追加された関連の中間レコードを作成する
+5. WHEN 親フォームの保存ボタンが押される THEN THE System SHALL 削除された関連の中間レコードを削除する
+6. WHEN 親フォームがキャンセルされる THEN THE System SHALL フォーム状態をリセットする（DB更新なし）
 
 ### 要件 3: DataProviderの拡張
 

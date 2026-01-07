@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.26] - 2026-01-07
+
+### Changed
+
+- **React-Admin多対多関係コンポーネント**: フォーム保存時にコミットする設計に変更
+  - `ReferenceManyToManyInput`: 選択時はフォーム状態のみ更新（DB更新なし）
+  - `useManyToManyTransform`: 親フォームの保存時に中間テーブルを更新する新しいフック
+  - キャンセル可能: 保存前にキャンセルすれば変更が破棄される
+  - トランザクション性: 親レコードと中間テーブルの更新が同時に行われる
+
+### Fixed
+
+- **React-Admin多対多関係コンポーネント**: `ListContextProvider`の追加
+  - `ReferenceManyToManyField`: 子コンポーネントに必要なListContextを提供
+  - "useListContext must be used inside a ListContextProvider"エラーを修正
+
 ## [1.3.25] - 2026-01-07
 
 ### Fixed

@@ -28,3 +28,5 @@ export type {
   TokenProvider,
 } from './types.js';
 export { ReferenceManyToManyField, ReferenceManyToManyInput } from './components/index.js';
+export { useManyToManyTransform } from './hooks/useManyToManyTransform.js';
+export type { ManyToManyConfig } from './hooks/useManyToManyTransform.js';
