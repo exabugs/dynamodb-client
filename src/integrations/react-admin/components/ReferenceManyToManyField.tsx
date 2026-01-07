@@ -131,7 +131,6 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
     return () => {
       controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId, reference, through, using]);
 
   // ローディング中
