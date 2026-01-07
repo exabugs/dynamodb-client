@@ -22,6 +22,7 @@ export type FilterOperator =
   | '$starts'
   | '$ends'
   | '$contains'
+  | '$regex'
   | '$exists'
   | '$near';
 
@@ -127,6 +128,7 @@ function isValidOperator(operator: string): operator is FilterOperator {
     '$starts',
     '$ends',
     '$contains',
+    '$regex',
     '$exists',
     '$near',
   ].includes(operator);

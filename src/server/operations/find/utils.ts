@@ -169,6 +169,13 @@ export function matchesAllFilters(
           typeof filterValue === 'string' &&
           recordValue.includes(filterValue)
         );
+      case '$regex':
+        // $regexは部分一致として扱う（$containsと同じ動作）
+        return (
+          typeof recordValue === 'string' &&
+          typeof filterValue === 'string' &&
+          recordValue.includes(filterValue)
+        );
       case '$exists':
         return filterValue
           ? recordValue !== undefined && recordValue !== null
