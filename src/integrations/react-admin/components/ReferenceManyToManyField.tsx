@@ -18,11 +18,16 @@
  * </ReferenceManyToManyField>
  * ```
  */
-import { cloneElement, useEffect, useState } from 'react';
+import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { useDataProvider, useRecordContext } from 'react-admin';
 
 import type { ReferenceManyToManyFieldProps } from '../types.js';
+
+/**
+ * レート制限: 同じリクエストを連続して実行しないための最小間隔（ミリ秒）
+ */
+const RATE_LIMIT_MS = 1000;
 
 /**
  * ReferenceManyToManyField コンポーネント
@@ -38,7 +43,6 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
     source = 'id',
     children,
     sort = { field: 'id', order: 'ASC' },
-    perPage = 25,
   } = props;
 
   const record = useRecordContext();
@@ -47,14 +51,42 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const lastFetchTime = useRef<number>(0);
+  const fetchCount = useRef<number>(0);
+
+  // recordIdを安定した値として取得（recordオブジェクトの参照が変わってもIDが同じなら再フェッチしない）
+  const recordId = useMemo(() => record?.[source], [record, source]);
 
   useEffect(() => {
-    // レコードが存在しない場合は何もしない
-    if (!record) {
+    // レコードIDが存在しない場合は何もしない
+    if (!recordId) {
       setLoading(false);
       return;
     }
 
+    // レート制限: 前回のフェッチから一定時間経過していない場合はスキップ
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    if (timeSinceLastFetch < RATE_LIMIT_MS) {
+      console.warn(
+        `[ReferenceManyToManyField] Rate limit: skipping fetch (${timeSinceLastFetch}ms since last fetch)`
+      );
+      return;
+    }
+
+    fetchCount.current += 1;
+    console.log(`[ReferenceManyToManyField] Fetch #${fetchCount.current} for record:`, recordId);
+
+    // フェッチ回数が異常に多い場合は警告
+    if (fetchCount.current > 10) {
+      console.error(
+        `[ReferenceManyToManyField] WARNING: Too many fetches (${fetchCount.current}). Possible infinite loop!`
+      );
+      setError(new Error('Too many requests. Please refresh the page.'));
+      return;
+    }
+
+    lastFetchTime.current = now;
     const controller = new AbortController();
 
     const fetchData = async () => {
@@ -74,7 +106,7 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
         }
 
         // 起点レコードのIDを取得
-        const sourceId = record[source];
+        const sourceId = recordId;
         if (!sourceId) {
           throw new Error(`Source field "${source}" not found in record`);
         }
@@ -129,7 +161,8 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
     return () => {
       controller.abort();
     };
-  }, [record, reference, through, using, source, dataProvider, sort, perPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordId, reference, through, using]);
 
   // ローディング中
   if (loading) {

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.25] - 2026-01-07
+
+### Fixed
+
+- **React-Admin多対多関係コンポーネント**: 無限ループの修正
+  - `ReferenceManyToManyField`: `useMemo`を使用してrecordIdを安定化し、無限再レンダリングを防止
+  - `ReferenceManyToManyInput`: 同様に`useMemo`を使用して無限ループを防止
+  - レート制限を追加（1秒間隔、最大10回のフェッチ）
+  - 依存配列を最適化（不要な依存を削除）
+
 ## [1.3.24] - 2026-01-06
 
 ### Added

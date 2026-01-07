@@ -16,11 +16,16 @@
  * </ReferenceManyToManyInput>
  * ```
  */
-import { cloneElement, useEffect, useState } from 'react';
+import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { useDataProvider, useNotify, useRecordContext, useRefresh } from 'react-admin';
 
 import type { ReferenceManyToManyInputProps } from '../types.js';
+
+/**
+ * レート制限: 同じリクエストを連続して実行しないための最小間隔（ミリ秒）
+ */
+const RATE_LIMIT_MS = 1000;
 
 /**
  * ReferenceManyToManyInput コンポーネント
@@ -38,6 +43,8 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
   const [currentIds, setCurrentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const lastFetchTime = useRef<number>(0);
+  const fetchCount = useRef<number>(0);
 
   // usingプロパティをパース
   const keys = using.split(',').map((k) => k.trim());
@@ -46,13 +53,39 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
   }
   const [sourceKey, targetKey] = keys;
 
+  // recordIdを安定した値として取得（recordオブジェクトの参照が変わってもIDが同じなら再フェッチしない）
+  const recordId = useMemo(() => record?.[source], [record, source]);
+
   useEffect(() => {
-    // レコードが存在しない場合は何もしない
-    if (!record) {
+    // レコードIDが存在しない場合は何もしない
+    if (!recordId) {
       setLoading(false);
       return;
     }
 
+    // レート制限: 前回のフェッチから一定時間経過していない場合はスキップ
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    if (timeSinceLastFetch < RATE_LIMIT_MS) {
+      console.warn(
+        `[ReferenceManyToManyInput] Rate limit: skipping fetch (${timeSinceLastFetch}ms since last fetch)`
+      );
+      return;
+    }
+
+    fetchCount.current += 1;
+    console.log(`[ReferenceManyToManyInput] Fetch #${fetchCount.current} for record:`, recordId);
+
+    // フェッチ回数が異常に多い場合は警告
+    if (fetchCount.current > 10) {
+      console.error(
+        `[ReferenceManyToManyInput] WARNING: Too many fetches (${fetchCount.current}). Possible infinite loop!`
+      );
+      setError(new Error('Too many requests. Please refresh the page.'));
+      return;
+    }
+
+    lastFetchTime.current = now;
     const controller = new AbortController();
 
     const fetchCurrentRelations = async () => {
@@ -60,7 +93,7 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
         setLoading(true);
         setError(null);
 
-        const sourceId = record[source];
+        const sourceId = recordId;
         if (!sourceId) {
           throw new Error(`Source field "${source}" not found in record`);
         }
@@ -93,16 +126,16 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
     return () => {
       controller.abort();
     };
-  }, [record, through, using, source, dataProvider, sourceKey, targetKey, notify]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordId, through, using]);
 
   const handleChange = async (newIds: string[]) => {
-    if (!record) return;
-
-    const sourceId = record[source];
-    if (!sourceId) {
+    if (!recordId) {
       notify(`Source field "${source}" not found in record`, { type: 'error' });
       return;
     }
+
+    const sourceId = recordId;
 
     try {
       // 追加された関連
