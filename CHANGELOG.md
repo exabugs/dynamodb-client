@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.27] - 2026-01-07
+
+### Changed
+
+- **React-Admin多対多関係コンポーネント**: DataProvider-level処理に変更
+  - `ReferenceManyToManyInput`: `__manyToMany_*`形式のフィールド名を使用
+  - `dataProvider`: `create`/`update`メソッドで自動的に中間テーブルを更新
+  - `useManyToManyTransform`フックを削除（不要になった）
+  - ユーザーは`transform`プロパティを書く必要がなくなった
+  - React-Admin Enterprise Editionと同様のシンプルなAPI
+
 ## [1.3.26] - 2026-01-07
 
 ### Changed

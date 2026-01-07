@@ -134,6 +134,62 @@ function cacheNextToken(resource: string, page: number, nextToken: string | unde
 }
 
 /**
+ * 多対多関係を更新する内部関数
+ *
+ * @param db - DynamoDB Client Database インスタンス
+ * @param through - 中間テーブル名
+ * @param sourceKey - 起点キー名
+ * @param targetKey - ターゲットキー名
+ * @param sourceId - 起点レコードID
+ * @param newIds - 新しい関連ID配列
+ */
+async function updateManyToManyRelations(
+  db: any,
+  through: string,
+  sourceKey: string,
+  targetKey: string,
+  sourceId: string,
+  newIds: string[]
+): Promise<void> {
+  const junctionCollection = db.collection(through);
+
+  // 現在の関連を取得
+  const currentJunctions = await junctionCollection
+    .find({ [sourceKey]: sourceId })
+    .limit(1000)
+    .toArray();
+
+  const currentIds = currentJunctions.map((r: any) => r[targetKey]) as string[];
+
+  // 追加された関連
+  const addedIds = newIds.filter((id: string) => !currentIds.includes(id));
+
+  // 削除された関連
+  const removedIds = currentIds.filter((id: string) => !newIds.includes(id));
+
+  // 追加処理
+  if (addedIds.length > 0) {
+    const recordsToInsert = addedIds.map((targetId) => ({
+      [sourceKey]: sourceId,
+      [targetKey]: targetId,
+    }));
+    await junctionCollection.insertMany(recordsToInsert);
+  }
+
+  // 削除処理
+  if (removedIds.length > 0) {
+    const junctionsToDelete = currentJunctions.filter((r: any) =>
+      removedIds.includes(r[targetKey])
+    );
+    const idsToDelete = junctionsToDelete.map((r: any) => r.id);
+
+    if (idsToDelete.length > 0) {
+      await junctionCollection.deleteMany({ id: { $in: idsToDelete } });
+    }
+  }
+}
+
+/**
  * キャッシュからnextTokenを取得
  *
  * page=2の場合、1ページ目の結果から得たnextTokenを使用する
@@ -353,11 +409,52 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const db = client.db();
         const collection = db.collection(resource);
 
+        // 多対多関係フィールドを抽出して処理
+        const cleanData = { ...params.data };
+        const manyToManyFields: Array<{
+          fieldName: string;
+          through: string;
+          sourceKey: string;
+          targetKey: string;
+          newIds: string[];
+        }> = [];
+
+        for (const [key, value] of Object.entries(cleanData)) {
+          // __manyToMany_{through}_{sourceKey}_{targetKey} 形式のフィールドを検出
+          if (key.startsWith('__manyToMany_')) {
+            const parts = key.replace('__manyToMany_', '').split('_');
+            if (parts.length === 3) {
+              const [through, sourceKey, targetKey] = parts;
+              manyToManyFields.push({
+                fieldName: key,
+                through,
+                sourceKey,
+                targetKey,
+                newIds: Array.isArray(value) ? value : [],
+              });
+              // DBに保存しないようにフィールドを削除
+              delete cleanData[key];
+            }
+          }
+        }
+
         // レコードを挿入
         const result = await collection.insertOne({
-          ...params.data,
-          id: params.data.id || undefined,
+          ...cleanData,
+          id: cleanData.id || undefined,
         });
+
+        // 多対多関係を更新（新規作成時）
+        for (const field of manyToManyFields) {
+          await updateManyToManyRelations(
+            db,
+            field.through,
+            field.sourceKey,
+            field.targetKey,
+            result.insertedId,
+            field.newIds
+          );
+        }
 
         // 挿入されたレコードを取得して返却
         const items = await collection.find({ id: result.insertedId }).limit(1).toArray();
@@ -409,13 +506,54 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const db = client.db();
         const collection = db.collection(resource);
 
+        // 多対多関係フィールドを抽出して処理
+        const cleanData = { ...params.data };
+        const manyToManyFields: Array<{
+          fieldName: string;
+          through: string;
+          sourceKey: string;
+          targetKey: string;
+          newIds: string[];
+        }> = [];
+
+        for (const [key, value] of Object.entries(cleanData)) {
+          // __manyToMany_{through}_{sourceKey}_{targetKey} 形式のフィールドを検出
+          if (key.startsWith('__manyToMany_')) {
+            const parts = key.replace('__manyToMany_', '').split('_');
+            if (parts.length === 3) {
+              const [through, sourceKey, targetKey] = parts;
+              manyToManyFields.push({
+                fieldName: key,
+                through,
+                sourceKey,
+                targetKey,
+                newIds: Array.isArray(value) ? value : [],
+              });
+              // DBに保存しないようにフィールドを削除
+              delete cleanData[key];
+            }
+          }
+        }
+
         // レコードを更新
         await collection.updateOne(
           { id: String(params.id) },
           {
-            $set: params.data,
+            $set: cleanData,
           }
         );
+
+        // 多対多関係を更新
+        for (const field of manyToManyFields) {
+          await updateManyToManyRelations(
+            db,
+            field.through,
+            field.sourceKey,
+            field.targetKey,
+            String(params.id),
+            field.newIds
+          );
+        }
 
         // 更新されたレコードを取得して返却（デフォルトソートを指定）
         const items = await collection

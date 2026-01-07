@@ -4,8 +4,8 @@
  * 中間テーブルを経由して関連レコードを編集します。
  * React-Admin Enterprise Editionを使用せずに多対多関係をサポートします。
  *
- * **重要**: このコンポーネントはフォーム状態のみを管理します。
- * 実際のDB更新は親フォームの保存時に行われます。
+ * **重要**: このコンポーネントはフォーム保存時に自動的に中間テーブルを更新します。
+ * DataProviderが自動的に処理するため、transform関数を書く必要はありません。
  *
  * @example
  * ```typescript
@@ -19,22 +19,17 @@
  * </ReferenceManyToManyInput>
  * ```
  */
-import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
+import { cloneElement, useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import { ReferenceArrayInput, useDataProvider, useNotify, useRecordContext } from 'react-admin';
 
 import type { ReferenceManyToManyInputProps } from '../types.js';
 
 /**
- * レート制限: 同じリクエストを連続して実行しないための最小間隔（ミリ秒）
- */
-const RATE_LIMIT_MS = 1000;
-
-/**
  * ReferenceManyToManyInput コンポーネント
  *
  * 多対多関係を編集するための入力コンポーネント。
- * フォーム状態のみを管理し、実際のDB更新は親フォームの保存時に行われます。
+ * DataProviderが保存時に自動的に中間テーブルを更新します。
  */
 export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): ReactElement => {
   const { reference, through, using, source = 'id', children, label } = props;
@@ -45,8 +40,6 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
   const [initialIds, setInitialIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const lastFetchTime = useRef<number>(0);
-  const fetchCount = useRef<number>(0);
 
   // usingプロパティをパース
   const keys = using.split(',').map((k) => k.trim());
@@ -58,6 +51,10 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
   // recordIdを安定した値として取得
   const recordId = useMemo(() => record?.[source], [record, source]);
 
+  // フィールド名を特殊な形式にして、DataProviderで識別できるようにする
+  // フォーマット: __manyToMany_{through}_{sourceKey}_{targetKey}
+  const fieldName = `__manyToMany_${through}_${sourceKey}_${targetKey}`;
+
   // 初期値を取得（マウント時またはrecordIdが変わった時のみ）
   useEffect(() => {
     if (!recordId) {
@@ -66,26 +63,6 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
       return;
     }
 
-    // レート制限
-    const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchTime.current;
-    if (timeSinceLastFetch < RATE_LIMIT_MS) {
-      console.warn(
-        `[ReferenceManyToManyInput] Rate limit: skipping fetch (${timeSinceLastFetch}ms since last fetch)`
-      );
-      return;
-    }
-
-    fetchCount.current += 1;
-    console.log(`[ReferenceManyToManyInput] Fetch #${fetchCount.current} for record:`, recordId);
-
-    if (fetchCount.current > 10) {
-      console.error(`[ReferenceManyToManyInput] WARNING: Too many fetches (${fetchCount.current})`);
-      setError(new Error('Too many requests. Please refresh the page.'));
-      return;
-    }
-
-    lastFetchTime.current = now;
     const controller = new AbortController();
 
     const fetchCurrentRelations = async () => {
@@ -138,10 +115,8 @@ export const ReferenceManyToManyInput = (props: ReferenceManyToManyInputProps): 
     return <div>エラー: {error.message}</div>;
   }
 
-  // フォーム状態として管理（DB更新はしない）
-  // フィールド名を特殊な形式にして、transform関数で識別できるようにする
-  const fieldName = `__manyToMany_${through}_${targetKey}`;
-
+  // フォーム状態として管理
+  // DataProviderのupdateメソッドが自動的に中間テーブルを更新します
   return (
     <ReferenceArrayInput source={fieldName} reference={reference} label={label}>
       {cloneElement(children, {
