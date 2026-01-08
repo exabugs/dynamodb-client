@@ -4,7 +4,7 @@
  * HTTP API（Lambda Function URL）経由でCRUD操作を提供
  * MongoDB風の10操作をサポート
  *
- * Version: 1.3.31
+ * Version: 1.3.32
  */
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -56,7 +56,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       event.requestContext.http.method === 'GET' &&
       event.requestContext.http.path === '/version'
     ) {
-      const version = process.env.PACKAGE_VERSION || '1.3.31';
+      const version = process.env.PACKAGE_VERSION || '1.3.32';
       return createSuccessResponse({ version, timestamp: new Date().toISOString() }, requestId);
     }
 

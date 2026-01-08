@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.32] - 2026-01-08
+
+### Added
+
+- **デバッグログ追加**: convertUpdateOneParamsにデバッグログを追加
+  - ゲストユーザーのデバイス登録失敗問題の調査のため
+  - filter.idが正しく渡されているかを確認
+
 ## [1.3.31] - 2026-01-08
 
 ### Fixed
