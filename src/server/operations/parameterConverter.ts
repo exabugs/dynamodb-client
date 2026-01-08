@@ -99,14 +99,24 @@ export function convertFindParams(mongoParams: MongoFindParams): FindParams {
  *
  * @param mongoParams - MongoDB風のfindOneパラメータ
  * @returns 内部形式のfindOneパラメータ
- * @throws {Error} idが指定されていない場合
+ * @throws {Error} filterが指定されていない場合
  */
 export function convertFindOneParams(mongoParams: MongoFilterParams): FindOneParams {
-  const id = typeof mongoParams.filter?.id === 'string' ? mongoParams.filter.id : undefined;
-  if (!id) {
-    throw new Error('findOne requires filter.id');
+  // filterが存在しない場合はエラー
+  if (!mongoParams.filter) {
+    throw new Error('findOne requires filter');
   }
-  return { id };
+
+  // filter.idが存在する場合はidとして使用（後方互換性）
+  const id = typeof mongoParams.filter.id === 'string' ? mongoParams.filter.id : undefined;
+
+  if (id) {
+    // idが存在する場合は従来通りの形式
+    return { id };
+  }
+
+  // idが存在しない場合はfilter全体を使用
+  return { filter: mongoParams.filter };
 }
 
 /**

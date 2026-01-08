@@ -65,8 +65,10 @@ export interface FindParams {
  * findOne パラメータ
  */
 export interface FindOneParams {
-  /** 取得するレコードのID */
-  id: string;
+  /** 取得するレコードのID（後方互換性のため） */
+  id?: string;
+  /** フィルター条件（任意のフィールドで検索） */
+  filter?: Record<string, unknown>;
 }
 
 /**

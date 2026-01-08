@@ -1,6 +1,6 @@
 /**
  * findOne 操作
- * 単一レコードをIDで取得する
+ * 単一レコードをIDまたはフィルター条件で取得する
  *
  * 要件: 4.3, 5.4, 5.5
  */
@@ -15,16 +15,19 @@ import {
   getDBClient,
   getTableName,
 } from '../utils/dynamodb.js';
+import { handleFind } from './find.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 
 /**
  * findOne 操作を実行する
  *
- * GetItemでメインレコードを取得し、__shadowKeysを除外してレスポンスを返す。
+ * idが指定された場合はGetItemでメインレコードを取得し、
+ * filterが指定された場合はfind操作で検索して最初の結果を返す。
+ * __shadowKeysを除外してレスポンスを返す。
  *
  * @param resource - リソース名
- * @param params - findOneパラメータ
+ * @param params - findOneパラメータ（idまたはfilter）
  * @param requestId - リクエストID
  * @returns レコードデータ
  * @throws {ItemNotFoundError} レコードが存在しない場合
@@ -34,49 +37,86 @@ export async function handleFindOne(
   params: FindOneParams,
   requestId: string
 ): Promise<FindOneResult> {
-  const { id } = params;
+  const { id, filter } = params;
 
-  logger.debug('Executing findOne', {
-    requestId,
-    resource,
-    id,
-  });
+  // idが指定された場合は従来通りGetItemで取得
+  if (id) {
+    logger.debug('Executing findOne by id', {
+      requestId,
+      resource,
+      id,
+    });
 
-  const dbClient = getDBClient();
-  const tableName = getTableName();
+    const dbClient = getDBClient();
+    const tableName = getTableName();
 
-  // メインレコードのSKを生成
-  const sk = generateMainRecordSK(id);
+    // メインレコードのSKを生成
+    const sk = generateMainRecordSK(id);
 
-  // GetItemでレコードを取得（ConsistentRead=true）
-  const result = await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new GetCommand({
-          TableName: tableName,
-          Key: {
-            PK: resource,
-            SK: sk,
-          },
-          ConsistentRead: true,
-        })
-      ),
-    'GetItem'
-  );
+    // GetItemでレコードを取得（ConsistentRead=true）
+    const result = await executeDynamoDBOperation(
+      () =>
+        dbClient.send(
+          new GetCommand({
+            TableName: tableName,
+            Key: {
+              PK: resource,
+              SK: sk,
+            },
+            ConsistentRead: true,
+          })
+        ),
+      'GetItem'
+    );
 
-  // レコードが存在しない場合
-  if (!result.Item) {
-    throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
+    // レコードが存在しない場合
+    if (!result.Item) {
+      throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
+    }
+
+    // data属性から__shadowKeysを除外してレスポンスを返す
+    const record = extractCleanRecord(result.Item);
+
+    logger.info('findOne by id succeeded', {
+      requestId,
+      resource,
+      id,
+    });
+
+    return record;
   }
 
-  // data属性から__shadowKeysを除外してレスポンスを返す
-  const record = extractCleanRecord(result.Item);
+  // filterが指定された場合はfind操作で検索
+  if (filter) {
+    logger.debug('Executing findOne by filter', {
+      requestId,
+      resource,
+      filter,
+    });
 
-  logger.info('findOne succeeded', {
-    requestId,
-    resource,
-    id,
-  });
+    const findResult = await handleFind(
+      resource,
+      {
+        filter,
+        pagination: { perPage: 1 },
+      },
+      requestId
+    );
 
-  return record;
+    // レコードが存在しない場合
+    if (!findResult.items || findResult.items.length === 0) {
+      throw new ItemNotFoundError(`Record not found with filter`, { resource, filter });
+    }
+
+    logger.info('findOne by filter succeeded', {
+      requestId,
+      resource,
+      filter,
+    });
+
+    return findResult.items[0];
+  }
+
+  // idもfilterも指定されていない場合
+  throw new Error('findOne requires either id or filter');
 }

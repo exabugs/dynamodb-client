@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.35] - 2026-01-08
+
+### Fixed
+
+- **findOneのfilter対応**: `findOne`操作が任意のフィールドでの検索をサポート
+  - `findOne({ token: 'xxx' })`が正しく動作するように修正
+  - `convertFindOneParams`が`filter.id`以外のフィールドを受け入れるように修正
+  - `handleFindOne`が`filter`パラメータをサポート（`find`操作で検索して最初の結果を返す）
+  - `filter.id`が存在する場合は従来通りGetItemで取得（後方互換性）
+  - `filter`が指定された場合は`find`操作で検索（新しいfilter対応）
+  - デバイス登録時の既存デバイスチェック（`findOne({ token })`）が正しく動作
+
 ## [1.3.34] - 2026-01-08
 
 ### Fixed
