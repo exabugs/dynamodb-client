@@ -26,6 +26,23 @@ import { ListContextProvider, useDataProvider, useRecordContext } from 'react-ad
 import type { ReferenceManyToManyFieldProps } from '../types.js';
 
 /**
+ * 中間テーブルのレコード型
+ */
+interface JunctionRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
+/**
+ * ターゲットレコード型（_throughフィールドを含む）
+ */
+interface EnrichedRecord {
+  id: string;
+  _through: JunctionRecord | null;
+  [key: string]: unknown;
+}
+
+/**
  * ReferenceManyToManyField コンポーネント
  *
  * 多対多関係を表示するためのフィールドコンポーネント。
@@ -46,7 +63,7 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
 
   const record = useRecordContext();
   const dataProvider = useDataProvider();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<EnrichedRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -100,11 +117,13 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
         }
 
         // 2. ターゲットIDを抽出し、中間レコードとのマッピングを作成
-        const targetIds = junctionRecords.map((r: any) => r[targetKey]).filter(Boolean);
+        const targetIds = (junctionRecords as JunctionRecord[])
+          .map((r) => r[targetKey] as string)
+          .filter(Boolean);
 
         // 中間レコードをターゲットIDでマッピング
-        const junctionMap = new Map<string, any>();
-        junctionRecords.forEach((junction: any) => {
+        const junctionMap = new Map<string, JunctionRecord>();
+        (junctionRecords as JunctionRecord[]).forEach((junction) => {
           const targetId = junction[targetKey];
           if (targetId) {
             junctionMap.set(String(targetId), junction);
@@ -123,7 +142,9 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
         });
 
         // 4. ターゲットレコードに中間テーブルのデータを追加
-        const enrichedRecords = targetRecords.map((targetRecord: any) => {
+        const enrichedRecords: EnrichedRecord[] = (
+          targetRecords as Array<{ id: string; [key: string]: unknown }>
+        ).map((targetRecord) => {
           const junction = junctionMap.get(String(targetRecord.id));
           return {
             ...targetRecord,
