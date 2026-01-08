@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.33] - 2026-01-08
+
+### Fixed
+
+- **filterによるupdateOne修正**: `convertUpdateOneParams`が`filter.id`以外のフィールドを正しく処理するように修正
+  - ゲストユーザーのデバイス登録失敗問題を解決
+  - `updateOne({ filter: { token: 'xxx' } }, ...)`が正しく動作するように修正
+  - `filter.id`が存在する場合は従来通り`{ id, data, options }`を返す（後方互換性）
+  - `filter.id`が存在しない場合は`{ filter, data, options }`を返す（新しいfilter対応）
+
 ## [1.3.32] - 2026-01-08
 
 ### Added

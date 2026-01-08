@@ -145,27 +145,37 @@ export function convertInsertOneParams(mongoParams: MongoDocumentParams): Insert
  *
  * @param mongoParams - MongoDB風のupdateOneパラメータ
  * @returns 内部形式のupdateOneパラメータ
- * @throws {Error} idが指定されていない場合
+ * @throws {Error} idまたはfilterが指定されていない場合
  */
 export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOneParams {
-  // デバッグログ: 受け取ったパラメータを出力
-  console.log('[DEBUG] convertUpdateOneParams received:', JSON.stringify(mongoParams, null, 2));
-  console.log('[DEBUG] mongoParams.filter:', JSON.stringify(mongoParams.filter, null, 2));
-  console.log('[DEBUG] mongoParams.filter?.id:', mongoParams.filter?.id);
-  console.log('[DEBUG] typeof mongoParams.filter?.id:', typeof mongoParams.filter?.id);
-
-  const id = typeof mongoParams.filter?.id === 'string' ? mongoParams.filter.id : undefined;
-  if (!id) {
-    throw new Error('updateOne requires filter.id');
+  // filterが存在しない場合はエラー
+  if (!mongoParams.filter) {
+    throw new Error('updateOne requires filter');
   }
+
+  // 更新データを抽出
   const updateData: Record<string, unknown> =
     mongoParams.update && typeof mongoParams.update === 'object'
       ? '$set' in mongoParams.update
         ? (mongoParams.update.$set as Record<string, unknown>) || {}
         : (mongoParams.update as Record<string, unknown>)
       : {};
+
+  // filter.idが存在する場合はidとして使用（後方互換性）
+  const id = typeof mongoParams.filter.id === 'string' ? mongoParams.filter.id : undefined;
+
+  if (id) {
+    // idが存在する場合は従来通りの形式
+    return {
+      id,
+      data: updateData,
+      options: mongoParams.options,
+    };
+  }
+
+  // idが存在しない場合はfilter全体を使用
   return {
-    id,
+    filter: mongoParams.filter,
     data: updateData,
     options: mongoParams.options,
   };
