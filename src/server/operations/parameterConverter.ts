@@ -153,13 +153,20 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
     throw new Error('updateOne requires filter');
   }
 
-  // 更新データを抽出
-  const updateData: Record<string, unknown> =
-    mongoParams.update && typeof mongoParams.update === 'object'
-      ? '$set' in mongoParams.update
-        ? (mongoParams.update.$set as Record<string, unknown>) || {}
-        : (mongoParams.update as Record<string, unknown>)
-      : {};
+  // 更新データを抽出（$set と $setOnInsert を両方含める）
+  let updateData: Record<string, unknown>;
+
+  if (mongoParams.update && typeof mongoParams.update === 'object') {
+    if ('$set' in mongoParams.update || '$setOnInsert' in mongoParams.update) {
+      // UpdateOperators形式の場合、update全体を渡す（handleUpdateOneで処理）
+      updateData = mongoParams.update as Record<string, unknown>;
+    } else {
+      // 通常のパッチ形式
+      updateData = mongoParams.update as Record<string, unknown>;
+    }
+  } else {
+    updateData = {};
+  }
 
   // filter.idが存在する場合はidとして使用（後方互換性）
   const id = typeof mongoParams.filter.id === 'string' ? mongoParams.filter.id : undefined;

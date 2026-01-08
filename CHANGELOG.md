@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.34] - 2026-01-08
+
+### Fixed
+
+- **$setOnInsert対応修正**: `convertUpdateOneParams`が`$setOnInsert`を正しく処理するように修正
+  - デバイス登録時に`token`と`userId`が保存されない問題を解決
+  - `$set`のみを抽出していたが、`$setOnInsert`も含めるように修正
+  - UpdateOperators形式（`{ $set, $setOnInsert }`）の場合、update全体を`handleUpdateOne`に渡す
+  - `handleUpsertCreate`で`$set`と`$setOnInsert`を正しくマージできるようになった
+
 ## [1.3.33] - 2026-01-08
 
 ### Fixed
