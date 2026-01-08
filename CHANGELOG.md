@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.29] - 2026-01-08
+
+### Added
+
+- **React-Admin多対多関係コンポーネント**: `ReferenceManyToManyField`に`_through`フィールドを追加
+  - 各ターゲットレコードに中間テーブルのデータを`_through`フィールドとして追加
+  - 中間テーブルのフィールドに直接アクセス可能（例: `source="_through.status"`）
+  - N+1問題を解消し、パフォーマンスを向上
+  - 使用例: `<StatusField source="_through.status" label="管理者ステータス" />`
+
 ## [1.3.28] - 2026-01-07
 
 ### Added

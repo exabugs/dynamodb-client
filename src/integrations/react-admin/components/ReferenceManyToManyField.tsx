@@ -14,6 +14,7 @@
  * >
  *   <Datagrid>
  *     <TextField source="nickname" />
+ *     <StatusField source="_through.status" label="管理者ステータス" />
  *   </Datagrid>
  * </ReferenceManyToManyField>
  * ```
@@ -29,6 +30,9 @@ import type { ReferenceManyToManyFieldProps } from '../types.js';
  *
  * 多対多関係を表示するためのフィールドコンポーネント。
  * 中間テーブルを経由して関連レコードを取得し、子コンポーネントに渡します。
+ *
+ * 各ターゲットレコードには `_through` フィールドが追加され、
+ * 中間テーブルのデータにアクセスできます。
  */
 export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): ReactElement => {
   const {
@@ -95,8 +99,17 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
           return;
         }
 
-        // 2. ターゲットIDを抽出
+        // 2. ターゲットIDを抽出し、中間レコードとのマッピングを作成
         const targetIds = junctionRecords.map((r: any) => r[targetKey]).filter(Boolean);
+
+        // 中間レコードをターゲットIDでマッピング
+        const junctionMap = new Map<string, any>();
+        junctionRecords.forEach((junction: any) => {
+          const targetId = junction[targetKey];
+          if (targetId) {
+            junctionMap.set(String(targetId), junction);
+          }
+        });
 
         if (targetIds.length === 0) {
           setData([]);
@@ -109,8 +122,17 @@ export const ReferenceManyToManyField = (props: ReferenceManyToManyFieldProps): 
           ids: targetIds,
         });
 
-        setData(targetRecords);
-        setTotal(targetRecords.length);
+        // 4. ターゲットレコードに中間テーブルのデータを追加
+        const enrichedRecords = targetRecords.map((targetRecord: any) => {
+          const junction = junctionMap.get(String(targetRecord.id));
+          return {
+            ...targetRecord,
+            _through: junction || null, // 中間テーブルのデータを _through フィールドに追加
+          };
+        });
+
+        setData(enrichedRecords);
+        setTotal(enrichedRecords.length);
       } catch (err) {
         // リクエストがキャンセルされた場合はエラーを無視
         if (controller.signal.aborted) {
