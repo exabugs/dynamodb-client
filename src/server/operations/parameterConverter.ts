@@ -124,14 +124,24 @@ export function convertFindOneParams(mongoParams: MongoFilterParams): FindOnePar
  *
  * @param mongoParams - MongoDB風のfindManyパラメータ
  * @returns 内部形式のfindManyパラメータ
+ * @throws {Error} filterが指定されていない場合
  */
 export function convertFindManyParams(mongoParams: MongoFilterParams): FindManyParams {
-  const idFilter = mongoParams.filter?.id;
-  const ids =
-    typeof idFilter === 'object' && idFilter !== null && '$in' in idFilter
-      ? idFilter.$in || []
-      : [];
-  return { ids };
+  // filterが存在しない場合はエラー
+  if (!mongoParams.filter) {
+    throw new Error('findMany requires filter');
+  }
+
+  const idFilter = mongoParams.filter.id;
+
+  // filter.id.$inが存在する場合はidsとして使用（後方互換性）
+  if (typeof idFilter === 'object' && idFilter !== null && '$in' in idFilter) {
+    const ids = idFilter.$in || [];
+    return { ids };
+  }
+
+  // idが存在しない場合はfilter全体を使用
+  return { filter: mongoParams.filter };
 }
 
 /**

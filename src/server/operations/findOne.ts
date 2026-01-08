@@ -37,10 +37,10 @@ export async function handleFindOne(
   params: FindOneParams,
   requestId: string
 ): Promise<FindOneResult> {
-  const { id, filter } = params;
-
   // idが指定された場合は従来通りGetItemで取得
-  if (id) {
+  if ('id' in params) {
+    const { id } = params;
+
     logger.debug('Executing findOne by id', {
       requestId,
       resource,
@@ -87,7 +87,9 @@ export async function handleFindOne(
   }
 
   // filterが指定された場合はfind操作で検索
-  if (filter) {
+  if ('filter' in params) {
+    const { filter } = params;
+
     logger.debug('Executing findOne by filter', {
       requestId,
       resource,
@@ -117,6 +119,6 @@ export async function handleFindOne(
     return findResult.items[0];
   }
 
-  // idもfilterも指定されていない場合
+  // idもfilterも指定されていない場合（型的にはありえないが念のため）
   throw new Error('findOne requires either id or filter');
 }

@@ -64,20 +64,12 @@ export interface FindParams {
 /**
  * findOne パラメータ
  */
-export interface FindOneParams {
-  /** 取得するレコードのID（後方互換性のため） */
-  id?: string;
-  /** フィルター条件（任意のフィールドで検索） */
-  filter?: Record<string, unknown>;
-}
+export type FindOneParams = SingleRecordSelector;
 
 /**
  * findMany パラメータ
  */
-export interface FindManyParams {
-  /** 取得するレコードのIDリスト */
-  ids: string[];
-}
+export type FindManyParams = MultipleRecordsSelector;
 
 /**
  * findManyReference パラメータ
