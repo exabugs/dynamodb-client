@@ -109,11 +109,35 @@ export interface InsertOneParams {
 }
 
 /**
+ * 単一レコード特定（IDまたはフィルター）
+ */
+export type SingleRecordSelector =
+  | {
+      /** レコードID */
+      id: string;
+    }
+  | {
+      /** フィルター条件 */
+      filter: Record<string, unknown>;
+    };
+
+/**
+ * 複数レコード特定（IDリストまたはフィルター）
+ */
+export type MultipleRecordsSelector =
+  | {
+      /** レコードIDリスト */
+      ids: string[];
+    }
+  | {
+      /** フィルター条件 */
+      filter: Record<string, unknown>;
+    };
+
+/**
  * updateOne パラメータ
  */
-export interface UpdateOneParams {
-  /** 更新対象のレコードID */
-  id: string;
+export type UpdateOneParams = SingleRecordSelector & {
   /** 更新データ（JSON Merge Patch形式） */
   data: Record<string, unknown>;
   /** 更新オプション */
@@ -121,14 +145,12 @@ export interface UpdateOneParams {
     /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
     upsert?: boolean;
   };
-}
+};
 
 /**
  * updateMany パラメータ
  */
-export interface UpdateManyParams {
-  /** 更新対象のレコードIDリスト */
-  ids: string[];
+export type UpdateManyParams = MultipleRecordsSelector & {
   /** 更新データ（JSON Merge Patch形式） */
   data: Record<string, unknown>;
   /** 更新オプション */
@@ -136,23 +158,17 @@ export interface UpdateManyParams {
     /** レコードが存在しない場合に新規作成するか（デフォルト: false） */
     upsert?: boolean;
   };
-}
+};
 
 /**
  * deleteOne パラメータ
  */
-export interface DeleteOneParams {
-  /** 削除対象のレコードID */
-  id: string;
-}
+export type DeleteOneParams = SingleRecordSelector;
 
 /**
  * deleteMany パラメータ
  */
-export interface DeleteManyParams {
-  /** 削除対象のレコードIDリスト */
-  ids: string[];
-}
+export type DeleteManyParams = MultipleRecordsSelector;
 
 /**
  * insertMany パラメータ

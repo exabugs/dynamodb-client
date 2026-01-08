@@ -68,7 +68,7 @@ function applyJsonMergePatch(
  * updateOne 操作を実行する
  *
  * 処理フロー:
- * 1. GetItemで既存レコードを取得
+ * 1. filterまたはidから対象レコードを特定
  * 2. レコードが存在しない場合:
  *    - upsert=falseの場合はエラー
  *    - upsert=trueの場合は新規作成
@@ -85,49 +85,115 @@ export async function handleUpdateOne(
   params: UpdateOneParams,
   requestId: string
 ): Promise<UpdateOneResult> {
-  const { id, data: patchData, options } = params;
+  const { data: patchData, options } = params;
   const upsert = options?.upsert ?? false;
 
-  logger.debug('Executing updateOne', {
-    requestId,
-    resource,
-    id,
-    upsert,
-  });
+  // idまたはfilterから対象レコードを特定
+  let targetId: string;
+  let existingItem: Record<string, unknown> | undefined;
 
-  const dbClient = getDBClient();
-  const tableName = getTableName();
-  const mainSK = generateMainRecordSK(id);
+  if ('id' in params) {
+    // idが指定されている場合
+    targetId = params.id;
 
-  // 既存レコードを取得
-  const getResult = await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new GetCommand({
-          TableName: tableName,
-          Key: {
-            PK: resource,
-            SK: mainSK,
-          },
-          ConsistentRead: true,
-        })
-      ),
-    'GetItem'
-  );
+    logger.debug('Executing updateOne with id', {
+      requestId,
+      resource,
+      id: targetId,
+      upsert,
+    });
+
+    const dbClient = getDBClient();
+    const tableName = getTableName();
+    const mainSK = generateMainRecordSK(targetId);
+
+    // 既存レコードを取得
+    const getResult = await executeDynamoDBOperation(
+      () =>
+        dbClient.send(
+          new GetCommand({
+            TableName: tableName,
+            Key: {
+              PK: resource,
+              SK: mainSK,
+            },
+            ConsistentRead: true,
+          })
+        ),
+      'GetItem'
+    );
+
+    existingItem = getResult.Item;
+  } else {
+    // filterが指定されている場合
+    logger.debug('Executing updateOne with filter', {
+      requestId,
+      resource,
+      filter: params.filter,
+      upsert,
+    });
+
+    // filterで検索（find操作を使用）
+    const { handleFind } = await import('./find.js');
+    const findResult = await handleFind(
+      resource,
+      { filter: params.filter, pagination: { perPage: 1 } },
+      requestId
+    );
+
+    if (findResult.items.length > 0) {
+      const foundRecord = findResult.items[0];
+      targetId = foundRecord.id as string;
+
+      // 既存レコードを取得
+      const dbClient = getDBClient();
+      const tableName = getTableName();
+      const mainSK = generateMainRecordSK(targetId);
+
+      const getResult = await executeDynamoDBOperation(
+        () =>
+          dbClient.send(
+            new GetCommand({
+              TableName: tableName,
+              Key: {
+                PK: resource,
+                SK: mainSK,
+              },
+              ConsistentRead: true,
+            })
+          ),
+        'GetItem'
+      );
+
+      existingItem = getResult.Item;
+    } else {
+      // レコードが見つからない場合
+      if (!upsert) {
+        throw new ItemNotFoundError(`Record not found with filter`, {
+          resource,
+          filter: params.filter,
+        });
+      }
+
+      // upsert=trueの場合、新しいIDを生成
+      const { ulid } = await import('../../shared/index.js');
+      targetId = ulid();
+    }
+  }
 
   // レコードが存在しない場合の処理
-  if (!getResult.Item) {
+  if (!existingItem) {
     if (!upsert) {
       // upsert=falseの場合はエラー
-      throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
+      throw new ItemNotFoundError(`Record not found: ${targetId}`, { resource, id: targetId });
     }
 
     // upsert=trueの場合は新規作成
-    return await handleUpsertCreate(resource, id, patchData, requestId);
+    return await handleUpsertCreate(resource, targetId, patchData, requestId);
   }
 
   // レコードが存在する場合は更新
-  return await handleUpsertUpdate(resource, id, getResult.Item, patchData, requestId);
+  return await handleUpsertUpdate(resource, targetId, existingItem, patchData, requestId);
 }
 
 /**

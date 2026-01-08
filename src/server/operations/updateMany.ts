@@ -84,13 +84,14 @@ function applyJsonMergePatch(
  * updateMany 操作を実行する
  *
  * 処理フロー:
- * 1. BatchGetItemで既存レコードを取得
- * 2. 各レコードにJSON Merge Patchを適用
- * 3. updatedAtタイムスタンプを更新
- * 4. 新しいシャドーSKを生成し、差分を計算
- * 5. アイテム数を計算してチャンク分割（1 + 削除シャドー数 + 追加シャドー数）
- * 6. 各チャンクをTransactWriteItemsで順次実行
- * 7. 部分失敗をハンドリング
+ * 1. idsまたはfilterから対象レコードを特定
+ * 2. BatchGetItemで既存レコードを取得
+ * 3. 各レコードにJSON Merge Patchを適用
+ * 4. updatedAtタイムスタンプを更新
+ * 5. 新しいシャドーSKを生成し、差分を計算
+ * 6. アイテム数を計算してチャンク分割（1 + 削除シャドー数 + 追加シャドー数）
+ * 7. 各チャンクをTransactWriteItemsで順次実行
+ * 8. 部分失敗をハンドリング
  *
  * @param resource - リソース名
  * @param params - updateManyパラメータ
@@ -102,14 +103,41 @@ export async function handleUpdateMany(
   params: UpdateManyParams,
   requestId: string
 ): Promise<UpdateManyResult> {
-  const { ids, data: patchData } = params;
+  const { data: patchData } = params;
   const startTime = Date.now();
 
-  logger.debug('Executing updateMany', {
-    requestId,
-    resource,
-    count: ids.length,
-  });
+  // idsまたはfilterから対象レコードIDリストを取得
+  let ids: string[];
+
+  if ('ids' in params) {
+    // idsが指定されている場合
+    ids = params.ids;
+
+    logger.debug('Executing updateMany with ids', {
+      requestId,
+      resource,
+      count: ids.length,
+    });
+  } else {
+    // filterが指定されている場合
+    logger.debug('Executing updateMany with filter', {
+      requestId,
+      resource,
+      filter: params.filter,
+    });
+
+    // filterで検索（find操作を使用）
+    const { handleFind } = await import('./find.js');
+    const findResult = await handleFind(resource, { filter: params.filter }, requestId);
+
+    ids = findResult.items.map((item) => item.id as string);
+
+    logger.debug('Found records with filter', {
+      requestId,
+      resource,
+      count: ids.length,
+    });
+  }
 
   // IDが空の場合は空レスポンスを返す
   if (ids.length === 0) {

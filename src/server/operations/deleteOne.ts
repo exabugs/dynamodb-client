@@ -17,9 +17,10 @@ const logger = createLogger({ service: 'records-lambda' });
  * deleteOne 操作を実行する
  *
  * 処理フロー:
- * 1. GetItemで既存レコードを取得（存在確認）
- * 2. __shadowKeysからシャドーSKリストを取得
- * 3. TransactWriteItemsでメインレコード + 全シャドーレコードを削除
+ * 1. filterまたはidから対象レコードを特定
+ * 2. GetItemで既存レコードを取得（存在確認）
+ * 3. __shadowKeysからシャドーSKリストを取得
+ * 4. TransactWriteItemsでメインレコード + 全シャドーレコードを削除
  *
  * @param resource - リソース名
  * @param params - deleteOneパラメータ
@@ -32,19 +33,50 @@ export async function handleDeleteOne(
   params: DeleteOneParams,
   requestId: string
 ): Promise<DeleteOneResult> {
-  const { id } = params;
+  // idまたはfilterから対象レコードを特定
+  let targetId: string;
 
-  logger.debug('Executing deleteOne', {
-    requestId,
-    resource,
-    id,
-  });
+  if ('id' in params) {
+    // idが指定されている場合
+    targetId = params.id;
+
+    logger.debug('Executing deleteOne with id', {
+      requestId,
+      resource,
+      id: targetId,
+    });
+  } else {
+    // filterが指定されている場合
+    logger.debug('Executing deleteOne with filter', {
+      requestId,
+      resource,
+      filter: params.filter,
+    });
+
+    // filterで検索（find操作を使用）
+    const { handleFind } = await import('./find.js');
+    const findResult = await handleFind(
+      resource,
+      { filter: params.filter, pagination: { perPage: 1 } },
+      requestId
+    );
+
+    if (findResult.items.length === 0) {
+      throw new ItemNotFoundError(`Record not found with filter`, {
+        resource,
+        filter: params.filter,
+      });
+    }
+
+    const foundRecord = findResult.items[0];
+    targetId = foundRecord.id as string;
+  }
 
   const dbClient = getDBClient();
   const tableName = getTableName();
 
   // メインレコードのSKを生成
-  const mainSK = generateMainRecordSK(id);
+  const mainSK = generateMainRecordSK(targetId);
 
   // 既存レコードを取得（存在確認とシャドーキー取得）
   const getResult = await executeDynamoDBOperation(
@@ -63,7 +95,7 @@ export async function handleDeleteOne(
   );
 
   if (!getResult.Item) {
-    throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
+    throw new ItemNotFoundError(`Record not found: ${targetId}`, { resource, id: targetId });
   }
 
   const existingData = getResult.Item.data as Record<string, unknown>;
@@ -112,9 +144,9 @@ export async function handleDeleteOne(
   logger.info('deleteOne succeeded', {
     requestId,
     resource,
-    id,
+    id: targetId,
     shadowCount: shadowKeys.length,
   });
 
-  return { id };
+  return { id: targetId };
 }

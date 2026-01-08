@@ -37,11 +37,12 @@ interface PreparedDeleteRecord {
  * deleteMany 操作を実行する
  *
  * 処理フロー:
- * 1. BatchGetItemで既存レコードを取得
- * 2. 各レコードの__shadowKeysからシャドーSKリストを取得
- * 3. アイテム数を計算してチャンク分割（1 + シャドー数）
- * 4. 各チャンクをTransactWriteItemsで順次実行
- * 5. 部分失敗をハンドリング
+ * 1. idsまたはfilterから対象レコードを特定
+ * 2. BatchGetItemで既存レコードを取得
+ * 3. 各レコードの__shadowKeysからシャドーSKリストを取得
+ * 4. アイテム数を計算してチャンク分割（1 + シャドー数）
+ * 5. 各チャンクをTransactWriteItemsで順次実行
+ * 6. 部分失敗をハンドリング
  *
  * @param resource - リソース名
  * @param params - deleteManyパラメータ
@@ -53,14 +54,40 @@ export async function handleDeleteMany(
   params: DeleteManyParams,
   requestId: string
 ): Promise<DeleteManyResult> {
-  const { ids } = params;
   const startTime = Date.now();
 
-  logger.debug('Executing deleteMany', {
-    requestId,
-    resource,
-    count: ids.length,
-  });
+  // idsまたはfilterから対象レコードIDリストを取得
+  let ids: string[];
+
+  if ('ids' in params) {
+    // idsが指定されている場合
+    ids = params.ids;
+
+    logger.debug('Executing deleteMany with ids', {
+      requestId,
+      resource,
+      count: ids.length,
+    });
+  } else {
+    // filterが指定されている場合
+    logger.debug('Executing deleteMany with filter', {
+      requestId,
+      resource,
+      filter: params.filter,
+    });
+
+    // filterで検索（find操作を使用）
+    const { handleFind } = await import('./find.js');
+    const findResult = await handleFind(resource, { filter: params.filter }, requestId);
+
+    ids = findResult.items.map((item) => item.id as string);
+
+    logger.debug('Found records with filter', {
+      requestId,
+      resource,
+      count: ids.length,
+    });
+  }
 
   // IDが空の場合は空レスポンスを返す
   if (ids.length === 0) {
