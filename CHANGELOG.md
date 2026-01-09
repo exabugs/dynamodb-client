@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.37] - 2026-01-09
+
+### Security
+
+- **updateOne情報漏洩の修正**: ADR 001に基づきセキュリティ脆弱性を修正
+  - update権限のみでread権限がない場合の情報漏洩を防止
+  - `findOne`呼び出しを削除し、`{ id, ...更新したフィールドのみ }` を返却
+  - UpdateOperators形式（`$set`）にも対応
+  - パフォーマンス向上: 不要な`findOne`クエリを削減
+
+### Added
+
+- **ADR 001**: 最小限のレスポンスデータ（セキュリティ重視）を文書化
+  - セキュリティ最優先の設計決定
+  - 全操作で最小限の情報のみ返す統一ポリシー
+
+### Changed
+
+- **破壊的変更**: `updateOne`のレスポンス形式が変更
+  - 従来: 完全なレコードを返却
+  - 新仕様: `{ id, ...更新したフィールドのみ }` を返却
+  - 完全なデータが必要な場合は追加の`findOne`呼び出しが必要
+
 ## [1.3.36] - 2026-01-09
 
 ### Refactored
