@@ -8,6 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as findOneModule from '../../src/server/operations/findOne.js';
 import * as updateManyModule from '../../src/server/operations/updateMany.js';
 import { handleUpdateOne } from '../../src/server/operations/updateOne.js';
+import { errorSimulator } from '../helpers/error-simulators.js';
+import { findOneResultBuilder, updateManyResultBuilder } from '../helpers/response-builders.js';
 
 // updateManyとfindOneをモック
 vi.mock('../../src/server/operations/updateMany.js', () => ({
@@ -33,22 +35,17 @@ describe('updateOne - 直接テスト', () => {
         title: '更新後のタイトル',
       };
 
-      // updateManyのモックレスポンス
-      const mockUpdateManyResponse = {
-        count: 1,
-        successIds: { 0: testId },
-        failedIds: {},
-        errors: {},
-      };
+      // updateManyのモックレスポンス（Response Builderを使用）
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId]);
 
-      // findOneのモックレスポンス
-      const mockFindOneResponse = {
+      // findOneのモックレスポンス（Response Builderを使用）
+      const mockFindOneResponse = findOneResultBuilder.success({
         id: testId,
         title: '更新後のタイトル',
         content: 'テスト内容',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-02T00:00:00Z',
-      };
+      });
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
       vi.mocked(findOneModule.handleFindOne).mockResolvedValue(mockFindOneResponse);
@@ -86,19 +83,10 @@ describe('updateOne - 直接テスト', () => {
         title: '更新後のタイトル',
       };
 
-      // updateManyのモックレスポンス（失敗）
-      const mockUpdateManyResponse = {
-        count: 0,
-        successIds: {},
-        failedIds: { 0: testId },
-        errors: {
-          0: {
-            id: testId,
-            code: 'NOT_FOUND',
-            message: 'Record not found',
-          },
-        },
-      };
+      // updateManyのモックレスポンス（失敗、Response Builderを使用）
+      const mockUpdateManyResponse = updateManyResultBuilder.failure([testId], {
+        0: errorSimulator.operationError(testId, 'NOT_FOUND', 'Record not found'),
+      });
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
 
@@ -123,23 +111,18 @@ describe('updateOne - 直接テスト', () => {
         status: 'published',
       };
 
-      // updateManyのモックレスポンス
-      const mockUpdateManyResponse = {
-        count: 1,
-        successIds: { 0: 'article-002' },
-        failedIds: {},
-        errors: {},
-      };
+      // updateManyのモックレスポンス（Response Builderを使用）
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, ['article-002']);
 
-      // findOneのモックレスポンス
-      const mockFindOneResponse = {
+      // findOneのモックレスポンス（Response Builderを使用）
+      const mockFindOneResponse = findOneResultBuilder.success({
         id: 'article-002',
         title: 'フィルタ記事',
         content: 'フィルタ内容',
         status: 'published',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-02T00:00:00Z',
-      };
+      });
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
       vi.mocked(findOneModule.handleFindOne).mockResolvedValue(mockFindOneResponse);

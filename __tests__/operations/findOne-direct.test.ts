@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as findManyModule from '../../src/server/operations/findMany.js';
 import { handleFindOne } from '../../src/server/operations/findOne.js';
+import { findManyResultBuilder } from '../helpers/response-builders.js';
 
 // findManyをモック
 vi.mock('../../src/server/operations/findMany.js', () => ({
@@ -23,8 +24,8 @@ describe('findOne - 直接テスト', () => {
 
   describe('idが指定された場合', () => {
     it('findMany([id])を呼び出して先頭の1件を取得する', async () => {
-      // findManyのモックレスポンス（配列を返す）
-      const mockResponse = [
+      // findManyのモックレスポンス（Response Builderを使用）
+      const mockResponse = findManyResultBuilder.success([
         {
           id: 'article-001',
           title: 'テスト記事',
@@ -32,7 +33,7 @@ describe('findOne - 直接テスト', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
         },
-      ];
+      ]);
 
       vi.mocked(findManyModule.handleFindMany).mockResolvedValue(mockResponse);
 
@@ -59,8 +60,8 @@ describe('findOne - 直接テスト', () => {
     });
 
     it('レコードが存在しない場合はItemNotFoundErrorをスローする', async () => {
-      // findManyのモックレスポンス（空配列）
-      const mockResponse: any[] = [];
+      // findManyのモックレスポンス（空配列、Response Builderを使用）
+      const mockResponse = findManyResultBuilder.success([]);
 
       vi.mocked(findManyModule.handleFindMany).mockResolvedValue(mockResponse);
 
@@ -79,8 +80,8 @@ describe('findOne - 直接テスト', () => {
 
   describe('filterが指定された場合', () => {
     it('findMany({ filter })を呼び出して先頭の1件を取得する', async () => {
-      // findManyのモックレスポンス（配列を返す）
-      const mockResponse = [
+      // findManyのモックレスポンス（Response Builderを使用）
+      const mockResponse = findManyResultBuilder.success([
         {
           id: 'article-002',
           title: 'フィルタ記事',
@@ -89,7 +90,7 @@ describe('findOne - 直接テスト', () => {
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
         },
-      ];
+      ]);
 
       vi.mocked(findManyModule.handleFindMany).mockResolvedValue(mockResponse);
 

@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as deleteManyModule from '../../src/server/operations/deleteMany.js';
 import { handleDeleteOne } from '../../src/server/operations/deleteOne.js';
+import { errorSimulator } from '../helpers/error-simulators.js';
+import { deleteManyResultBuilder } from '../helpers/response-builders.js';
 
 // deleteManyをモック
 vi.mock('../../src/server/operations/deleteMany.js', () => ({
@@ -25,13 +27,8 @@ describe('deleteOne - 直接テスト', () => {
     it('deleteMany([id])を呼び出して削除されたIDを返す', async () => {
       const testId = 'article-001';
 
-      // deleteManyのモックレスポンス
-      const mockDeleteManyResponse = {
-        count: 1,
-        successIds: { 0: testId },
-        failedIds: {},
-        errors: {},
-      };
+      // deleteManyのモックレスポンス（Response Builderを使用）
+      const mockDeleteManyResponse = deleteManyResultBuilder.success(1, [testId]);
 
       vi.mocked(deleteManyModule.handleDeleteMany).mockResolvedValue(mockDeleteManyResponse);
 
@@ -60,19 +57,10 @@ describe('deleteOne - 直接テスト', () => {
     it('削除が失敗した場合はErrorをスローする', async () => {
       const testId = 'article-001';
 
-      // deleteManyのモックレスポンス（失敗）
-      const mockDeleteManyResponse = {
-        count: 0,
-        successIds: {},
-        failedIds: { 0: testId },
-        errors: {
-          0: {
-            id: testId,
-            code: 'NOT_FOUND',
-            message: 'Record not found',
-          },
-        },
-      };
+      // deleteManyのモックレスポンス（失敗、Response Builderを使用）
+      const mockDeleteManyResponse = deleteManyResultBuilder.failure([testId], {
+        0: errorSimulator.operationError(testId, 'NOT_FOUND', 'Record not found'),
+      });
 
       vi.mocked(deleteManyModule.handleDeleteMany).mockResolvedValue(mockDeleteManyResponse);
 
@@ -93,13 +81,8 @@ describe('deleteOne - 直接テスト', () => {
     it('deleteMany({ filter })を呼び出して削除されたIDを返す', async () => {
       const testFilter = { status: 'draft' };
 
-      // deleteManyのモックレスポンス
-      const mockDeleteManyResponse = {
-        count: 1,
-        successIds: { 0: 'article-002' },
-        failedIds: {},
-        errors: {},
-      };
+      // deleteManyのモックレスポンス（Response Builderを使用）
+      const mockDeleteManyResponse = deleteManyResultBuilder.success(1, ['article-002']);
 
       vi.mocked(deleteManyModule.handleDeleteMany).mockResolvedValue(mockDeleteManyResponse);
 

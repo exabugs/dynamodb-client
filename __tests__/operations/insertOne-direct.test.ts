@@ -8,6 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as findOneModule from '../../src/server/operations/findOne.js';
 import * as insertManyModule from '../../src/server/operations/insertMany.js';
 import { handleInsertOne } from '../../src/server/operations/insertOne.js';
+import { errorSimulator } from '../helpers/error-simulators.js';
+import { findOneResultBuilder, insertManyResultBuilder } from '../helpers/response-builders.js';
 
 // insertManyとfindOneをモック
 vi.mock('../../src/server/operations/insertMany.js', () => ({
@@ -33,22 +35,17 @@ describe('insertOne - 直接テスト', () => {
         content: 'テスト内容',
       };
 
-      // insertManyのモックレスポンス
-      const mockInsertManyResponse = {
-        count: 1,
-        successIds: { 0: 'article-001' },
-        failedIds: {},
-        errors: {},
-      };
+      // insertManyのモックレスポンス（Response Builderを使用）
+      const mockInsertManyResponse = insertManyResultBuilder.success(1, ['article-001']);
 
-      // findOneのモックレスポンス
-      const mockFindOneResponse = {
+      // findOneのモックレスポンス（Response Builderを使用）
+      const mockFindOneResponse = findOneResultBuilder.success({
         id: 'article-001',
         title: 'テスト記事',
         content: 'テスト内容',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
-      };
+      });
 
       vi.mocked(insertManyModule.handleInsertMany).mockResolvedValue(mockInsertManyResponse);
       vi.mocked(findOneModule.handleFindOne).mockResolvedValue(mockFindOneResponse);
@@ -90,19 +87,10 @@ describe('insertOne - 直接テスト', () => {
         content: 'テスト内容',
       };
 
-      // insertManyのモックレスポンス（失敗）
-      const mockInsertManyResponse = {
-        count: 0,
-        successIds: {},
-        failedIds: { 0: 'article-001' },
-        errors: {
-          0: {
-            id: 'article-001',
-            code: 'VALIDATION_ERROR',
-            message: 'Validation failed',
-          },
-        },
-      };
+      // insertManyのモックレスポンス（失敗、Response Builderを使用）
+      const mockInsertManyResponse = insertManyResultBuilder.failure(['article-001'], {
+        0: errorSimulator.operationError('article-001', 'VALIDATION_ERROR', 'Validation failed'),
+      });
 
       vi.mocked(insertManyModule.handleInsertMany).mockResolvedValue(mockInsertManyResponse);
 
