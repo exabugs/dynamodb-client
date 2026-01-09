@@ -2,34 +2,27 @@
  * findOne 操作
  * 単一レコードをIDまたはフィルター条件で取得する
  *
+ * リファクタリング: findManyを内部で使用してコードの重複を削減
+ *
  * 要件: 4.3, 5.4, 5.5
  */
-import { GetCommand } from '@aws-sdk/lib-dynamodb';
-
 import { ItemNotFoundError, createLogger } from '../../shared/index.js';
-import { generateMainRecordSK } from '../shadow/index.js';
 import type { FindOneParams, FindOneResult } from '../types.js';
-import {
-  executeDynamoDBOperation,
-  extractCleanRecord,
-  getDBClient,
-  getTableName,
-} from '../utils/dynamodb.js';
-import { handleFind } from './find.js';
+import { handleFindMany } from './findMany.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 
 /**
  * findOne 操作を実行する
  *
- * idが指定された場合はGetItemでメインレコードを取得し、
- * filterが指定された場合はfind操作で検索して最初の結果を返す。
- * __shadowKeysを除外してレスポンスを返す。
+ * findManyを内部で使用して単一レコードを取得する。
+ * idが指定された場合はfindMany([id])を呼び出し、
+ * filterが指定された場合はfindMany({ filter })を呼び出して最初の結果を返す。
  *
  * @param resource - リソース名
  * @param params - findOneパラメータ（idまたはfilter）
  * @param requestId - リクエストID
- * @returns レコードデータ
+ * @returns レコードデータ（単一レコードオブジェクト）
  * @throws {ItemNotFoundError} レコードが存在しない場合
  */
 export async function handleFindOne(
@@ -37,45 +30,23 @@ export async function handleFindOne(
   params: FindOneParams,
   requestId: string
 ): Promise<FindOneResult> {
-  // idが指定された場合は従来通りGetItemで取得
+  // idが指定された場合はfindManyを1件のIDで呼び出し
   if ('id' in params) {
     const { id } = params;
 
-    logger.debug('Executing findOne by id', {
+    logger.debug('Executing findOne by id (using findMany)', {
       requestId,
       resource,
       id,
     });
 
-    const dbClient = getDBClient();
-    const tableName = getTableName();
+    // findManyを呼び出して1件のレコードを取得
+    const results = await handleFindMany(resource, { ids: [id] }, requestId);
 
-    // メインレコードのSKを生成
-    const sk = generateMainRecordSK(id);
-
-    // GetItemでレコードを取得（ConsistentRead=true）
-    const result = await executeDynamoDBOperation(
-      () =>
-        dbClient.send(
-          new GetCommand({
-            TableName: tableName,
-            Key: {
-              PK: resource,
-              SK: sk,
-            },
-            ConsistentRead: true,
-          })
-        ),
-      'GetItem'
-    );
-
-    // レコードが存在しない場合
-    if (!result.Item) {
+    // レコードが存在しない場合（既存のインターフェースを維持）
+    if (results.length === 0) {
       throw new ItemNotFoundError(`Record not found: ${id}`, { resource, id });
     }
-
-    // data属性から__shadowKeysを除外してレスポンスを返す
-    const record = extractCleanRecord(result.Item);
 
     logger.info('findOne by id succeeded', {
       requestId,
@@ -83,30 +54,25 @@ export async function handleFindOne(
       id,
     });
 
-    return record;
+    // 既存のインターフェースを維持: 単一レコードオブジェクトを返す
+    return results[0];
   }
 
-  // filterが指定された場合はfind操作で検索
+  // filterが指定された場合はfindManyをfilterで呼び出し
   if ('filter' in params) {
     const { filter } = params;
 
-    logger.debug('Executing findOne by filter', {
+    logger.debug('Executing findOne by filter (using findMany)', {
       requestId,
       resource,
       filter,
     });
 
-    const findResult = await handleFind(
-      resource,
-      {
-        filter,
-        pagination: { perPage: 1 },
-      },
-      requestId
-    );
+    // findManyを呼び出してフィルター検索
+    const results = await handleFindMany(resource, { filter }, requestId);
 
-    // レコードが存在しない場合
-    if (!findResult.items || findResult.items.length === 0) {
+    // レコードが存在しない場合（既存のインターフェースを維持）
+    if (results.length === 0) {
       throw new ItemNotFoundError(`Record not found with filter`, { resource, filter });
     }
 
@@ -116,7 +82,8 @@ export async function handleFindOne(
       filter,
     });
 
-    return findResult.items[0];
+    // 既存のインターフェースを維持: 単一レコードオブジェクトを返す
+    return results[0];
   }
 
   // idもfilterも指定されていない場合（型的にはありえないが念のため）

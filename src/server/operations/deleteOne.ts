@@ -3,13 +3,11 @@
  * 単一レコードを削除する
  *
  * 要件: 4.4, 5.2, 5.3
+ *
+ * リファクタリング: deleteManyを内部で使用
  */
-import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
-
-import { ItemNotFoundError, createLogger } from '../../shared/index.js';
-import { generateMainRecordSK } from '../shadow/index.js';
+import { createLogger } from '../../shared/index.js';
 import type { DeleteOneParams, DeleteOneResult } from '../types.js';
-import { executeDynamoDBOperation, getDBClient, getTableName } from '../utils/dynamodb.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 
@@ -17,24 +15,26 @@ const logger = createLogger({ service: 'records-lambda' });
  * deleteOne 操作を実行する
  *
  * 処理フロー:
- * 1. filterまたはidから対象レコードを特定
- * 2. GetItemで既存レコードを取得（存在確認）
- * 3. __shadowKeysからシャドーSKリストを取得
- * 4. TransactWriteItemsでメインレコード + 全シャドーレコードを削除
+ * 1. deleteMany([id])を呼び出す（idまたはfilterから対象を特定）
+ * 2. 結果を検証し、失敗した場合は通常のErrorをスロー
+ * 3. 成功した場合は削除されたIDを返却
  *
  * @param resource - リソース名
  * @param params - deleteOneパラメータ
  * @param requestId - リクエストID
  * @returns 削除されたレコードのID
- * @throws {ItemNotFoundError} レコードが存在しない場合
+ * @throws {Error} レコードが存在しない場合、または削除に失敗した場合
  */
 export async function handleDeleteOne(
   resource: string,
   params: DeleteOneParams,
   requestId: string
 ): Promise<DeleteOneResult> {
+  // deleteManyをインポート
+  const { handleDeleteMany } = await import('./deleteMany.js');
+
   // idまたはfilterから対象レコードを特定
-  let targetId: string;
+  let targetId: string | undefined;
 
   if ('id' in params) {
     // idが指定されている場合
@@ -45,6 +45,29 @@ export async function handleDeleteOne(
       resource,
       id: targetId,
     });
+
+    // deleteMany([id])を呼び出す
+    const deleteManyResult = await handleDeleteMany(
+      resource,
+      {
+        ids: [targetId],
+      },
+      requestId
+    );
+
+    // 結果を検証
+    if (deleteManyResult.count === 0) {
+      // 削除に失敗した場合
+      const error = Object.values(deleteManyResult.errors)[0];
+      if (error) {
+        throw new Error(`Failed to delete record: ${error.message}`);
+      } else {
+        throw new Error(`Failed to delete record: ${targetId}`);
+      }
+    }
+
+    // 既存のインターフェースを維持: { id } を返す
+    return { id: targetId };
   } else {
     // filterが指定されている場合
     logger.debug('Executing deleteOne with filter', {
@@ -53,100 +76,39 @@ export async function handleDeleteOne(
       filter: params.filter,
     });
 
-    // filterで検索（find操作を使用）
-    const { handleFind } = await import('./find.js');
-    const findResult = await handleFind(
+    // deleteMany({ filter })を呼び出す
+    const deleteManyResult = await handleDeleteMany(
       resource,
-      { filter: params.filter, pagination: { perPage: 1 } },
+      {
+        filter: params.filter,
+      },
       requestId
     );
 
-    if (findResult.items.length === 0) {
-      throw new ItemNotFoundError(`Record not found with filter`, {
-        resource,
-        filter: params.filter,
-      });
+    // 結果を検証
+    if (deleteManyResult.count === 0) {
+      // 削除に失敗した場合
+      const error = Object.values(deleteManyResult.errors)[0];
+      if (error) {
+        throw new Error(`Failed to delete record: ${error.message}`);
+      } else {
+        throw new Error(`No records found matching filter`);
+      }
     }
 
-    const foundRecord = findResult.items[0];
-    targetId = foundRecord.id as string;
-  }
+    // 成功した場合は削除されたレコードのIDを取得
+    const deletedId = Object.values(deleteManyResult.deletedIds)[0];
+    if (!deletedId) {
+      throw new Error('Failed to get deleted record ID');
+    }
 
-  const dbClient = getDBClient();
-  const tableName = getTableName();
-
-  // メインレコードのSKを生成
-  const mainSK = generateMainRecordSK(targetId);
-
-  // 既存レコードを取得（存在確認とシャドーキー取得）
-  const getResult = await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new GetCommand({
-          TableName: tableName,
-          Key: {
-            PK: resource,
-            SK: mainSK,
-          },
-          ConsistentRead: true,
-        })
-      ),
-    'GetItem'
-  );
-
-  if (!getResult.Item) {
-    throw new ItemNotFoundError(`Record not found: ${targetId}`, { resource, id: targetId });
-  }
-
-  const existingData = getResult.Item.data as Record<string, unknown>;
-  const shadowKeys = (existingData.__shadowKeys as string[]) || [];
-
-  // TransactWriteItemsで一括削除
-  const transactItems: Array<{
-    Delete: { TableName: string; Key: Record<string, string> };
-  }> = [];
-
-  // メインレコードを削除
-  transactItems.push({
-    Delete: {
-      TableName: tableName,
-      Key: {
-        PK: resource,
-        SK: mainSK,
-      },
-    },
-  });
-
-  // 全シャドーレコードを削除
-  for (const shadowSK of shadowKeys) {
-    transactItems.push({
-      Delete: {
-        TableName: tableName,
-        Key: {
-          PK: resource,
-          SK: shadowSK,
-        },
-      },
+    logger.info('deleteOne succeeded', {
+      requestId,
+      resource,
+      id: deletedId,
     });
+
+    // 既存のインターフェースを維持: { id } を返す
+    return { id: deletedId };
   }
-
-  // トランザクション実行
-  await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new TransactWriteCommand({
-          TransactItems: transactItems,
-        })
-      ),
-    'TransactWriteItems'
-  );
-
-  logger.info('deleteOne succeeded', {
-    requestId,
-    resource,
-    id: targetId,
-    shadowCount: shadowKeys.length,
-  });
-
-  return { id: targetId };
 }

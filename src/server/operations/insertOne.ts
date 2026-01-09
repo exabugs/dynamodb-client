@@ -3,20 +3,11 @@
  * 単一レコードを作成する
  *
  * 要件: 4.1, 4.2, 5.2, 5.3
+ *
+ * リファクタリング: insertManyを内部で使用
  */
-import { PutCommand } from '@aws-sdk/lib-dynamodb';
-
-import { createLogger, ulid } from '../../shared/index.js';
-import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
-import { generateMainRecordSK } from '../shadow/index.js';
+import { createLogger } from '../../shared/index.js';
 import type { InsertOneParams, InsertOneResult } from '../types.js';
-import {
-  executeDynamoDBOperation,
-  getDBClient,
-  getTableName,
-} from '../utils/dynamodb.js';
-import { addCreateTimestamps } from '../utils/timestamps.js';
-import { addTTL } from '../utils/ttl.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 
@@ -24,16 +15,15 @@ const logger = createLogger({ service: 'records-lambda' });
  * insertOne 操作を実行する
  *
  * 処理フロー:
- * 1. ULIDを生成してレコードIDを作成
- * 2. createdAt, updatedAtタイムスタンプを追加
- * 3. シャドー設定を読み込み、全シャドーSKを生成
- * 4. メインレコードをPutItemで保存
- * 5. シャドーレコードをPutItemで保存
+ * 1. insertMany([data])を呼び出す
+ * 2. 結果を検証し、失敗した場合は通常のErrorをスロー
+ * 3. 成功した場合は作成されたレコードをfindOneで取得して返却
  *
  * @param resource - リソース名
  * @param params - insertOneパラメータ
  * @param requestId - リクエストID
  * @returns 作成されたレコード
+ * @throws {Error} レコード作成に失敗した場合
  */
 export async function handleInsertOne(
   resource: string,
@@ -45,67 +35,44 @@ export async function handleInsertOne(
     resource,
   });
 
-  const dbClient = getDBClient();
-  const tableName = getTableName();
+  // insertManyをインポート
+  const { handleInsertMany } = await import('./insertMany.js');
 
-  // IDを決定（指定されていればそれを使用、なければULIDを生成）
-  const id = (params.data.id as string | undefined) || ulid();
-
-  // レコードデータを構築（id、タイムスタンプ、TTLを追加）
-  let recordData: Record<string, unknown> = addCreateTimestamps({
-    ...params.data,
-    id,
-  });
-
-  // TTLを追加（リソースに応じて）
-  recordData = addTTL(resource, recordData);
-
-  // シャドー設定を取得（環境変数からキャッシュ付き）
-  const shadowConfig = getShadowConfig();
-
-  // シャドーレコードを生成（自動フィールド検出）
-  const shadowRecords = generateShadowRecords(recordData, resource, shadowConfig);
-
-  // メインレコードのSKを生成
-  const mainSK = generateMainRecordSK(id);
-
-  // メインレコードを保存
-  await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new PutCommand({
-          TableName: tableName,
-          Item: {
-            PK: resource,
-            SK: mainSK,
-            data: recordData,
-          },
-        })
-      ),
-    'PutItem'
+  // insertMany([data])を呼び出す
+  const insertManyResult = await handleInsertMany(
+    resource,
+    {
+      data: [params.data],
+    },
+    requestId
   );
 
-  // シャドーレコードを保存
-  for (const shadowRecord of shadowRecords) {
-    await executeDynamoDBOperation(
-      () =>
-        dbClient.send(
-          new PutCommand({
-            TableName: tableName,
-            Item: shadowRecord,
-          })
-        ),
-      'PutItem'
-    );
+  // 結果を検証
+  if (insertManyResult.count === 0) {
+    // 作成に失敗した場合
+    const error = Object.values(insertManyResult.errors)[0];
+    if (error) {
+      throw new Error(`Failed to create record: ${error.message}`);
+    } else {
+      throw new Error('Failed to create record');
+    }
   }
+
+  // 成功した場合は作成されたレコードのIDを取得
+  const createdId = Object.values(insertManyResult.successIds)[0];
+  if (!createdId) {
+    throw new Error('Failed to get created record ID');
+  }
+
+  // 既存のインターフェースを維持: 作成されたレコードを取得して返す
+  const { handleFindOne } = await import('./findOne.js');
+  const createdRecord = await handleFindOne(resource, { id: createdId }, requestId);
 
   logger.info('insertOne succeeded', {
     requestId,
     resource,
-    id,
-    shadowCount: shadowRecords.length,
+    id: createdId,
   });
 
-  // レコードデータを返す
-  return recordData;
+  return createdRecord;
 }
