@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.36] - 2026-01-09
+
+### Refactored
+
+- **単一操作のリファクタリング**: 単一操作をバルク操作のサブセットとして実装
+  - `findOne`: `findMany`を使用するように変更（カバレッジ91.11%）
+  - `insertOne`: `insertMany`を使用するように変更（カバレッジ90.00%）
+  - `updateOne`: `updateMany`を使用するように変更（カバレッジ84.05%）
+  - `deleteOne`: `deleteManyを使用するように変更（カバレッジ83.07%）
+  - コードの重複を削減し、保守性を向上
+  - 後方互換性100%維持（インターフェース変更なし）
+
+### Added
+
+- **テストカバレッジ向上**: 直接テストを4ファイル追加（計11テスト）
+  - 全テスト481件成功（既存470件 + 新規11件）
+  - 全体カバレッジ: 36.45% → 40.09%
+  - vitest.config.tsの設定改善（`all: true`追加）
+
 ## [1.3.35] - 2026-01-08
 
 ### Fixed
