@@ -1,23 +1,20 @@
 /**
  * updateOne操作の直接テスト
  *
- * updateOneがupdateManyを正しく呼び出しているかを確認する
+ * ADR 001: 最小限のレスポンスデータ（セキュリティ重視）
+ * - updateOneは { id, ...更新したフィールドのみ } を返す
+ * - findOneの追加クエリは実行しない（セキュリティとパフォーマンス）
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as findOneModule from '../../src/server/operations/findOne.js';
 import * as updateManyModule from '../../src/server/operations/updateMany.js';
 import { handleUpdateOne } from '../../src/server/operations/updateOne.js';
 import { errorSimulator } from '../helpers/error-simulators.js';
-import { findOneResultBuilder, updateManyResultBuilder } from '../helpers/response-builders.js';
+import { updateManyResultBuilder } from '../helpers/response-builders.js';
 
-// updateManyとfindOneをモック
+// updateManyをモック
 vi.mock('../../src/server/operations/updateMany.js', () => ({
   handleUpdateMany: vi.fn(),
-}));
-
-vi.mock('../../src/server/operations/findOne.js', () => ({
-  handleFindOne: vi.fn(),
 }));
 
 describe('updateOne - 直接テスト', () => {
@@ -29,26 +26,17 @@ describe('updateOne - 直接テスト', () => {
   });
 
   describe('idが指定された場合', () => {
-    it('updateMany([id], data)を呼び出して更新されたレコードを返す', async () => {
+    it('updateMany([id], data)を呼び出して { id, ...更新フィールド } を返す', async () => {
       const testId = 'article-001';
       const testData = {
         title: '更新後のタイトル',
+        status: 'published',
       };
 
       // updateManyのモックレスポンス（Response Builderを使用）
       const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId]);
 
-      // findOneのモックレスポンス（Response Builderを使用）
-      const mockFindOneResponse = findOneResultBuilder.success({
-        id: testId,
-        title: '更新後のタイトル',
-        content: 'テスト内容',
-        createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-02T00:00:00Z',
-      });
-
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
-      vi.mocked(findOneModule.handleFindOne).mockResolvedValue(mockFindOneResponse);
 
       // updateOneを実行
       const result = await handleUpdateOne(
@@ -70,11 +58,53 @@ describe('updateOne - 直接テスト', () => {
         requestId
       );
 
-      // findOneが正しく呼び出されたことを確認
-      expect(findOneModule.handleFindOne).toHaveBeenCalledWith(resource, { id: testId }, requestId);
+      // 結果が { id, ...更新したフィールドのみ } であることを確認
+      expect(result).toEqual({
+        id: testId,
+        title: '更新後のタイトル',
+        status: 'published',
+      });
 
-      // 結果が更新されたレコードオブジェクトであることを確認
-      expect(result).toEqual(mockFindOneResponse);
+      // 更新していないフィールド（content, createdAt等）は含まれない
+      expect(result).not.toHaveProperty('content');
+      expect(result).not.toHaveProperty('createdAt');
+      expect(result).not.toHaveProperty('updatedAt');
+    });
+
+    it('UpdateOperators形式（$set）の場合、$setのフィールドのみを返す', async () => {
+      const testId = 'article-002';
+      const testData = {
+        $set: {
+          title: '更新後のタイトル',
+        },
+        $setOnInsert: {
+          createdAt: '2025-01-01T00:00:00Z',
+        },
+      };
+
+      // updateManyのモックレスポンス
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId]);
+
+      vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
+
+      // updateOneを実行
+      const result = await handleUpdateOne(
+        resource,
+        {
+          id: testId,
+          data: testData,
+        },
+        requestId
+      );
+
+      // 結果が { id, ...$setのフィールドのみ } であることを確認
+      expect(result).toEqual({
+        id: testId,
+        title: '更新後のタイトル',
+      });
+
+      // $setOnInsertのフィールドは含まれない
+      expect(result).not.toHaveProperty('createdAt');
     });
 
     it('更新が失敗した場合はErrorをスローする', async () => {
@@ -105,7 +135,7 @@ describe('updateOne - 直接テスト', () => {
   });
 
   describe('filterが指定された場合', () => {
-    it('updateMany({ filter }, data)を呼び出して更新されたレコードを返す', async () => {
+    it('updateMany({ filter }, data)を呼び出して { id, ...更新フィールド } を返す', async () => {
       const testFilter = { status: 'draft' };
       const testData = {
         status: 'published',
@@ -114,18 +144,7 @@ describe('updateOne - 直接テスト', () => {
       // updateManyのモックレスポンス（Response Builderを使用）
       const mockUpdateManyResponse = updateManyResultBuilder.success(1, ['article-002']);
 
-      // findOneのモックレスポンス（Response Builderを使用）
-      const mockFindOneResponse = findOneResultBuilder.success({
-        id: 'article-002',
-        title: 'フィルタ記事',
-        content: 'フィルタ内容',
-        status: 'published',
-        createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-02T00:00:00Z',
-      });
-
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
-      vi.mocked(findOneModule.handleFindOne).mockResolvedValue(mockFindOneResponse);
 
       // updateOneを実行
       const result = await handleUpdateOne(
@@ -147,15 +166,15 @@ describe('updateOne - 直接テスト', () => {
         requestId
       );
 
-      // findOneが正しく呼び出されたことを確認
-      expect(findOneModule.handleFindOne).toHaveBeenCalledWith(
-        resource,
-        { id: 'article-002' },
-        requestId
-      );
+      // 結果が { id, ...更新したフィールドのみ } であることを確認
+      expect(result).toEqual({
+        id: 'article-002',
+        status: 'published',
+      });
 
-      // 結果が更新されたレコードオブジェクトであることを確認
-      expect(result).toEqual(mockFindOneResponse);
+      // 更新していないフィールドは含まれない
+      expect(result).not.toHaveProperty('title');
+      expect(result).not.toHaveProperty('content');
     });
   });
 });

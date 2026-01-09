@@ -17,12 +17,16 @@ const logger = createLogger({ service: 'records-lambda' });
  * 処理フロー:
  * 1. updateMany([id], data)を呼び出す（idまたはfilterから対象を特定）
  * 2. 結果を検証し、失敗した場合は通常のErrorをスロー
- * 3. 成功した場合は更新されたレコードをfindOneで取得して返却
+ * 3. 成功した場合は { id, ...更新したフィールドのみ } を返却
+ *
+ * セキュリティ: ADR 001に基づき、更新したフィールドのみを返却
+ * - read権限なしでupdate権限のみの場合の情報漏洩を防止
+ * - findOneの追加クエリを削減してパフォーマンス向上
  *
  * @param resource - リソース名
  * @param params - updateOneパラメータ
  * @param requestId - リクエストID
- * @returns 更新されたレコード
+ * @returns 更新されたレコード（idと更新したフィールドのみ）
  * @throws {Error} レコードが存在しない場合、または更新に失敗した場合
  */
 export async function handleUpdateOne(
@@ -70,11 +74,16 @@ export async function handleUpdateOne(
       }
     }
 
-    // 成功した場合は更新されたレコードをfindOneで取得
-    const { handleFindOne } = await import('./findOne.js');
-    const updatedRecord = await handleFindOne(resource, { id: targetId }, requestId);
+    // 成功した場合は { id, ...更新したフィールドのみ } を返却
+    // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+    const actualPatchData = patchData.$set
+      ? (patchData.$set as Record<string, unknown>)
+      : patchData;
 
-    return updatedRecord;
+    return {
+      id: targetId,
+      ...actualPatchData,
+    };
   } else {
     // filterが指定されている場合
     logger.debug('Executing updateOne with filter', {
@@ -111,10 +120,15 @@ export async function handleUpdateOne(
       throw new Error('Failed to get updated record ID');
     }
 
-    // findOneで更新されたレコードを取得
-    const { handleFindOne } = await import('./findOne.js');
-    const updatedRecord = await handleFindOne(resource, { id: updatedId }, requestId);
+    // { id, ...更新したフィールドのみ } を返却
+    // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+    const actualPatchData = patchData.$set
+      ? (patchData.$set as Record<string, unknown>)
+      : patchData;
 
-    return updatedRecord;
+    return {
+      id: updatedId,
+      ...actualPatchData,
+    };
   }
 }
