@@ -28,7 +28,7 @@ describe('deleteOne - 直接テスト', () => {
       // deleteManyのモックレスポンス
       const mockDeleteManyResponse = {
         count: 1,
-        deletedIds: { 0: testId },
+        successIds: { 0: testId },
         failedIds: {},
         errors: {},
       };
@@ -63,7 +63,7 @@ describe('deleteOne - 直接テスト', () => {
       // deleteManyのモックレスポンス（失敗）
       const mockDeleteManyResponse = {
         count: 0,
-        deletedIds: {},
+        successIds: {},
         failedIds: { 0: testId },
         errors: {
           0: {
@@ -96,7 +96,7 @@ describe('deleteOne - 直接テスト', () => {
       // deleteManyのモックレスポンス
       const mockDeleteManyResponse = {
         count: 1,
-        deletedIds: { 0: 'article-002' },
+        successIds: { 0: 'article-002' },
         failedIds: {},
         errors: {},
       };

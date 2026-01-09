@@ -97,7 +97,7 @@ export async function handleDeleteOne(
     }
 
     // 成功した場合は削除されたレコードのIDを取得
-    const deletedId = Object.values(deleteManyResult.deletedIds)[0];
+    const deletedId = Object.values(deleteManyResult.successIds)[0];
     if (!deletedId) {
       throw new Error('Failed to get deleted record ID');
     }
