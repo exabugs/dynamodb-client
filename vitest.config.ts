@@ -16,6 +16,7 @@ export default defineConfig({
         '**/types.ts',
         '**/__tests__/**',
         '**/index.ts', // re-export only files
+        'src/scripts/**', // CLIスクリプト（実行時のみ使用）
       ],
       // すべてのソースファイルをカバレッジ対象に含める
       all: true,

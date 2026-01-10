@@ -405,10 +405,41 @@ export class DynamoDBMock {
   }
 
   /**
-   * スキャン（未実装）
+   * スキャン
    */
   async scan(params: ScanInput): Promise<ScanOutput> {
-    throw new Error('Not implemented yet');
+    this.checkErrorSimulation('scan', params);
+
+    const tableName = params.TableName!;
+    const table = this.tables.get(tableName);
+
+    if (!table) {
+      throw new Error(`ResourceNotFoundException: Table ${tableName} not found`);
+    }
+
+    let items: DynamoDBItem[] = Array.from(table.values());
+
+    // FilterExpressionの評価
+    if (params.FilterExpression && params.ExpressionAttributeValues) {
+      items = items.filter((item) =>
+        this.evaluateFilterExpression(
+          params.FilterExpression!,
+          item,
+          params.ExpressionAttributeValues!
+        )
+      );
+    }
+
+    // Limitの適用
+    if (params.Limit) {
+      items = items.slice(0, params.Limit);
+    }
+
+    return {
+      Items: items,
+      Count: items.length,
+      ScannedCount: items.length,
+    };
   }
 
   /**

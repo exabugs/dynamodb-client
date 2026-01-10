@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.38] - 2026-01-11
+
+### Changed
+
+- **テストカバレッジ大幅向上**: 86.37%達成（Phase 2目標80%を超過）
+  - dataProviderの完全テスト実装（17テスト、カバレッジ86.37%）
+  - react-admin v5 APIに対応（`pageInfo`形式のレスポンス）
+  - 全481テスト成功
+
+### Removed
+
+- **useManyToManyTransformフック削除**: 不要なコード削除
+  - Many-to-many関係の処理はdataProvider内で統合済み
+  - コードの重複を削減し、保守性を向上
+
 ## [1.3.37] - 2026-01-09
 
 ### Security

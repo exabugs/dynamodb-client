@@ -419,6 +419,16 @@ interface IntegrationTestHelper {
 
 ## テストケース設計
 
+### ADR 001: セキュリティ原則
+
+**updateOne と updateMany は更新したフィールドのみを返却する**
+
+- **理由**: read権限なしでupdate権限のみの場合の情報漏洩を防止
+- **効果**: findOneの追加クエリを削減してパフォーマンス向上
+- **実装**: 
+  - `updateOne`: `{ id, ...更新したフィールドのみ }` を返却
+  - `updateMany`: 各レコードについて `{ id, ...更新したフィールドのみ }` を返却
+
 ### updateOne with upsert のテストケース
 
 ```typescript
