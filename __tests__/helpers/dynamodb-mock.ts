@@ -99,6 +99,11 @@ export class DynamoDBMock {
         return this.batchGetItem(input);
       }
 
+      // Query
+      if (input.KeyConditionExpression) {
+        return this.query(input);
+      }
+
       // その他のコマンドは未実装
       throw new Error(`Unsupported command: ${command.constructor.name}`);
     }
@@ -341,10 +346,62 @@ export class DynamoDBMock {
   }
 
   /**
-   * クエリ（未実装）
+   * クエリ
    */
   async query(params: QueryInput): Promise<QueryOutput> {
-    throw new Error('Not implemented yet');
+    this.checkErrorSimulation('query', params);
+
+    const tableName = params.TableName!;
+    const table = this.tables.get(tableName);
+
+    if (!table) {
+      throw new Error(`ResourceNotFoundException: Table ${tableName} not found`);
+    }
+
+    const items: DynamoDBItem[] = [];
+
+    // KeyConditionExpressionの簡易実装
+    // "PK = :pk AND begins_with(SK, :sk)" のパターンのみサポート
+    if (params.KeyConditionExpression && params.ExpressionAttributeValues) {
+      const pkValue = this.extractValue(params.ExpressionAttributeValues[':pk']);
+      const skPrefix = params.ExpressionAttributeValues[':sk']
+        ? this.extractValue(params.ExpressionAttributeValues[':sk'])
+        : undefined;
+
+      for (const [key, item] of table.entries()) {
+        const [itemPk, itemSk] = key.split('#');
+
+        // PKが一致するか確認
+        if (itemPk !== pkValue) {
+          continue;
+        }
+
+        // SKのプレフィックスが一致するか確認（begins_withの場合）
+        if (skPrefix && !itemSk.startsWith(skPrefix)) {
+          continue;
+        }
+
+        // FilterExpressionの評価（簡易実装）
+        if (params.FilterExpression) {
+          if (
+            !this.evaluateFilterExpression(
+              params.FilterExpression,
+              item,
+              params.ExpressionAttributeValues
+            )
+          ) {
+            continue;
+          }
+        }
+
+        items.push(item);
+      }
+    }
+
+    return {
+      Items: items,
+      Count: items.length,
+    };
   }
 
   /**
@@ -352,6 +409,17 @@ export class DynamoDBMock {
    */
   async scan(params: ScanInput): Promise<ScanOutput> {
     throw new Error('Not implemented yet');
+  }
+
+  /**
+   * テーブル内の全アイテムを取得（テスト用）
+   */
+  getAllItems(tableName: string): DynamoDBItem[] {
+    const table = this.tables.get(tableName);
+    if (!table) {
+      return [];
+    }
+    return Array.from(table.values());
   }
 
   /**
@@ -410,6 +478,41 @@ export class DynamoDBMock {
       return item === undefined;
     }
     // その他の条件式は常にtrueを返す（TODO: 完全実装）
+    return true;
+  }
+
+  /**
+   * フィルター式を評価（簡易実装）
+   */
+  private evaluateFilterExpression(
+    expression: string,
+    item: DynamoDBItem,
+    values?: Record<string, AttributeValue>
+  ): boolean {
+    // 簡易実装: 基本的な等価比較のみサポート
+    // 例: "status = :status"
+    if (!values) {
+      return true;
+    }
+
+    // 式をパースして評価（簡易実装）
+    for (const [placeholder, value] of Object.entries(values)) {
+      const attrName = placeholder.replace(':', '');
+      const itemValue = item[attrName];
+
+      if (!itemValue) {
+        return false;
+      }
+
+      // 値を比較
+      const expectedValue = this.extractValue(value);
+      const actualValue = this.extractValue(itemValue);
+
+      if (expectedValue !== actualValue) {
+        return false;
+      }
+    }
+
     return true;
   }
 
