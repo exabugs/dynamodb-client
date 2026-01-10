@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.39] - 2026-01-11
+
+### Fixed
+
+- **package-lock.json同期**: CI失敗を修正
+  - `yaml@2.8.2`の依存関係を追加
+  - `npm ci`が正常に動作するように修正
+
 ## [1.3.38] - 2026-01-11
 
 ### Changed
