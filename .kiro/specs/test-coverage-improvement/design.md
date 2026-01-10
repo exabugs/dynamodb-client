@@ -1,373 +1,595 @@
-# テストカバレッジ改善設計
+# テストカバレッジ改善 - 設計書
 
-## Overview
+## 概要
 
-dynamodb-clientライブラリのテストカバレッジを33.69%から80%以上に向上させるための包括的なテスト戦略を設計します。特に$nearオペレータ関連の実装（現在3.67%）を90%以上にすることを最優先とします。
+dynamodb-clientライブラリのテストカバレッジを60%→80%に向上させるための設計。
 
-## Architecture
+## アーキテクチャ
 
-### テスト階層
+### テスト構造
 
 ```
-┌─────────────────────────────────────┐
-│   End-to-End Tests (E2E)            │  ← クライアント→Lambda→DynamoDB
-├─────────────────────────────────────┤
-│   Integration Tests                 │  ← 複数コンポーネント統合
-├─────────────────────────────────────┤
-│   Unit Tests                        │  ← 個別関数・クラス
-└─────────────────────────────────────┘
+__tests__/
+├── unit/                    # ユニットテスト（既存）
+│   ├── client/             # クライアント側
+│   └── server/             # サーバー側（新規）
+├── integration/            # 統合テスト（新規）
+│   ├── operations/         # 操作別テスト
+│   └── scenarios/          # シナリオテスト
+├── helpers/                # テストヘルパー
+│   ├── dynamodb-mock.ts   # DynamoDBモック（新規）
+│   ├── factories.ts        # テストデータファクトリー（新規）
+│   └── assertions.ts       # カスタムアサーション（既存）
+└── fixtures/               # テストフィクスチャ（新規）
+    ├── shadow-configs.ts
+    └── test-data.ts
 ```
 
-### テスト対象の優先順位
+## コンポーネント設計
 
-1. **最優先**: `nearQuery.ts` (現在3.67% → 目標90%)
-2. **高優先**: `filter.ts` (現在27.56% → 目標90%)
-3. **高優先**: `find/utils.ts` (現在49.6% → 目標90%)
-4. **中優先**: その他のserver/operations/* (現在0-8% → 目標80%)
-5. **低優先**: react-admin統合 (現在0% → 目標60%)
+### 1. DynamoDBモック
 
-## Components and Interfaces
+#### 設計方針
 
-### 1. nearQuery.tsのテスト設計
+- **メモリ内データストア**: Map<string, Map<string, Item>> 構造
+- **トランザクション対応**: 操作のバッチ実行とロールバック
+- **エラーシミュレーション**: 条件付きエラー発生
 
-#### テストファイル: `__tests__/near-query.test.ts`
-
-**テストケース構成**:
+#### インターフェース
 
 ```typescript
-describe('executeNearQuery', () => {
-  describe('正常系', () => {
-    test('簡易形式の$nearクエリで検索できる')
-    test('GeoJSON形式の$nearクエリで検索できる')
-    test('limitパラメータが正しく適用される')
-    test('距離情報(__distance)が正しく付与される')
-    test('結果が距離順にソートされる')
-  })
+/**
+ * DynamoDBモック
+ * 実際のDynamoDBの動作を忠実に再現する
+ */
+class DynamoDBMock {
+  private tables: Map<string, Map<string, Item>>;
+  private transactionLog: TransactionEntry[];
 
-  describe('DynamoDB統合', () => {
-    test('シャドウレコードから本体レコードを取得できる')
-    test('複数のシャドウレコードから複数の本体レコードを取得できる')
-    test('シャドウレコードが存在しない場合は空配列を返す')
-    test('本体レコードが削除されている場合はスキップする')
-    test('GeoHashフィールド名が正しく生成される')
-  })
+  /**
+   * テーブルを作成
+   */
+  createTable(tableName: string): void;
 
-  describe('エラーハンドリング', () => {
-    test('DynamoDBエラー時に適切なエラーを投げる')
-    test('無効な座標の場合にエラーを投げる')
-    test('無効なlimitの場合にエラーを投げる')
-  })
+  /**
+   * アイテムを取得
+   */
+  getItem(params: GetItemInput): Promise<GetItemOutput>;
 
-  describe('エッジケース', () => {
-    test('座標(0, 0)で検索できる')
-    test('北極点(90, 0)で検索できる')
-    test('南極点(-90, 0)で検索できる')
-    test('日付変更線(0, 180)で検索できる')
-    test('maxDistance=0で完全一致のみ返す')
-  })
+  /**
+   * アイテムを書き込み
+   */
+  putItem(params: PutItemInput): Promise<PutItemOutput>;
 
-  describe('パフォーマンス', () => {
-    test('1000件の検索が5秒以内に完了する')
-    test('最初の反復で結果が見つかった場合、追加反復しない')
-  })
-})
+  /**
+   * アイテムを更新
+   */
+  updateItem(params: UpdateItemInput): Promise<UpdateItemOutput>;
+
+  /**
+   * アイテムを削除
+   */
+  deleteItem(params: DeleteItemInput): Promise<DeleteItemOutput>;
+
+  /**
+   * バッチ取得
+   */
+  batchGetItem(params: BatchGetItemInput): Promise<BatchGetItemOutput>;
+
+  /**
+   * トランザクション書き込み
+   */
+  transactWriteItems(params: TransactWriteItemsInput): Promise<TransactWriteItemsOutput>;
+
+  /**
+   * クエリ
+   */
+  query(params: QueryInput): Promise<QueryOutput>;
+
+  /**
+   * スキャン
+   */
+  scan(params: ScanInput): Promise<ScanOutput>;
+
+  /**
+   * エラーシミュレーション設定
+   */
+  setErrorSimulation(config: ErrorSimulationConfig): void;
+
+  /**
+   * データをクリア
+   */
+  clear(): void;
+
+  /**
+   * トランザクションログを取得
+   */
+  getTransactionLog(): TransactionEntry[];
+}
 ```
 
-#### モック戦略
+#### 実装詳細
 
+**データ構造**:
 ```typescript
-// DynamoDBクライアントのモック
-vi.mock('../../src/server/utils/dynamodb.js', () => ({
-  getDBClient: vi.fn(),
-  getTableName: vi.fn(() => 'test-table'),
-  executeDynamoDBOperation: vi.fn(),
-  extractCleanRecord: vi.fn((record) => record),
-}))
+// テーブル名 → (PK#SK → Item)
+private tables: Map<string, Map<string, Item>> = new Map();
 
-// executeNearSearchのモック（必要に応じて）
-vi.mock('../../src/server/query/nearSearch.js', () => ({
-  executeNearSearch: vi.fn(),
-}))
+// 複合キーの生成
+private makeKey(pk: string, sk: string): string {
+  return `${pk}#${sk}`;
+}
 ```
 
-### 2. filter.tsのテスト設計
-
-#### テストファイル: `__tests__/filter-comprehensive.test.ts`
-
-**テストケース構成**:
-
+**トランザクション処理**:
 ```typescript
-describe('parseFilterField', () => {
-  describe('全オペレータのパース', () => {
-    test.each([
-      ['field:$eq', { field: 'field', operator: '$eq', type: 'string' }],
-      ['field:$ne', { field: 'field', operator: '$ne', type: 'string' }],
-      ['field:$lt', { field: 'field', operator: '$lt', type: 'string' }],
-      ['field:$lte', { field: 'field', operator: '$lte', type: 'string' }],
-      ['field:$gt', { field: 'field', operator: '$gt', type: 'string' }],
-      ['field:$gte', { field: 'field', operator: '$gte', type: 'string' }],
-      ['field:$in', { field: 'field', operator: '$in', type: 'string' }],
-      ['field:$nin', { field: 'field', operator: '$nin', type: 'string' }],
-      ['field:$starts', { field: 'field', operator: '$starts', type: 'string' }],
-      ['field:$ends', { field: 'field', operator: '$ends', type: 'string' }],
-      ['field:$contains', { field: 'field', operator: '$contains', type: 'string' }],
-      ['field:$exists', { field: 'field', operator: '$exists', type: 'string' }],
-      ['field:$near', { field: 'field', operator: '$near', type: 'string' }],
-    ])('"%s"を正しくパースできる', (input, expected) => {
-      expect(parseFilterField(input)).toEqual(expected)
-    })
-  })
-
-  describe('型指定のパース', () => {
-    test.each([
-      ['field:$eq:string', 'string'],
-      ['field:$eq:number', 'number'],
-      ['field:$eq:date', 'date'],
-      ['field:$eq:boolean', 'boolean'],
-    ])('"%s"の型を正しくパースできる', (input, expectedType) => {
-      const result = parseFilterField(input)
-      expect(result.type).toBe(expectedType)
-    })
-  })
-})
-
-describe('isValidOperator', () => {
-  test('FilterOperator型の全ての値がtrueを返す', () => {
-    const operators: FilterOperator[] = [
-      '$eq', '$ne', '$lt', '$lte', '$gt', '$gte',
-      '$in', '$nin', '$starts', '$ends', '$contains', '$exists', '$near'
-    ]
-    operators.forEach(op => {
-      expect(isValidOperator(op)).toBe(true)
-    })
-  })
-
-  test('無効なオペレータはfalseを返す', () => {
-    expect(isValidOperator('invalid')).toBe(false)
-    expect(isValidOperator('eq')).toBe(false) // $プレフィックスなし
-    expect(isValidOperator('$unknown')).toBe(false)
-  })
-})
-
-describe('matchesFilter', () => {
-  describe('全オペレータの評価', () => {
-    test('$eqで等価比較できる')
-    test('$neで不等価比較できる')
-    test('$ltで小なり比較できる')
-    test('$lteで小なりイコール比較できる')
-    test('$gtで大なり比較できる')
-    test('$gteで大なりイコール比較できる')
-    test('$startsで前方一致できる')
-    test('$endsで後方一致できる')
-  })
-
-  describe('型変換', () => {
-    test('string型に変換して比較できる')
-    test('number型に変換して比較できる')
-    test('date型に変換して比較できる')
-    test('boolean型に変換して比較できる')
-  })
-})
-
-describe('convertType', () => {
-  test.each([
-    ['123', 'string', '123'],
-    ['123', 'number', 123],
-    ['2024-01-01', 'date', new Date('2024-01-01')],
-    ['true', 'boolean', true],
-    ['false', 'boolean', false],
-    [true, 'boolean', true],
-    [false, 'boolean', false],
-  ])('convertType(%s, %s) = %s', (value, type, expected) => {
-    const result = convertType(value, type as FilterType)
-    if (type === 'date') {
-      expect(result).toEqual(expected)
-    } else {
-      expect(result).toBe(expected)
+async transactWriteItems(params: TransactWriteItemsInput): Promise<TransactWriteItemsOutput> {
+  const operations: Operation[] = [];
+  
+  // 1. 全操作を検証（条件チェック）
+  for (const item of params.TransactItems) {
+    if (item.ConditionCheck) {
+      // 条件チェック
+      if (!this.checkCondition(item.ConditionCheck)) {
+        throw new TransactionCanceledException();
+      }
     }
-  })
-})
-```
-
-### 3. find/utils.tsのテスト設計
-
-#### テストファイル: `__tests__/find-utils-comprehensive.test.ts`
-
-**テストケース構成**:
-
-```typescript
-describe('detectNearQuery', () => {
-  describe('ネストされたオブジェクト形式', () => {
-    test('簡易形式の$nearを検出できる')
-    test('GeoJSON形式の$nearを検出できる')
-    test('複数フィールドがある場合、$nearを持つフィールドを検出できる')
-  })
-
-  describe('フィールド名に演算子を含める形式', () => {
-    test('"location:$near"形式を検出できる')
-    test('"location:$near:string"形式を検出できる')
-  })
-
-  describe('$nearが存在しない場合', () => {
-    test('空のフィルターでnullを返す')
-    test('他のオペレータのみの場合nullを返す')
-    test('$nearがネストされていない場合nullを返す')
-  })
-})
-
-describe('parseFilters', () => {
-  describe('全オペレータ形式のパース', () => {
-    test('ネストされたオブジェクト形式をパースできる')
-    test('フィールド名に演算子を含める形式をパースできる')
-    test('両方の形式が混在している場合をパースできる')
-  })
-
-  describe('エラーハンドリング', () => {
-    test('無効なオペレータの場合にエラーを投げる')
-    test('無効な型の場合にエラーを投げる')
-    test('無効な構文の場合にエラーを投げる')
-  })
-})
-
-describe('matchesAllFilters', () => {
-  test('全てのフィルターにマッチする場合trueを返す')
-  test('1つでもマッチしない場合falseを返す')
-  test('空のフィルター配列の場合trueを返す')
-  test('複数のオペレータが混在する場合に正しく評価できる')
-})
-```
-
-### 4. エンドツーエンドテストの設計
-
-#### テストファイル: `__tests__/e2e-near-search.test.ts`
-
-**テストケース構成**:
-
-```typescript
-describe('$near検索のE2Eテスト', () => {
-  beforeAll(async () => {
-    // テストデータの投入
-    await seedTestVenues()
-  })
-
-  afterAll(async () => {
-    // テストデータのクリーンアップ
-    await cleanupTestVenues()
-  })
-
-  describe('クライアント→Lambda→DynamoDB', () => {
-    test('簡易形式の$nearクエリで検索できる')
-    test('GeoJSON形式の$nearクエリで検索できる')
-    test('paginationのperPageが適用される')
-    test('maxDistanceでフィルタリングできる')
-    test('minDistanceでフィルタリングできる')
-    test('結果が距離順にソートされる')
-    test('__distanceフィールドが付与される')
-  })
-
-  describe('エラーケース', () => {
-    test('無効な座標の場合にエラーを返す')
-    test('無効なlimitの場合にエラーを返す')
-    test('GeoHashフィールドが存在しない場合にエラーを返す')
-  })
-})
-```
-
-## Data Models
-
-### テストデータモデル
-
-```typescript
-interface TestVenue {
-  id: string
-  name: string
-  location: {
-    latitude: number
-    longitude: number
+    operations.push(this.prepareOperation(item));
   }
-  status: 'active' | 'inactive'
-}
-
-interface TestShadowRecord {
-  PK: string
-  SK: string
-  // dataフィールドは含まない（シャドウレコードの仕様）
-}
-
-interface TestMainRecord {
-  PK: string
-  SK: string
-  data: TestVenue
+  
+  // 2. 全操作を実行（アトミック）
+  for (const op of operations) {
+    this.executeOperation(op);
+  }
+  
+  return {};
 }
 ```
 
-### テストデータセット
+**エラーシミュレーション**:
+```typescript
+interface ErrorSimulationConfig {
+  operation: 'putItem' | 'getItem' | 'updateItem' | 'deleteItem' | 'transactWriteItems';
+  errorType: 'ConditionalCheckFailedException' | 'ResourceNotFoundException' | 'ValidationException';
+  condition?: (params: any) => boolean;
+}
+
+setErrorSimulation(config: ErrorSimulationConfig): void {
+  this.errorSimulations.push(config);
+}
+```
+
+### 2. テストデータファクトリー
+
+#### 設計方針
+
+- **型安全**: TypeScriptの型定義を活用
+- **カスタマイズ可能**: デフォルト値とオーバーライド
+- **ランダム生成**: faker.jsを使用
+
+#### インターフェース
 
 ```typescript
-const TEST_VENUES: TestVenue[] = [
-  {
-    id: 'venue-001',
-    name: '東京タワー',
-    location: { latitude: 35.6586, longitude: 139.7454 },
-    status: 'active',
-  },
-  {
-    id: 'venue-002',
-    name: '東京スカイツリー',
-    location: { latitude: 35.7101, longitude: 139.8107 },
-    status: 'active',
-  },
-  {
-    id: 'venue-003',
-    name: '北極点',
-    location: { latitude: 90.0, longitude: 0.0 },
-    status: 'active',
-  },
-  {
-    id: 'venue-004',
-    name: '南極点',
-    location: { latitude: -90.0, longitude: 0.0 },
-    status: 'active',
-  },
-  {
-    id: 'venue-005',
-    name: '日付変更線',
-    location: { latitude: 0.0, longitude: 180.0 },
-    status: 'active',
-  },
-]
+/**
+ * テストデータファクトリー
+ */
+interface TestDataFactory {
+  /**
+   * ユーザーデータを生成
+   */
+  createUser(overrides?: Partial<User>): User;
+
+  /**
+   * 記事データを生成
+   */
+  createArticle(overrides?: Partial<Article>): Article;
+
+  /**
+   * タスクデータを生成
+   */
+  createTask(overrides?: Partial<Task>): Task;
+
+  /**
+   * 複数のユーザーデータを生成
+   */
+  createUsers(count: number, overrides?: Partial<User>): User[];
+
+  /**
+   * シャドー設定を生成
+   */
+  createShadowConfig(overrides?: Partial<ShadowConfig>): ShadowConfig;
+}
 ```
 
-## Testing Strategy
+#### 実装例
 
-### カバレッジ目標
+```typescript
+import { faker } from '@faker-js/faker';
 
-| ファイル | 現在 | 目標 | 優先度 |
-|---------|------|------|--------|
-| nearQuery.ts | 3.67% | 90% | 最優先 |
-| filter.ts | 27.56% | 90% | 高 |
-| find/utils.ts | 49.6% | 90% | 高 |
-| handler.ts | 95.65% | 95% | 維持 |
-| generator.ts | 83.72% | 90% | 中 |
-| その他operations/* | 0-8% | 80% | 中 |
+export const testDataFactory = {
+  createUser(overrides?: Partial<User>): User {
+    return {
+      id: faker.string.uuid(),
+      name: faker.person.fullName(),
+      email: faker.internet.email(),
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...overrides,
+    };
+  },
 
-### テスト実行戦略
-
-```bash
-# 1. ユニットテストのみ実行（高速）
-npm run test:unit
-
-# 2. カバレッジ付きで全テスト実行
-npm run test:coverage
-
-# 3. 特定ファイルのカバレッジ確認
-npm run test:coverage -- __tests__/near-query.test.ts
-
-# 4. カバレッジ閾値チェック（CI/CD用）
-npm run test:coverage -- --coverage.lines=80 --coverage.branches=75
+  createUsers(count: number, overrides?: Partial<User>): User[] {
+    return Array.from({ length: count }, () => this.createUser(overrides));
+  },
+};
 ```
 
-### CI/CDでのカバレッジチェック
+### 3. 統合テストヘルパー
+
+#### 設計方針
+
+- **セットアップ簡素化**: beforeEach/afterEachの共通化
+- **アサーション拡張**: カスタムマッチャー
+- **デバッグ支援**: 詳細なエラーメッセージ
+
+#### インターフェース
+
+```typescript
+/**
+ * 統合テストヘルパー
+ */
+interface IntegrationTestHelper {
+  /**
+   * テスト環境をセットアップ
+   */
+  setup(): Promise<TestContext>;
+
+  /**
+   * テスト環境をクリーンアップ
+   */
+  teardown(context: TestContext): Promise<void>;
+
+  /**
+   * DynamoDBモックを取得
+   */
+  getDynamoDBMock(): DynamoDBMock;
+
+  /**
+   * テストデータを投入
+   */
+  seedData(data: Record<string, any[]>): Promise<void>;
+
+  /**
+   * カスタムアサーション
+   */
+  assertions: {
+    toHaveShadowRecords(item: any, expectedCount: number): void;
+    toMatchDynamoDBItem(actual: any, expected: any): void;
+  };
+}
+```
+
+## テスト戦略
+
+### フェーズ1: 基盤整備（カバレッジ60%）
+
+#### 優先順位
+
+1. **DynamoDBモックの実装** (Week 1)
+   - 基本操作（Put, Get, Update, Delete, Query, Scan）
+   - トランザクション操作
+   - エラーシミュレーション
+
+2. **基本CRUD操作のテスト** (Week 2)
+   - insertOne, findOne, updateOne, deleteOne
+   - 正常系と基本的な異常系
+   - シャドーレコード生成・更新・削除
+
+3. **クエリ操作のテスト** (Week 3)
+   - find（フィルター、ソート、ページネーション）
+   - 複雑なフィルター条件（$and, $or, $in等）
+   - シャドーレコードを使用したクエリ
+
+4. **バルク操作のテスト** (Week 4)
+   - insertMany, updateMany, deleteMany
+   - 部分失敗のハンドリング
+   - チャンク分割の動作
+
+#### カバレッジ目標
+
+- **全体: 60%**（dynamodb-client全体）
+
+### フェーズ2: 完全カバレッジ（カバレッジ80%）
+
+#### 優先順位
+
+1. **更新オペレーターのテスト** (Week 5)
+   - $set, $unset, $inc, $push, $pull等
+   - upsert機能（updateOne/updateMany with upsert: true）
+   - $setOnInsert オペレーター
+   - 条件付き更新
+
+2. **エッジケースのテスト** (Week 6)
+   - 空配列、null、undefined
+   - 境界値テスト
+   - 大量データ処理（1000件以上）
+
+3. **エラーハンドリングのテスト** (Week 7)
+   - バリデーションエラー
+   - トランザクション失敗
+   - タイムアウト
+   - 条件チェック失敗
+
+4. **シャドーレコード管理のテスト** (Week 8)
+   - シャドー設定変更時の動作
+   - シャドーレコードの整合性
+   - メタデータ管理
+   - 設定ドリフト検出
+
+5. **統合シナリオテスト** (Week 9)
+   - 複雑なクエリ
+   - 複数操作の組み合わせ
+   - パフォーマンステスト
+
+#### カバレッジ目標
+
+- **全体: 80%**（dynamodb-client全体）
+
+## テストケース設計
+
+### updateOne with upsert のテストケース
+
+```typescript
+describe('updateOne with upsert', () => {
+  let dynamoMock: DynamoDBMock;
+  let context: TestContext;
+
+  beforeEach(async () => {
+    context = await integrationTestHelper.setup();
+    dynamoMock = integrationTestHelper.getDynamoDBMock();
+  });
+
+  afterEach(async () => {
+    await integrationTestHelper.teardown(context);
+  });
+
+  describe('insert case (record does not exist)', () => {
+    it('should create new record with $set fields', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'new-user',
+          data: {
+            $set: { name: 'Alice', email: 'alice@example.com' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      expect(result.__upsertedId).toBe('new-user');
+      expect(result.name).toBe('Alice');
+      expect(result.email).toBe('alice@example.com');
+
+      // DynamoDBに実際に保存されたか確認
+      const item = await dynamoMock.getItem({
+        TableName: 'test-table',
+        Key: { PK: 'users', SK: 'MAIN#new-user' },
+      });
+      expect(item.Item).toBeDefined();
+    });
+
+    it('should apply both $set and $setOnInsert on insert', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'new-user',
+          data: {
+            $set: { name: 'Alice' },
+            $setOnInsert: { status: 'active', role: 'user' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      expect(result.name).toBe('Alice');
+      expect(result.status).toBe('active');
+      expect(result.role).toBe('user');
+    });
+
+    it('should prioritize $set over $setOnInsert for same field', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'new-user',
+          data: {
+            $set: { status: 'pending' },
+            $setOnInsert: { status: 'active' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      expect(result.status).toBe('pending');
+    });
+
+    it('should generate shadow records on insert', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'new-user',
+          data: {
+            $set: { name: 'Alice', email: 'alice@example.com' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      // シャドーレコードが生成されたか確認
+      const shadows = await dynamoMock.query({
+        TableName: 'test-table',
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': 'users',
+          ':sk': 'SHADOW#',
+        },
+      });
+
+      expect(shadows.Items.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('update case (record exists)', () => {
+    beforeEach(async () => {
+      // 既存レコードを作成
+      await handleInsertOne(
+        'users',
+        {
+          data: {
+            id: 'existing-user',
+            name: 'Bob',
+            email: 'bob@example.com',
+            status: 'active',
+          },
+        },
+        'setup-request-id'
+      );
+    });
+
+    it('should update existing record', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'existing-user',
+          data: {
+            $set: { name: 'Bob Updated' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      expect(result.matchedCount).toBe(1);
+      expect(result.modifiedCount).toBe(1);
+      expect(result.upsertedId).toBeUndefined();
+      expect(result.name).toBe('Bob Updated');
+    });
+
+    it('should ignore $setOnInsert on update', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'existing-user',
+          data: {
+            $set: { name: 'Bob Updated' },
+            $setOnInsert: { status: 'pending' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      expect(result.name).toBe('Bob Updated');
+      expect(result.status).toBe('active'); // 変更されない
+    });
+
+    it('should update shadow records on update', async () => {
+      const result = await handleUpdateOne(
+        'users',
+        {
+          id: 'existing-user',
+          data: {
+            $set: { email: 'bob.new@example.com' },
+          },
+          options: { upsert: true },
+        },
+        'test-request-id'
+      );
+
+      // シャドーレコードが更新されたか確認
+      const shadows = await dynamoMock.query({
+        TableName: 'test-table',
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': 'users',
+          ':sk': 'SHADOW#email#',
+        },
+      });
+
+      expect(shadows.Items.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('error cases', () => {
+    it('should fail when upsert is false and record does not exist', async () => {
+      await expect(
+        handleUpdateOne(
+          'users',
+          {
+            id: 'non-existent-user',
+            data: {
+              $set: { name: 'Alice' },
+            },
+            options: { upsert: false },
+          },
+          'test-request-id'
+        )
+      ).rejects.toThrow('Record not found');
+    });
+
+    it('should handle validation errors', async () => {
+      await expect(
+        handleUpdateOne(
+          'users',
+          {
+            id: 'new-user',
+            data: {
+              $set: { email: 'invalid-email' },
+            },
+            options: { upsert: true },
+          },
+          'test-request-id'
+        )
+      ).rejects.toThrow('Validation error');
+    });
+  });
+});
+```
+
+## カバレッジ測定
+
+### Vitest設定
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      include: ['src/**/*.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'src/**/types.ts',
+        'src/**/index.ts',
+      ],
+      thresholds: {
+        lines: 60,      // フェーズ1
+        functions: 60,
+        branches: 60,
+        statements: 60,
+      },
+    },
+  },
+});
+```
+
+### CI統合
 
 ```yaml
 # .github/workflows/ci.yml
@@ -376,90 +598,48 @@ npm run test:coverage -- --coverage.lines=80 --coverage.branches=75
 
 - name: Check coverage thresholds
   run: |
-    npm run test:coverage -- \
-      --coverage.lines=80 \
-      --coverage.branches=75 \
-      --coverage.functions=75 \
-      --coverage.statements=80
+    if [ $(jq '.total.lines.pct' coverage/coverage-summary.json | cut -d. -f1) -lt 60 ]; then
+      echo "Coverage is below 60%"
+      exit 1
+    fi
+
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v3
+  with:
+    files: ./coverage/lcov.info
 ```
 
-## Error Handling
+## 実装順序
 
-### テストでのエラーハンドリング
+### Week 1: DynamoDBモック
 
-```typescript
-describe('エラーハンドリング', () => {
-  test('DynamoDBエラー時に適切なエラーを投げる', async () => {
-    // Arrange
-    vi.mocked(executeDynamoDBOperation).mockRejectedValue(
-      new Error('DynamoDB error')
-    )
+1. 基本データ構造の実装
+2. Put/Get/Update/Delete操作
+3. トランザクション操作
+4. エラーシミュレーション
 
-    // Act & Assert
-    await expect(
-      executeNearQuery('venues', 'location', mockNearQuery, 10, 'test-id')
-    ).rejects.toThrow('DynamoDB error')
-  })
+### Week 2: CRUD操作テスト
 
-  test('無効な座標の場合にエラーを投げる', async () => {
-    // Arrange
-    const invalidNearQuery = {
-      latitude: 91, // 無効（-90〜90の範囲外）
-      longitude: 0,
-    }
+1. insertOne/findOne テスト
+2. updateOne テスト（upsert なし）
+3. deleteOne テスト
+4. 正常系のみ
 
-    // Act & Assert
-    await expect(
-      executeNearQuery('venues', 'location', invalidNearQuery, 10, 'test-id')
-    ).rejects.toThrow('Invalid coordinates')
-  })
-})
-```
+### Week 3: upsert機能テスト
 
-## Implementation Plan
+1. updateOne with upsert テスト
+2. $setOnInsert オペレーターテスト
+3. エラーケーステスト
 
-### Phase 1: nearQuery.tsのテスト追加（最優先）
+### Week 4: バルク操作テスト
 
-1. `__tests__/near-query.test.ts`を作成
-2. 正常系テストを追加（5ケース）
-3. DynamoDB統合テストを追加（5ケース）
-4. エラーハンドリングテストを追加（3ケース）
-5. エッジケーステストを追加（5ケース）
-6. カバレッジ確認（目標90%）
+1. insertMany テスト
+2. updateMany テスト
+3. deleteMany テスト
+4. 部分失敗ハンドリング
 
-### Phase 2: filter.tsのテスト追加（高優先）
+## 参考
 
-1. `__tests__/filter-comprehensive.test.ts`を作成
-2. 全オペレータのパーステストを追加（13ケース）
-3. isValidOperatorのテストを追加（15ケース）
-4. matchesFilterのテストを追加（10ケース）
-5. convertTypeのテストを追加（6ケース）
-6. カバレッジ確認（目標90%）
-
-### Phase 3: find/utils.tsのテスト追加（高優先）
-
-1. `__tests__/find-utils-comprehensive.test.ts`を作成
-2. detectNearQueryのテストを追加（8ケース）
-3. parseFiltersのテストを追加（6ケース）
-4. matchesAllFiltersのテストを追加（4ケース）
-5. カバレッジ確認（目標90%）
-
-### Phase 4: E2Eテストの追加（中優先）
-
-1. `__tests__/e2e-near-search.test.ts`を作成
-2. クライアント→Lambda→DynamoDBのテストを追加（7ケース）
-3. エラーケーステストを追加（3ケース）
-4. パフォーマンステストを追加（2ケース）
-
-### Phase 5: CI/CDでのカバレッジチェック設定
-
-1. `.github/workflows/ci.yml`を更新
-2. カバレッジ閾値を設定（80%/75%）
-3. カバレッジレポートをGitHub Actionsに表示
-
-## Notes
-
-- テストは**実装前に書く**（TDD）ではなく、**実装後に充実させる**アプローチ
-- カバレッジは**指標**であり、**目的ではない**（質の高いテストを書くことが重要）
-- エッジケースは**実際に発生しうる**ケースに絞る（過度なテストは避ける）
-- モックは**必要最小限**にする（実際のコードパスをテストすることを優先）
+- [Vitest Documentation](https://vitest.dev/)
+- [AWS SDK v3 Mock](https://aws.amazon.com/blogs/developer/mocking-modular-aws-sdk-for-javascript-v3-in-unit-tests/)
+- [faker.js](https://fakerjs.dev/)

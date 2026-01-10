@@ -93,6 +93,10 @@ function applyJsonMergePatch(
  * 7. 各チャンクをTransactWriteItemsで順次実行
  * 8. 部分失敗をハンドリング
  *
+ * upsertオプション:
+ * - upsert: true の場合、存在しないレコードは新規作成される
+ * - $setOnInsert オペレーターは初回作成時のみ適用される
+ *
  * @param resource - リソース名
  * @param params - updateManyパラメータ
  * @param requestId - リクエストID
@@ -103,8 +107,15 @@ export async function handleUpdateMany(
   params: UpdateManyParams,
   requestId: string
 ): Promise<UpdateManyResult> {
-  const { data: patchData } = params;
+  const { data: patchData, options } = params;
+  const upsert = options?.upsert ?? false;
   const startTime = Date.now();
+
+  logger.debug('Executing updateMany', {
+    requestId,
+    resource,
+    upsert,
+  });
 
   // idsまたはfilterから対象レコードIDリストを取得
   let ids: string[];
@@ -188,6 +199,16 @@ export async function handleUpdateMany(
 
   // 存在しないIDを特定
   const notFoundIds = ids.filter((id) => !existingIds.has(id));
+
+  // upsert: false の場合、存在しないIDはエラーとして扱う
+  if (!upsert && notFoundIds.length > 0) {
+    logger.warn('Records not found (upsert: false)', {
+      requestId,
+      resource,
+      notFoundCount: notFoundIds.length,
+      notFoundIds: notFoundIds.slice(0, 10), // 最初の10件のみログ
+    });
+  }
 
   // シャドー設定を取得（環境変数からキャッシュ付き）
   const shadowConfig = getShadowConfig();

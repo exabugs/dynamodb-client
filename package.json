@@ -99,6 +99,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:ui": "vitest --ui --coverage",
     "test:watch": "vitest",
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
     "analyze-functions": "node scripts/find-large-functions.js",
@@ -118,6 +119,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@faker-js/faker": "^10.2.0",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/aws-lambda": "^8.10.0",
     "@types/ngeohash": "^0.6.8",

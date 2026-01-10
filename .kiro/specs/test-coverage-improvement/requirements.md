@@ -1,124 +1,224 @@
-# テストカバレッジ改善要件
+# テストカバレッジ改善 - 要件定義
 
-## Introduction
+## 概要
 
-dynamodb-clientライブラリのテストカバレッジが33.69%と低く、特に$nearオペレータ関連の実装がほぼテストされていない状態です。これにより、実装の不具合を検出できず、多くの時間を無駄にしました。
+dynamodb-clientライブラリのテストカバレッジを向上させ、実装の不具合を確実に検出できるテスト体制を構築する。
 
-## Glossary
+## 背景
 
-- **System**: dynamodb-clientライブラリ
-- **Coverage**: テストカバレッジ（コードの何%がテストされているか）
-- **Unit Test**: 個別の関数・クラスをテストする単体テスト
-- **Integration Test**: 複数のコンポーネントを統合してテストする統合テスト
-- **Edge Case**: 境界値や異常系のテストケース
+### 現状の問題
 
-## Requirements
+1. **クライアント側のみのテスト**
+   - 既存テストはfetchのモックを使用し、リクエストボディの確認のみ
+   - サーバー側（Lambda handler）の実装を検証していない
+   - 実装の不具合（upsert未実装等）を検出できない
 
-### Requirement 1: $nearオペレータのテストカバレッジ向上
+2. **CI環境でスキップ**
+   - 多くのテストが `describe.skip` でCI環境では実行されない
+   - 本番デプロイ前に問題を検出できない
 
-**User Story:** As a library developer, I want comprehensive test coverage for $near operator, so that I can detect bugs early.
+3. **低いカバレッジ**
+   - サーバー側の実装が十分にテストされていない
+   - エッジケース、エラーハンドリングのテストが不足
 
-#### Acceptance Criteria
+## 目標
 
-1. WHEN nearQuery.ts is tested, THE System SHALL achieve at least 90% line coverage
-2. WHEN nearQuery.ts is tested, THE System SHALL achieve at least 85% branch coverage
-3. WHEN executeNearQuery is called with valid parameters, THE System SHALL return correct results
-4. WHEN executeNearQuery is called with invalid parameters, THE System SHALL throw appropriate errors
-5. WHEN DynamoDB returns empty results, THE System SHALL handle it gracefully
-6. WHEN DynamoDB returns multiple shadow records, THE System SHALL fetch all main records correctly
-7. WHEN main record fetch fails, THE System SHALL handle the error appropriately
+### フェーズ1: 基盤整備（カバレッジ60%）
 
-### Requirement 2: filter.tsのテストカバレッジ向上
+- サーバー側の統合テスト基盤を構築
+- DynamoDB操作の正確なモックを実装
+- 主要操作（CRUD）のテストを追加
+- カバレッジ60%達成
 
-**User Story:** As a library developer, I want comprehensive test coverage for filter utilities, so that I can ensure all operators work correctly.
+### フェーズ2: 完全カバレッジ（カバレッジ80%）
 
-#### Acceptance Criteria
+- 全操作のテストを追加
+- エッジケース、エラーハンドリングのテストを追加
+- カバレッジ80%達成
 
-1. WHEN filter.ts is tested, THE System SHALL achieve at least 90% line coverage
-2. WHEN filter.ts is tested, THE System SHALL achieve at least 85% branch coverage
-3. WHEN parseFilterField is called with all valid operators, THE System SHALL parse them correctly
-4. WHEN parseFilterField is called with $near operator, THE System SHALL parse it correctly
-5. WHEN isValidOperator is called with all FilterOperator values, THE System SHALL return true
-6. WHEN isValidOperator is called with invalid operators, THE System SHALL return false
-7. WHEN matchesFilter is called with all operators, THE System SHALL evaluate correctly
-8. WHEN convertType is called with all FilterType values, THE System SHALL convert correctly
+## 用語定義
 
-### Requirement 3: find/utils.tsのテストカバレッジ向上
+- **クライアント側**: `src/client/` 配下のコード（DynamoClient, Collection等）
+- **サーバー側**: `src/server/` 配下のコード（Lambda handler, operations等）
+- **統合テスト**: サーバー側の実装を含めた、エンドツーエンドのテスト
+- **正確なモック**: DynamoDBの実際の動作を忠実に再現するモック
 
-**User Story:** As a library developer, I want comprehensive test coverage for find utilities, so that I can ensure query detection works correctly.
+## 要件
 
-#### Acceptance Criteria
+### 要件1: DynamoDBモックの実装
 
-1. WHEN find/utils.ts is tested, THE System SHALL achieve at least 90% line coverage
-2. WHEN find/utils.ts is tested, THE System SHALL achieve at least 85% branch coverage
-3. WHEN detectNearQuery is called with nested $near format, THE System SHALL detect it correctly
-4. WHEN detectNearQuery is called with field:$near format, THE System SHALL detect it correctly
-5. WHEN detectNearQuery is called without $near, THE System SHALL return null
-6. WHEN parseFilters is called with all operator formats, THE System SHALL parse them correctly
-7. WHEN matchesAllFilters is called with multiple filters, THE System SHALL evaluate correctly
+**ユーザーストーリー**: テスト実行者として、実際のDynamoDBを使用せずにサーバー側の実装をテストしたい
 
-### Requirement 4: エンドツーエンドテストの追加
+#### 受入基準
 
-**User Story:** As a library developer, I want end-to-end tests for $near operator, so that I can ensure the entire flow works correctly.
+1. **メモリ内データストア**
+   - DynamoDBのテーブル構造をメモリ内で再現
+   - PK/SKによるアイテム管理
+   - トランザクション操作のサポート
 
-#### Acceptance Criteria
+2. **主要操作のサポート**
+   - PutItem, GetItem, UpdateItem, DeleteItem
+   - BatchGetItem, BatchWriteItem
+   - TransactWriteItems
+   - Query, Scan
 
-1. WHEN client sends $near query to Lambda, THE System SHALL return correct results
-2. WHEN client sends $near query with pagination, THE System SHALL respect the limit
-3. WHEN client sends $near query with maxDistance, THE System SHALL filter by distance
-4. WHEN client sends $near query with minDistance, THE System SHALL filter by distance
-5. WHEN client sends $near query with no matching results, THE System SHALL return empty array
-6. WHEN client sends $near query with GeoJSON format, THE System SHALL process correctly
-7. WHEN client sends $near query with simple format, THE System SHALL process correctly
+3. **エラーシミュレーション**
+   - ConditionalCheckFailedException
+   - ResourceNotFoundException
+   - ValidationException
+   - TransactionCanceledException
 
-### Requirement 5: エッジケーステストの追加
+4. **一貫性の保証**
+   - トランザクション内の操作は全て成功または全て失敗
+   - 条件付き書き込みの正確な動作
 
-**User Story:** As a library developer, I want edge case tests, so that I can ensure the system handles unusual inputs correctly.
+### 要件2: サーバー側統合テストの追加
 
-#### Acceptance Criteria
+**ユーザーストーリー**: 開発者として、サーバー側の実装が正しく動作することを確認したい
 
-1. WHEN $near query has coordinates at (0, 0), THE System SHALL handle it correctly
-2. WHEN $near query has coordinates at poles (90, 0) or (-90, 0), THE System SHALL handle it correctly
-3. WHEN $near query has coordinates at date line (0, 180) or (0, -180), THE System SHALL handle it correctly
-4. WHEN $near query has maxDistance of 0, THE System SHALL return only exact matches
-5. WHEN $near query has very large maxDistance, THE System SHALL handle it correctly
-6. WHEN shadow records exist but main records are deleted, THE System SHALL handle it gracefully
-7. WHEN GeoHash field name contains special characters, THE System SHALL handle it correctly
+#### 受入基準
 
-### Requirement 6: カバレッジ目標の設定
+1. **基本CRUD操作のテスト**
+   - insertOne, findOne, updateOne, deleteOne
+   - insertMany, updateMany, deleteMany
+   - 正常系と異常系の両方をカバー
 
-**User Story:** As a library maintainer, I want clear coverage targets, so that I can maintain code quality.
+2. **クエリ操作のテスト**
+   - find（フィルター、ソート、ページネーション）
+   - 複雑なフィルター条件（$and, $or, $in, $gt, $lt等）
+   - シャドーレコードを使用したクエリ
+   - クエリ結果の正確性
 
-#### Acceptance Criteria
+3. **更新操作のテスト**
+   - $set, $unset, $inc, $push, $pull等の更新オペレーター
+   - upsert機能（updateOne/updateMany with upsert: true）
+   - $setOnInsert オペレーターの動作
+   - 条件付き更新
 
-1. THE System SHALL achieve at least 80% overall line coverage
-2. THE System SHALL achieve at least 75% overall branch coverage
-3. THE System SHALL achieve at least 90% coverage for critical paths ($near, find, filter)
-4. THE System SHALL achieve at least 85% coverage for utility functions
-5. WHEN coverage drops below targets, THE System SHALL fail CI/CD pipeline
-6. WHEN new code is added, THE System SHALL require tests to maintain coverage
+4. **シャドーレコード管理のテスト**
+   - シャドーレコードの自動生成
+   - シャドーレコードの更新・削除
+   - シャドー設定の変更時の動作
+   - メタデータ管理（__shadowKeys, __configVersion, __configHash）
 
-### Requirement 7: テストの保守性向上
+5. **バルク操作のテスト**
+   - 大量データの処理（100件以上）
+   - チャンク分割の動作
+   - 部分失敗のハンドリング
+   - タイムアウトリスク計算
 
-**User Story:** As a library developer, I want maintainable tests, so that I can easily update them when requirements change.
+6. **エラーハンドリングのテスト**
+   - レコードが存在しない場合
+   - バリデーションエラー
+   - トランザクション失敗
+   - 条件チェック失敗
 
-#### Acceptance Criteria
+### 要件3: テストカバレッジの測定と報告
 
-1. WHEN tests are written, THE System SHALL use descriptive test names
-2. WHEN tests are written, THE System SHALL follow AAA pattern (Arrange, Act, Assert)
-3. WHEN tests are written, THE System SHALL use test helpers for common setup
-4. WHEN tests are written, THE System SHALL avoid code duplication
-5. WHEN tests fail, THE System SHALL provide clear error messages
-6. WHEN tests are written, THE System SHALL be independent (no test interdependencies)
+**ユーザーストーリー**: プロジェクトマネージャーとして、テストカバレッジを可視化し、改善状況を追跡したい
 
-### Requirement 8: パフォーマンステストの追加
+#### 受入基準
 
-**User Story:** As a library developer, I want performance tests, so that I can ensure the system performs well under load.
+1. **カバレッジ測定**
+   - 行カバレッジ（Line Coverage）
+   - 分岐カバレッジ（Branch Coverage）
+   - 関数カバレッジ（Function Coverage）
+   - ステートメントカバレッジ（Statement Coverage）
 
-#### Acceptance Criteria
+2. **カバレッジレポート**
+   - HTML形式のレポート生成
+   - ファイル別カバレッジ表示
+   - 未カバー行の可視化
 
-1. WHEN $near query processes 1000 venues, THE System SHALL complete within 5 seconds
-2. WHEN $near query processes 10000 venues, THE System SHALL complete within 30 seconds
-3. WHEN $near query uses precision 6, THE System SHALL be faster than precision 4
-4. WHEN $near query finds results in first iteration, THE System SHALL not perform additional iterations
-5. WHEN $near query requires multiple iterations, THE System SHALL log iteration count
+3. **CI統合**
+   - GitHub ActionsでカバレッジをCI実行
+   - カバレッジ閾値チェック（フェーズ1: 60%, フェーズ2: 80%）
+   - カバレッジバッジの表示
+
+### 要件4: 既存テストの改善
+
+**ユーザーストーリー**: 開発者として、既存テストを意味のあるテストに改善したい
+
+#### 受入基準
+
+1. **クライアント側テストの維持**
+   - リクエスト生成の正確性を確認
+   - レスポンス変換の正確性を確認
+   - エラーハンドリングの正確性を確認
+
+2. **サーバー側テストの追加**
+   - 既存のクライアント側テストに加えて、サーバー側テストを追加
+   - 同じ機能を両側からテスト
+
+3. **CI環境での実行**
+   - `describe.skip` を削除
+   - 全テストがCI環境で実行される
+
+### 要件5: テストデータ管理
+
+**ユーザーストーリー**: テスト実行者として、テストデータを簡単に準備・クリーンアップしたい
+
+#### 受入基準
+
+1. **テストデータファクトリー**
+   - 各エンティティ（User, Article, Task等）のファクトリー関数
+   - ランダムデータ生成
+   - カスタマイズ可能なデータ生成
+
+2. **テストフィクスチャ**
+   - 共通テストデータの定義
+   - テスト間でのデータ共有
+   - テスト後の自動クリーンアップ
+
+3. **シャドー設定のモック**
+   - 環境変数からのシャドー設定読み込み
+   - テスト用のシャドー設定オーバーライド
+
+## 非機能要件
+
+### パフォーマンス
+
+- テストスイート全体の実行時間: 5分以内
+- 単一テストファイルの実行時間: 30秒以内
+
+### 保守性
+
+- テストコードは実装コードと同じ品質基準を満たす
+- テストの意図が明確に記述されている
+- テストの失敗原因が容易に特定できる
+
+### 拡張性
+
+- 新しい操作の追加が容易
+- 新しいエンティティの追加が容易
+- 新しいエラーケースの追加が容易
+
+## 制約
+
+- 実際のDynamoDBは使用しない（コスト、速度の理由）
+- LocalStackも使用しない（セットアップの複雑さ、CI環境での不安定性）
+- メモリ内モックを使用する（高速、安定、セットアップ不要）
+
+## 成功基準
+
+### フェーズ1（カバレッジ60%）
+
+- [ ] DynamoDBモックの実装完了
+- [ ] 主要CRUD操作のサーバー側テスト追加
+- [ ] upsert機能のテスト追加
+- [ ] カバレッジ60%達成
+- [ ] 全テストがCI環境で実行される
+
+### フェーズ2（カバレッジ80%）
+
+- [ ] 全操作のサーバー側テスト追加
+- [ ] エッジケース、エラーハンドリングのテスト追加
+- [ ] シャドーレコード管理の完全テスト
+- [ ] カバレッジ80%達成
+- [ ] カバレッジレポートの自動生成
+
+## 参考
+
+- [既存テスト](../../__tests__/) - 既存のテストコード
+- [Mock Factory Guide](../../docs/testing/mock-factory-guide.md) - モックファクトリーガイド
+- [Vitest Coverage](https://vitest.dev/guide/coverage.html) - Vitestカバレッジドキュメント
