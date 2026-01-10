@@ -25,6 +25,7 @@ import type {
   UpdateItemInput,
   UpdateItemOutput,
 } from '@aws-sdk/client-dynamodb';
+import type { TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
 /**
  * DynamoDBアイテム（AttributeValueのマップ）
@@ -79,6 +80,31 @@ export class DynamoDBMock {
    * エラーシミュレーション設定
    */
   private errorSimulations: ErrorSimulationConfig[] = [];
+
+  /**
+   * AWS SDK v3のsendメソッド（コマンドパターン）
+   */
+  async send(command: any): Promise<any> {
+    // コマンドの入力を取得
+    if (command instanceof Object && command.input) {
+      const input = command.input;
+
+      // TransactWriteItems
+      if (input.TransactItems) {
+        return this.transactWriteItems(input);
+      }
+
+      // BatchGetItem
+      if (input.RequestItems) {
+        return this.batchGetItem(input);
+      }
+
+      // その他のコマンドは未実装
+      throw new Error(`Unsupported command: ${command.constructor.name}`);
+    }
+
+    throw new Error('Invalid command');
+  }
 
   /**
    * テーブルを作成
@@ -253,10 +279,34 @@ export class DynamoDBMock {
   }
 
   /**
-   * バッチ取得（未実装）
+   * バッチ取得
    */
   async batchGetItem(params: BatchGetItemInput): Promise<BatchGetItemOutput> {
-    throw new Error('Not implemented yet');
+    this.checkErrorSimulation('batchGetItem' as any, params);
+
+    const responses: Record<string, DynamoDBItem[]> = {};
+
+    for (const [tableName, requestItems] of Object.entries(params.RequestItems || {})) {
+      const table = this.tables.get(tableName);
+      if (!table) {
+        throw new Error(`ResourceNotFoundException: Table ${tableName} not found`);
+      }
+
+      const items: DynamoDBItem[] = [];
+      for (const keyItem of requestItems.Keys || []) {
+        const key = this.makeKey(keyItem.PK, keyItem.SK);
+        const item = table.get(key);
+        if (item) {
+          items.push(item);
+        }
+      }
+
+      responses[tableName] = items;
+    }
+
+    return {
+      Responses: responses,
+    };
   }
 
   /**
@@ -267,10 +317,27 @@ export class DynamoDBMock {
   }
 
   /**
-   * トランザクション書き込み（未実装）
+   * トランザクション書き込み
    */
   async transactWriteItems(params: TransactWriteItemsInput): Promise<TransactWriteItemsOutput> {
-    throw new Error('Not implemented yet');
+    this.checkErrorSimulation('transactWriteItems', params);
+
+    const transactItems = params.TransactItems || [];
+
+    // 全操作を実行（簡易実装：エラー時はロールバックなし）
+    for (const item of transactItems) {
+      if (item.Put) {
+        await this.putItem(item.Put);
+      } else if (item.Update) {
+        await this.updateItem(item.Update);
+      } else if (item.Delete) {
+        await this.deleteItem(item.Delete);
+      }
+    }
+
+    this.logTransaction('transactWriteItems', params, true);
+
+    return {};
   }
 
   /**

@@ -6,6 +6,85 @@ dynamodb-clientライブラリのテストカバレッジを60%→80%に向上�
 
 ## アーキテクチャ
 
+### モジュールモック戦略
+
+**Vitestの`vi.mock()`を使用してDynamoDBクライアントをモック化**
+
+#### 利点
+- ✅ **既存コード変更不要**: 本番コードの関数シグネチャを維持
+- ✅ **テストコードのみ修正**: 影響範囲が限定的
+- ✅ **標準機能**: Vitestの標準機能、追加ライブラリ不要
+- ✅ **破壊的変更なし**: 約30ファイルの関数シグネチャ変更が不要
+
+#### 実装方法
+
+```typescript
+// __tests__/integration/operations/insertOne.test.ts
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { handleInsertOne } from '../../../src/server/operations/insertOne.js';
+import { DynamoDBMock } from '../../helpers/dynamodb-mock.js';
+
+// DynamoDBモックインスタンス
+let mockDynamoClient: DynamoDBMock;
+
+// モジュール全体をモック
+vi.mock('../../../src/server/utils/dynamodb.ts', () => ({
+  getDBClient: vi.fn(() => mockDynamoClient),
+  getTableName: vi.fn(() => 'test-table'),
+  removeShadowKeys: vi.fn((record) => {
+    const { __shadowKeys, ...rest } = record;
+    return rest;
+  }),
+  extractCleanRecord: vi.fn((item) => {
+    const data = item.data || item;
+    const { __shadowKeys, ...rest } = data;
+    return rest;
+  }),
+  executeDynamoDBOperation: vi.fn(async (operation) => await operation()),
+}));
+
+describe('insertOne', () => {
+  beforeEach(() => {
+    // 各テスト前にモックをリセット
+    mockDynamoClient = new DynamoDBMock();
+    mockDynamoClient.createTable('test-table');
+  });
+
+  afterEach(() => {
+    mockDynamoClient.clear();
+  });
+
+  it('should insert a new record', async () => {
+    const result = await handleInsertOne(
+      'users',
+      { data: { name: 'Alice', email: 'alice@example.com' } },
+      'test-request-id'
+    );
+
+    expect(result.id).toBeDefined();
+    expect(result.name).toBe('Alice');
+  });
+});
+```
+
+#### モックの配置
+
+```typescript
+// vitest.setup.ts（グローバルセットアップ）
+import { beforeEach } from 'vitest';
+import { DynamoDBMock } from './__tests__/helpers/dynamodb-mock.js';
+
+// グローバル変数として宣言（テストファイルからアクセス可能）
+declare global {
+  var mockDynamoClient: DynamoDBMock;
+}
+
+beforeEach(() => {
+  // 各テスト前にモックをリセット
+  global.mockDynamoClient = new DynamoDBMock();
+});
+```
+
 ### テスト構造
 
 ```
@@ -34,6 +113,8 @@ __tests__/
 - **メモリ内データストア**: Map<string, Map<string, Item>> 構造
 - **トランザクション対応**: 操作のバッチ実行とロールバック
 - **エラーシミュレーション**: 条件付きエラー発生
+- **モジュールモック使用**: Vitestの`vi.mock()`で`src/server/utils/dynamodb.ts`をモック
+- **既存コード変更不要**: 本番コードの関数シグネチャはそのまま維持
 
 #### インターフェース
 
