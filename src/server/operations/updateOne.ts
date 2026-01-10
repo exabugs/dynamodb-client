@@ -17,11 +17,12 @@ const logger = createLogger({ service: 'records-lambda' });
  * 処理フロー:
  * 1. updateMany([id], data)を呼び出す（idまたはfilterから対象を特定）
  * 2. 結果を検証し、失敗した場合は通常のErrorをスロー
- * 3. 成功した場合は { id, ...更新したフィールドのみ } を返却
+ * 3. 成功した場合は items[0] を返却（更新したフィールドのみ）
  *
  * セキュリティ: ADR 001に基づき、更新したフィールドのみを返却
  * - read権限なしでupdate権限のみの場合の情報漏洩を防止
  * - findOneの追加クエリを削減してパフォーマンス向上
+ * - updateManyが更新したフィールドを返すため、updateOneは単純にitems[0]を返すだけ
  *
  * @param resource - リソース名
  * @param params - updateOneパラメータ
@@ -40,11 +41,9 @@ export async function handleUpdateOne(
   const { handleUpdateMany } = await import('./updateMany.js');
 
   // idまたはfilterから対象レコードを特定
-  let targetId: string | undefined;
-
   if ('id' in params) {
     // idが指定されている場合
-    targetId = params.id;
+    const targetId = params.id;
 
     logger.debug('Executing updateOne with id', {
       requestId,
@@ -59,6 +58,7 @@ export async function handleUpdateOne(
       {
         ids: [targetId],
         data: patchData,
+        options,
       },
       requestId
     );
@@ -74,16 +74,12 @@ export async function handleUpdateOne(
       }
     }
 
-    // 成功した場合は { id, ...更新したフィールドのみ } を返却
-    // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
-    const actualPatchData = patchData.$set
-      ? (patchData.$set as Record<string, unknown>)
-      : patchData;
+    // 成功した場合は items[0] を返却（updateManyが更新したフィールドのみを返す）
+    if (!updateManyResult.items || updateManyResult.items.length === 0) {
+      throw new Error('updateMany did not return items');
+    }
 
-    return {
-      id: targetId,
-      ...actualPatchData,
-    };
+    return updateManyResult.items[0];
   } else {
     // filterが指定されている場合
     logger.debug('Executing updateOne with filter', {
@@ -99,6 +95,7 @@ export async function handleUpdateOne(
       {
         filter: params.filter,
         data: patchData,
+        options,
       },
       requestId
     );
@@ -114,21 +111,11 @@ export async function handleUpdateOne(
       }
     }
 
-    // 成功した場合は更新されたレコードのIDを取得
-    const updatedId = Object.values(updateManyResult.successIds)[0];
-    if (!updatedId) {
-      throw new Error('Failed to get updated record ID');
+    // 成功した場合は items[0] を返却（updateManyが更新したフィールドのみを返す）
+    if (!updateManyResult.items || updateManyResult.items.length === 0) {
+      throw new Error('updateMany did not return items');
     }
 
-    // { id, ...更新したフィールドのみ } を返却
-    // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
-    const actualPatchData = patchData.$set
-      ? (patchData.$set as Record<string, unknown>)
-      : patchData;
-
-    return {
-      id: updatedId,
-      ...actualPatchData,
-    };
+    return updateManyResult.items[0];
   }
 }

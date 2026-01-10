@@ -374,9 +374,14 @@ export async function handleUpdateMany(
 
   // 統一レスポンス形式を構築
   // successIds: インデックス付きオブジェクト（元の配列のインデックスとIDのマッピング）
+  // items: 更新したフィールドのみを含むレコード配列（ADR 001）
   const successIds: Record<number, string> = {};
+  const items: Array<Record<string, unknown>> = [];
   const failedIdsMap: Record<number, string> = {};
   const errorsMap: Record<number, OperationError> = {};
+
+  // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
+  const actualPatchData = patchData.$set ? (patchData.$set as Record<string, unknown>) : patchData;
 
   // 成功したレコードのインデックスを特定
   const successIdSet = new Set(successRecords.map((r) => r.id));
@@ -384,6 +389,11 @@ export async function handleUpdateMany(
     const id = ids[i];
     if (successIdSet.has(id)) {
       successIds[i] = id;
+      // 更新したフィールドのみを含むレコードを追加（ADR 001）
+      items.push({
+        id,
+        ...actualPatchData,
+      });
     }
   }
 
@@ -474,6 +484,7 @@ export async function handleUpdateMany(
     successIds,
     failedIds: failedIdsMap,
     errors: errorsMap,
+    items, // 更新したフィールドのみを含むレコード配列（ADR 001）
   };
 }
 

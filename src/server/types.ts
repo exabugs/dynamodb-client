@@ -288,6 +288,10 @@ export interface OperationError {
  *
  * Records Lambdaは統一された内部形式でレスポンスを返却します。
  * この形式は情報を保持し、Collection.tsでMongoDB互換形式に変換されます。
+ *
+ * ADR 001: セキュリティ原則
+ * - updateMany は更新したフィールドのみを返却する
+ * - read権限なしでupdate権限のみの場合の情報漏洩を防止
  */
 export interface BulkOperationResult {
   /** 成功件数 */
@@ -298,6 +302,8 @@ export interface BulkOperationResult {
   failedIds: Record<number, string>;
   /** エラー情報（インデックスをキーとする）（{ 1: { code: '...', message: '...' } }） */
   errors: Record<number, OperationError>;
+  /** 成功したレコードのデータ（updateManyの場合は更新したフィールドのみ、insertManyの場合は完全なレコード） */
+  items?: Array<Record<string, unknown>>;
 }
 
 /**

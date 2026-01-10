@@ -86,16 +86,24 @@ export const insertManyResultBuilder = {
  */
 export const updateManyResultBuilder = {
   /**
-   * 成功レスポンスを生成
+   * 成功レスポンスを生成（ADR 001: 更新したフィールドのみを返却）
    *
    * @param count - 成功件数
    * @param ids - 成功したレコードのIDリスト
+   * @param updatedFields - 更新したフィールド（オプション）
    * @returns UpdateManyResult
    */
-  success(count: number, ids: string[]): UpdateManyResult {
+  success(count: number, ids: string[], updatedFields?: Record<string, unknown>): UpdateManyResult {
     const successIds: Record<number, string> = {};
+    const items: Array<Record<string, unknown>> = [];
+
     ids.forEach((id, index) => {
       successIds[index] = id;
+      // ADR 001: 更新したフィールドのみを含むレコードを追加
+      items.push({
+        id,
+        ...(updatedFields || {}),
+      });
     });
 
     return {
@@ -103,6 +111,7 @@ export const updateManyResultBuilder = {
       successIds,
       failedIds: {},
       errors: {},
+      items,
     };
   },
 
@@ -112,18 +121,21 @@ export const updateManyResultBuilder = {
    * @param successIds - 成功したレコードのインデックスとID
    * @param failedIds - 失敗したレコードのインデックスとID
    * @param errors - エラー情報
+   * @param items - 成功したレコードのデータ（更新したフィールドのみ）
    * @returns UpdateManyResult
    */
   partialFailure(
     successIds: Record<number, string>,
     failedIds: Record<number, string>,
-    errors: Record<number, OperationError>
+    errors: Record<number, OperationError>,
+    items?: Array<Record<string, unknown>>
   ): UpdateManyResult {
     return {
       count: Object.keys(successIds).length,
       successIds,
       failedIds,
       errors,
+      items,
     };
   },
 
@@ -145,6 +157,7 @@ export const updateManyResultBuilder = {
       successIds: {},
       failedIds,
       errors,
+      items: [],
     };
   },
 };

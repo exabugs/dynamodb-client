@@ -33,8 +33,8 @@ describe('updateOne - 直接テスト', () => {
         status: 'published',
       };
 
-      // updateManyのモックレスポンス（Response Builderを使用）
-      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId]);
+      // updateManyのモックレスポンス（Response Builderを使用、更新したフィールドを含む）
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId], testData);
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
 
@@ -82,8 +82,10 @@ describe('updateOne - 直接テスト', () => {
         },
       };
 
-      // updateManyのモックレスポンス
-      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId]);
+      // updateManyのモックレスポンス（$setのフィールドのみを含む）
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, [testId], {
+        title: '更新後のタイトル',
+      });
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
 
@@ -141,8 +143,8 @@ describe('updateOne - 直接テスト', () => {
         status: 'published',
       };
 
-      // updateManyのモックレスポンス（Response Builderを使用）
-      const mockUpdateManyResponse = updateManyResultBuilder.success(1, ['article-002']);
+      // updateManyのモックレスポンス（Response Builderを使用、更新したフィールドを含む）
+      const mockUpdateManyResponse = updateManyResultBuilder.success(1, ['article-002'], testData);
 
       vi.mocked(updateManyModule.handleUpdateMany).mockResolvedValue(mockUpdateManyResponse);
 
