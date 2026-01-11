@@ -210,6 +210,16 @@ export async function handleUpdateMany(
     });
   }
 
+  // upsert: true の場合、存在しないIDに対して新規レコードを作成
+  if (upsert && notFoundIds.length > 0) {
+    logger.info('Creating new records (upsert: true)', {
+      requestId,
+      resource,
+      notFoundCount: notFoundIds.length,
+      notFoundIds: notFoundIds.slice(0, 10), // 最初の10件のみログ
+    });
+  }
+
   // シャドー設定を取得（環境変数からキャッシュ付き）
   const shadowConfig = getShadowConfig();
 
@@ -217,7 +227,7 @@ export async function handleUpdateMany(
   const preparationFailedIds: string[] = [];
   const preparationErrors: OperationError[] = [];
 
-  // 各レコードを準備
+  // 既存レコードを準備
   for (const item of existingItems) {
     try {
       const existingData = item.data as Record<string, unknown>;
@@ -273,6 +283,66 @@ export async function handleUpdateMany(
         code: errorCode,
         message: errorMessage,
       });
+    }
+  }
+
+  // upsert: true の場合、存在しないIDに対して新規レコードを作成
+  if (upsert && notFoundIds.length > 0) {
+    // タイムスタンプヘルパーをインポート
+    const { addCreateTimestamp } = await import('../utils/timestamps.js');
+
+    for (const id of notFoundIds) {
+      try {
+        // $setと$setOnInsertをマージ（$setが優先）
+        const setData = patchData.$set ? (patchData.$set as Record<string, unknown>) : patchData;
+        const setOnInsertData = patchData.$setOnInsert
+          ? (patchData.$setOnInsert as Record<string, unknown>)
+          : {};
+
+        // $setOnInsertを先に適用し、その後$setで上書き
+        const mergedData = {
+          ...setOnInsertData,
+          ...setData,
+          id,
+        };
+
+        // createdAtとupdatedAtを追加
+        const newData: Record<string, unknown> = addCreateTimestamp(mergedData);
+
+        // 新しいシャドーレコードを生成
+        const newShadowRecords = generateShadowRecords(newData, resource, shadowConfig);
+        const newShadowKeys = newShadowRecords.map((shadow) => shadow.SK);
+
+        // メインレコードのSKを生成
+        const mainSK = generateMainRecordSK(id);
+
+        preparedRecords.push({
+          id,
+          updatedData: newData,
+          oldShadowKeys: [], // 新規作成なので空
+          newShadowKeys,
+          mainSK,
+        });
+      } catch (error) {
+        // 準備段階で失敗したレコードを記録
+        const errorMessage = error instanceof Error ? error.message : 'Unknown preparation error';
+        const errorCode = getPreparationErrorCode(error);
+
+        logger.error('Failed to prepare new record for upsert', {
+          requestId,
+          recordId: id,
+          error: errorMessage,
+          errorCode,
+        });
+
+        // 準備失敗をエラーリストに追加
+        preparationFailedIds.push(id);
+        preparationErrors.push({
+          id,
+          code: errorCode,
+          message: errorMessage,
+        });
+      }
     }
   }
 
@@ -382,6 +452,9 @@ export async function handleUpdateMany(
 
   // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
   const actualPatchData = patchData.$set ? (patchData.$set as Record<string, unknown>) : patchData;
+  const setOnInsertData = patchData.$setOnInsert
+    ? (patchData.$setOnInsert as Record<string, unknown>)
+    : {};
 
   // 成功したレコードのインデックスを特定
   const successIdSet = new Set(successRecords.map((r) => r.id));
@@ -389,24 +462,36 @@ export async function handleUpdateMany(
     const id = ids[i];
     if (successIdSet.has(id)) {
       successIds[i] = id;
-      // 更新したフィールドのみを含むレコードを追加（ADR 001）
-      items.push({
-        id,
-        ...actualPatchData,
-      });
+
+      // 新規作成されたレコードの場合は、$setと$setOnInsertをマージ
+      if (upsert && notFoundIds.includes(id)) {
+        items.push({
+          id,
+          ...setOnInsertData,
+          ...actualPatchData,
+        });
+      } else {
+        // 既存レコード更新の場合は、$setのみ
+        items.push({
+          id,
+          ...actualPatchData,
+        });
+      }
     }
   }
 
-  // 存在しないIDのインデックスを特定
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    if (notFoundIds.includes(id)) {
-      failedIdsMap[i] = id;
-      errorsMap[i] = {
-        id,
-        code: 'ITEM_NOT_FOUND',
-        message: `Record not found: ${id}`,
-      };
+  // 存在しないIDのインデックスを特定（upsert: false の場合のみ）
+  if (!upsert) {
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      if (notFoundIds.includes(id)) {
+        failedIdsMap[i] = id;
+        errorsMap[i] = {
+          id,
+          code: 'ITEM_NOT_FOUND',
+          message: `Record not found: ${id}`,
+        };
+      }
     }
   }
 
@@ -454,9 +539,10 @@ export async function handleUpdateMany(
     completionRiskInfo,
     {
       updated: count,
-      notFound: notFoundIds.length,
+      notFound: upsert ? 0 : notFoundIds.length, // upsert: true の場合は0
       preparationFailed: preparationFailedIds.length,
       chunkExecutionFailed: chunkFailedIds.length,
+      upserted: upsert ? notFoundIds.length : 0, // upsert: true の場合は新規作成数
     }
   );
 
@@ -471,7 +557,7 @@ export async function handleUpdateMany(
       allFailedIds.length,
       Object.values(errorsMap).map((e) => e.code),
       {
-        notFoundCount: notFoundIds.length,
+        notFoundCount: upsert ? 0 : notFoundIds.length, // upsert: true の場合は0
         preparationFailures: preparationFailedIds.length,
         chunkExecutionFailures: chunkFailedIds.length,
       }

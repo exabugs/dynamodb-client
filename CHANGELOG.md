@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.40] - 2026-01-11
+
+### Added
+
+- **updateMany upsert: true サポート**: 存在しないレコードの新規作成機能を実装
+  - `upsert: true`オプションで存在しないレコードを自動作成
+  - `$set`と`$setOnInsert`オペレーターのサポート
+  - `$set`が`$setOnInsert`より優先される仕様
+  - サーバー側ユニットテスト追加（8テスト）
+
+### Fixed
+
+- **updateMany upsert: true バグ修正**: 存在しないレコードで`ITEM_NOT_FOUND`エラーが発生していた問題を修正
+  - 新規レコード作成処理を実装
+  - `createdAt`/`updatedAt`タイムスタンプを自動追加
+  - シャドーレコードを自動生成
+  - レスポンス形式を修正（新規作成時は`$set`と`$setOnInsert`をマージ）
+
+### Changed
+
+- **テストカバレッジ向上**: サーバー側の`updateMany`ユニットテストを追加
+  - 基本的な更新テスト
+  - `upsert: false`のテスト
+  - `upsert: true`（insert case）のテスト
+  - `upsert: true`（update case）のテスト
+  - `upsert: true`（混在ケース）のテスト
+
 ## [1.3.39] - 2026-01-11
 
 ### Fixed
