@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.41] - 2026-01-11
+
+### Added
+
+- **updateOne filter版 upsert: true サポート**: filterで検索して存在しない場合に新規作成する機能を実装
+  - filter版で`upsert: true`オプションをサポート
+  - filterの条件を`$setOnInsert`に自動マージ
+  - 新規IDを自動生成（UUID）
+  - サーバー側ユニットテスト追加（8テスト）
+
+### Fixed
+
+- **updateOne filter版 upsert: true バグ修正**: filterで検索して存在しない場合に`No records found matching filter`エラーが発生していた問題を修正
+  - `updateMany`のfilter版でレコードが見つからない場合の処理を実装
+  - 新規レコード作成時にfilterの条件を`$setOnInsert`にマージ
+  - FCMトークン登録（`{ token: "..." }`でupsert）が正常に動作するように修正
+
+### Changed
+
+- **テストカバレッジ向上**: サーバー側の`updateOne`ユニットテストを追加（全707テスト成功）
+
 ## [1.3.40] - 2026-01-11
 
 ### Added

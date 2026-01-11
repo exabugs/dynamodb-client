@@ -148,16 +148,47 @@ export async function handleUpdateMany(
       resource,
       count: ids.length,
     });
-  }
 
-  // IDが空の場合は空レスポンスを返す
-  if (ids.length === 0) {
-    return {
-      count: 0,
-      successIds: {},
-      failedIds: {},
-      errors: {},
-    };
+    // filter版でレコードが見つからない場合
+    if (ids.length === 0) {
+      if (upsert) {
+        // upsert: true の場合、新規レコードを作成
+        // 新しいIDを生成
+        const { randomUUID } = await import('crypto');
+        const newId = randomUUID();
+        ids = [newId];
+
+        logger.info('Creating new record with filter (upsert: true)', {
+          requestId,
+          resource,
+          newId,
+          filter: params.filter,
+        });
+
+        // filterの条件を$setOnInsertにマージ
+        // これにより、filterで指定されたフィールドが新規レコードに含まれる
+        if (patchData.$setOnInsert) {
+          patchData.$setOnInsert = {
+            ...params.filter,
+            ...patchData.$setOnInsert,
+          };
+        } else if (patchData.$set) {
+          // $setOnInsertがない場合は、filterを$setOnInsertとして追加
+          patchData.$setOnInsert = params.filter;
+        } else {
+          // $setも$setOnInsertもない場合は、filterを$setOnInsertとして追加
+          patchData.$setOnInsert = params.filter;
+        }
+      } else {
+        // upsert: false の場合は空レスポンスを返す
+        return {
+          count: 0,
+          successIds: {},
+          failedIds: {},
+          errors: {},
+        };
+      }
+    }
   }
 
   // 大量レコード処理時の警告ログ出力（要件: 13.12）
