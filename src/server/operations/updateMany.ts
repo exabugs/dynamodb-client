@@ -289,7 +289,7 @@ export async function handleUpdateMany(
   // upsert: true の場合、存在しないIDに対して新規レコードを作成
   if (upsert && notFoundIds.length > 0) {
     // タイムスタンプヘルパーをインポート
-    const { addCreateTimestamp } = await import('../utils/timestamps.js');
+    const { addCreateTimestamps } = await import('../utils/timestamps.js');
 
     for (const id of notFoundIds) {
       try {
@@ -307,7 +307,7 @@ export async function handleUpdateMany(
         };
 
         // createdAtとupdatedAtを追加
-        const newData: Record<string, unknown> = addCreateTimestamp(mergedData);
+        const newData: Record<string, unknown> = addCreateTimestamps(mergedData);
 
         // 新しいシャドーレコードを生成
         const newShadowRecords = generateShadowRecords(newData, resource, shadowConfig);
