@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.42] - 2026-01-15
+
+### Added
+
+- **ドット記法サポート**: `$set`オペレーターでドット記法（例: `"settings.locationEnabled"`）をサポート
+  - ネストされたオブジェクトとして正しく保存される（例: `settings: { locationEnabled: true }`）
+  - `expandDotNotation`ヘルパー関数を追加
+  - `applyJsonMergePatch`関数を更新してドット記法を展開
+  - ユニットテスト追加（10テスト）
+
+### Fixed
+
+- **ドット記法の文字列キー問題**: `$set: { "settings.locationEnabled": true }`が文字列キーとして保存されていた問題を修正
+  - 以前: `{ "settings.locationEnabled": true }` （文字列キー）
+  - 修正後: `{ settings: { locationEnabled: true } }` （ネストされたオブジェクト）
+
 ## [1.3.41] - 2026-01-11
 
 ### Added

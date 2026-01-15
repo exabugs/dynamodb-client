@@ -45,19 +45,66 @@ interface PreparedUpdateRecord {
 }
 
 /**
+ * ドット記法のキーをネストされたオブジェクトに変換する
+ *
+ * 例: { "settings.locationEnabled": true } → { settings: { locationEnabled: true } }
+ *
+ * @param patch - パッチオブジェクト（ドット記法を含む可能性がある）
+ * @returns ネストされたオブジェクト
+ */
+function expandDotNotation(patch: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (key.includes('.')) {
+      // ドット記法の場合、ネストされたオブジェクトに変換
+      const keys = key.split('.');
+      let current = result;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        const k = keys[i];
+        if (!(k in current)) {
+          current[k] = {};
+        } else if (typeof current[k] !== 'object' || Array.isArray(current[k])) {
+          // 既存の値がオブジェクトでない場合は上書き
+          current[k] = {};
+        }
+        current = current[k] as Record<string, unknown>;
+      }
+
+      // 最後のキーに値を設定
+      const lastKey = keys[keys.length - 1];
+      current[lastKey] = value;
+    } else {
+      // ドット記法でない場合はそのまま設定
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
+/**
  * JSON Merge Patch (RFC 7396) を適用する
  *
+ * ドット記法のサポート:
+ * - "settings.locationEnabled" のようなドット記法を自動的にネストされたオブジェクトに変換
+ * - 例: { "settings.locationEnabled": true } → { settings: { locationEnabled: true } }
+ *
  * @param target - 対象オブジェクト
- * @param patch - パッチオブジェクト
+ * @param patch - パッチオブジェクト（ドット記法を含む可能性がある）
  * @returns マージされたオブジェクト
  */
 function applyJsonMergePatch(
   target: Record<string, unknown>,
   patch: Record<string, unknown>
 ): Record<string, unknown> {
+  // ドット記法をネストされたオブジェクトに変換
+  const expandedPatch = expandDotNotation(patch);
+
   const result = { ...target };
 
-  for (const [key, value] of Object.entries(patch)) {
+  for (const [key, value] of Object.entries(expandedPatch)) {
     if (value === null) {
       delete result[key];
     } else if (
