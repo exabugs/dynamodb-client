@@ -253,12 +253,7 @@ The easiest way to deploy is using the [dynamodb-client-example](https://github.
 git clone https://github.com/exabugs/dynamodb-client-example.git
 cd dynamodb-client-example
 
-# Deploy to dev environment
-make deploy-dev
-
-# Deploy to other environments
-make deploy-stg    # Staging
-make deploy-prd    # Production
+make infra-apply
 ```
 
 See the [example project's documentation](https://github.com/exabugs/dynamodb-client-example) for detailed deployment instructions.
