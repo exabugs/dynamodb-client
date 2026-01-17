@@ -17,6 +17,7 @@ import {
   logPreparationTimeoutRisk,
 } from '../utils/bulkOperations.js';
 import { calculateChunks, executeChunks } from '../utils/chunking.js';
+import { CostTracker } from '../utils/cost-tracker.js';
 import { executeDynamoDBOperation, getDBClient, getTableName } from '../utils/dynamodb.js';
 
 const logger = createLogger({ service: 'records-lambda' });
@@ -55,6 +56,7 @@ export async function handleDeleteMany(
   requestId: string
 ): Promise<DeleteManyResult> {
   const startTime = Date.now();
+  const costTracker = new CostTracker();
 
   // idsまたはfilterから対象レコードIDリストを取得
   let ids: string[];
@@ -96,6 +98,7 @@ export async function handleDeleteMany(
       successIds: {},
       failedIds: {},
       errors: {},
+      consumedCapacity: costTracker.getAggregated(),
     };
   }
 
@@ -121,10 +124,20 @@ export async function handleDeleteMany(
               ConsistentRead: true,
             },
           },
+          ReturnConsumedCapacity: 'TOTAL',
         })
       ),
     'BatchGetItem'
   );
+
+  // コスト情報を収集
+  if (Array.isArray(batchGetResult.ConsumedCapacity)) {
+    for (const capacity of batchGetResult.ConsumedCapacity) {
+      costTracker.add(capacity);
+    }
+  } else {
+    costTracker.add(batchGetResult.ConsumedCapacity);
+  }
 
   const existingItems = batchGetResult.Responses?.[tableName] || [];
 
@@ -183,6 +196,7 @@ export async function handleDeleteMany(
       successIds: {},
       failedIds: failedIdsMap,
       errors: errorsMap,
+      consumedCapacity: costTracker.getAggregated(),
     };
   }
 
@@ -238,15 +252,25 @@ export async function handleDeleteMany(
     }
 
     // TransactWriteItemsを実行
-    await executeDynamoDBOperation(
+    const result = await executeDynamoDBOperation(
       () =>
         dbClient.send(
           new TransactWriteCommand({
             TransactItems: transactItems,
+            ReturnConsumedCapacity: 'TOTAL',
           })
         ),
       'TransactWriteItems'
     );
+
+    // コスト情報を収集（TransactWriteCommandは配列の場合もある）
+    if (Array.isArray(result.ConsumedCapacity)) {
+      for (const capacity of result.ConsumedCapacity) {
+        costTracker.add(capacity);
+      }
+    } else {
+      costTracker.add(result.ConsumedCapacity);
+    }
 
     // 成功したレコードを返す
     return chunk;
@@ -346,5 +370,6 @@ export async function handleDeleteMany(
     successIds,
     failedIds: failedIdsMap,
     errors: errorsMap,
+    consumedCapacity: costTracker.getAggregated(),
   };
 }

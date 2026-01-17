@@ -6,6 +6,7 @@ import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { DEFAULT_GEOHASH_CONFIG, type NearQuery } from '../../../shared/geohash/index.js';
 import { createLogger } from '../../../shared/index.js';
 import { executeNearSearch } from '../../query/nearSearch.js';
+import { CostTracker } from '../../utils/cost-tracker.js';
 import {
   executeDynamoDBOperation,
   extractCleanRecord,
@@ -44,6 +45,8 @@ export async function executeNearQuery(
     limit,
   });
 
+  const costTracker = new CostTracker();
+
   // DynamoDBから検索する関数
   const searchFunction = async (geohashPrefix: string): Promise<Record<string, unknown>[]> => {
     const dbClient = getDBClient();
@@ -71,10 +74,14 @@ export async function executeNearQuery(
               ':skPrefix': `${fieldName}#${geohashPrefix}`,
             },
             ConsistentRead: false, // シャドウレコードは結果整合性で十分
+            ReturnConsumedCapacity: 'TOTAL',
           })
         ),
       'Query'
     );
+
+    // コスト情報を収集
+    costTracker.add(queryResult.ConsumedCapacity);
 
     const shadowRecords = queryResult.Items || [];
 
@@ -119,10 +126,15 @@ export async function executeNearQuery(
                   ':sk': `id#${id}`,
                 },
                 ConsistentRead: true,
+                ReturnConsumedCapacity: 'TOTAL',
               })
             ),
           'Query'
         );
+
+        // コスト情報を収集
+        costTracker.add(result.ConsumedCapacity);
+
         return result.Items?.[0];
       })
     );
@@ -181,5 +193,6 @@ export async function executeNearQuery(
       hasNextPage: false, // $near検索はページネーション非対応
       hasPreviousPage: false,
     },
+    consumedCapacity: costTracker.getAggregated(),
   };
 }

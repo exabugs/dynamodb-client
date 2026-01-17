@@ -3,6 +3,7 @@
  * Lambda Function URL (RPC スタイル) で使用される型定義
  * MongoDB 風の操作インターフェース
  */
+import type { WithConsumedCapacity } from '../shared/types/consumed-capacity.js';
 
 // ========================================
 // リクエスト型
@@ -217,7 +218,7 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 /**
  * find レスポンスデータ
  */
-export interface FindResult {
+export interface FindResult extends WithConsumedCapacity {
   /** レコードリスト */
   items: Record<string, unknown>[];
   /** ページ情報 */
@@ -263,12 +264,12 @@ export interface FindManyReferenceResult {
 /**
  * insertOne レスポンスデータ
  */
-export type InsertOneResult = Record<string, unknown>;
+export type InsertOneResult = Record<string, unknown> & WithConsumedCapacity;
 
 /**
  * updateOne レスポンスデータ
  */
-export type UpdateOneResult = Record<string, unknown>;
+export type UpdateOneResult = Record<string, unknown> & WithConsumedCapacity;
 
 /**
  * 操作エラー
@@ -293,7 +294,7 @@ export interface OperationError {
  * - updateMany は更新したフィールドのみを返却する
  * - read権限なしでupdate権限のみの場合の情報漏洩を防止
  */
-export interface BulkOperationResult {
+export interface BulkOperationResult extends WithConsumedCapacity {
   /** 成功件数 */
   count: number;
   /** 成功したレコードのインデックスとID（{ 0: 'A', 2: 'C' }） */
@@ -315,7 +316,7 @@ export interface UpdateManyResult extends BulkOperationResult {}
 /**
  * deleteOne レスポンスデータ
  */
-export interface DeleteOneResult {
+export interface DeleteOneResult extends WithConsumedCapacity {
   /** 削除されたレコードのID */
   id: string;
 }

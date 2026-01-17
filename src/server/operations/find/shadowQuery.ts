@@ -7,6 +7,7 @@ import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 import { NUMBER_FORMAT } from '../../../shared/constants/formatting.js';
 import { createLogger } from '../../../shared/index.js';
+import { CostTracker } from '../../utils/cost-tracker.js';
 import {
   executeDynamoDBOperation,
   extractCleanRecord,
@@ -37,6 +38,7 @@ export async function executeShadowQuery(
 ): Promise<FindResult> {
   const { sort, pagination, parsedFilters } = normalizedParams;
   const { perPage, nextToken } = pagination;
+  const costTracker = new CostTracker();
 
   logger.debug('Executing shadow query', {
     requestId,
@@ -55,6 +57,7 @@ export async function executeShadowQuery(
     perPage,
     nextToken,
     optimizableFilter,
+    costTracker,
     requestId
   );
 
@@ -68,11 +71,12 @@ export async function executeShadowQuery(
         hasNextPage: false,
         hasPreviousPage: false,
       },
+      consumedCapacity: costTracker.getAggregated(),
     };
   }
 
   // 本体レコードを取得
-  const mainRecords = await fetchMainRecords(resource, recordIds, requestId);
+  const mainRecords = await fetchMainRecords(resource, recordIds, costTracker, requestId);
 
   // IDでマッピングを作成（順序を保持するため）
   const recordMap = new Map(
@@ -129,6 +133,7 @@ export async function executeShadowQuery(
       hasPreviousPage: !!nextToken,
     },
     ...(nextTokenValue && { nextToken: nextTokenValue }),
+    consumedCapacity: costTracker.getAggregated(),
   };
 }
 
@@ -140,6 +145,7 @@ export async function executeShadowQuery(
  * @param perPage - ページサイズ
  * @param nextToken - 次ページトークン
  * @param optimizableFilter - 最適化可能なフィルター
+ * @param costTracker - コスト追跡インスタンス
  * @param requestId - リクエストID
  * @returns DynamoDBクエリ結果
  */
@@ -149,6 +155,7 @@ async function executeShadowRecordQuery(
   perPage: number,
   nextToken: string | undefined,
   optimizableFilter: OptimizableFilter | undefined,
+  costTracker: CostTracker,
   _requestId: string
 ): Promise<any> {
   const dbClient = getDBClient();
@@ -171,7 +178,7 @@ async function executeShadowRecordQuery(
     optimizableFilter
   );
 
-  return await executeDynamoDBOperation(
+  const result = await executeDynamoDBOperation(
     () =>
       dbClient.send(
         new QueryCommand({
@@ -182,10 +189,16 @@ async function executeShadowRecordQuery(
           Limit: perPage,
           ExclusiveStartKey: exclusiveStartKey,
           ConsistentRead: true,
+          ReturnConsumedCapacity: 'TOTAL',
         })
       ),
     'Query'
   );
+
+  // コスト情報を収集
+  costTracker.add(result.ConsumedCapacity);
+
+  return result;
 }
 
 /**
@@ -324,12 +337,14 @@ function extractRecordIds(shadowRecords: any[]): string[] {
  *
  * @param resource - リソース名
  * @param recordIds - レコードIDの配列
+ * @param costTracker - コスト追跡インスタンス
  * @param requestId - リクエストID
  * @returns 本体レコードの配列
  */
 async function fetchMainRecords(
   resource: string,
   recordIds: string[],
+  costTracker: CostTracker,
   requestId: string
 ): Promise<any[]> {
   const dbClient = getDBClient();
@@ -352,10 +367,19 @@ async function fetchMainRecords(
               ConsistentRead: true,
             },
           },
+          ReturnConsumedCapacity: 'TOTAL',
         })
       ),
     'BatchGetItem'
   );
+
+  // コスト情報を収集
+  if (batchGetResult.ConsumedCapacity) {
+    // BatchGetCommandは配列でConsumedCapacityを返す
+    for (const capacity of batchGetResult.ConsumedCapacity) {
+      costTracker.add(capacity);
+    }
+  }
 
   const mainRecords = batchGetResult.Responses?.[tableName] || [];
 

@@ -1,5 +1,5 @@
 import { DEFAULT_HTTP_TIMEOUT_MS } from '../shared/constants/http.js';
-import type { Filter, FindOptions } from '../shared/index.js';
+import type { AggregatedCost, Filter, FindOptions } from '../shared/index.js';
 import type { AuthHeadersGetter } from './Collection.js';
 import type { ClientOptions } from './DynamoClient.js';
 
@@ -30,6 +30,7 @@ export class FindCursor<
   private executed: boolean = false;
   private results: TSchema[] = [];
   private pageInfo?: { hasNextPage: boolean; hasPreviousPage: boolean; nextToken?: string };
+  private consumedCapacity?: AggregatedCost;
 
   /**
    * FindCursorを作成
@@ -196,9 +197,10 @@ export class FindCursor<
             hasPreviousPage: boolean;
           };
           nextToken?: string;
+          consumedCapacity?: AggregatedCost;
         };
       };
-      // Lambda からのレスポンス: { success: true, data: { items: [...], pageInfo: {...}, nextToken?: string } }
+      // Lambda からのレスポンス: { success: true, data: { items: [...], pageInfo: {...}, nextToken?: string, consumedCapacity?: {...} } }
       this.results = result.data?.items || result.data?.documents || [];
       this.pageInfo = result.data?.pageInfo
         ? {
@@ -207,6 +209,7 @@ export class FindCursor<
             nextToken: result.data.nextToken, // nextTokenはpageInfoの外にある
           }
         : undefined;
+      this.consumedCapacity = result.data?.consumedCapacity;
       this.executed = true;
     } catch (error: unknown) {
       clearTimeout(timeoutId);
@@ -285,5 +288,37 @@ export class FindCursor<
         hasPreviousPage: false,
       }
     );
+  }
+
+  /**
+   * コスト情報を取得
+   *
+   * クエリを実行し、DynamoDB操作のコスト情報を返します。
+   * RCU（Read Capacity Units）とWCU（Write Capacity Units）の消費量を確認できます。
+   *
+   * @returns コスト情報（未実行の場合はundefined）
+   *
+   * @example
+   * ```typescript
+   * const cursor = products
+   *   .find({ status: 'active' })
+   *   .sort({ price: 'desc' })
+   *   .limit(10);
+   *
+   * const results = await cursor.toArray();
+   * const cost = await cursor.getConsumedCapacity();
+   *
+   * if (cost) {
+   *   console.log(`Total RCU: ${cost.totalRCU}`);
+   *   console.log(`Total WCU: ${cost.totalWCU}`);
+   *   console.log(`Operations: ${cost.operationCount}`);
+   * }
+   * ```
+   */
+  async getConsumedCapacity(): Promise<AggregatedCost | undefined> {
+    if (!this.executed) {
+      await this.execute();
+    }
+    return this.consumedCapacity;
   }
 }

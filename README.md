@@ -394,6 +394,158 @@ const record = {
 
 ---
 
+## 💰 Cost Tracking
+
+### Overview
+
+DynamoDB Client SDK provides built-in cost tracking for all DynamoDB operations. This feature helps you monitor and optimize your DynamoDB usage by tracking Read Capacity Units (RCU) and Write Capacity Units (WCU) consumed by each operation.
+
+### Features
+
+- **Automatic Tracking**: All operations automatically include consumed capacity information
+- **Aggregated Costs**: Multiple operations (pagination, bulk operations) are automatically aggregated
+- **Zero Overhead**: Minimal performance impact (< 5ms)
+- **Type Safe**: Full TypeScript support with `AggregatedCost` type
+
+### Usage Examples
+
+#### Single Operations
+
+All single operations (`insertOne`, `updateOne`, `deleteOne`) return consumed capacity information:
+
+```typescript
+// Insert operation
+const result = await collection.insertOne({
+  title: 'New Article',
+  content: 'Content here...',
+});
+
+console.log('Inserted ID:', result.insertedId);
+console.log('Cost:', result.consumedCapacity);
+// Output: { totalRCU: 0, totalWCU: 1.0, operationCount: 1 }
+```
+
+```typescript
+// Update operation
+const result = await collection.updateOne(
+  { id: '01HQXYZ123' },
+  { $set: { title: 'Updated Title' } }
+);
+
+console.log('Modified:', result.modifiedCount);
+console.log('Cost:', result.consumedCapacity);
+// Output: { totalRCU: 0.5, totalWCU: 1.0, operationCount: 1 }
+```
+
+```typescript
+// Delete operation
+const result = await collection.deleteOne({ id: '01HQXYZ123' });
+
+console.log('Deleted:', result.deletedCount);
+console.log('Cost:', result.consumedCapacity);
+// Output: { totalRCU: 0.5, totalWCU: 1.0, operationCount: 1 }
+```
+
+#### Bulk Operations
+
+Bulk operations automatically aggregate costs across all chunks:
+
+```typescript
+// Insert many documents
+const result = await collection.insertMany([
+  { title: 'Article 1', content: '...' },
+  { title: 'Article 2', content: '...' },
+  { title: 'Article 3', content: '...' },
+  // ... 100 documents
+]);
+
+console.log('Inserted:', result.insertedCount);
+console.log('Cost:', result.consumedCapacity);
+// Output: { totalRCU: 0, totalWCU: 100.0, operationCount: 4 }
+// Note: 100 documents processed in 4 chunks (25 per chunk)
+```
+
+```typescript
+// Update many documents
+const result = await collection.updateMany({ status: 'draft' }, { $set: { status: 'published' } });
+
+console.log('Modified:', result.modifiedCount);
+console.log('Cost:', result.consumedCapacity);
+// Output: { totalRCU: 25.0, totalWCU: 50.0, operationCount: 10 }
+```
+
+#### Find Operations with Pagination
+
+Find operations aggregate costs across all pages:
+
+```typescript
+// Find with pagination
+const cursor = collection.find({ status: 'active' }).limit(100);
+const results = await cursor.toArray();
+
+// Get aggregated cost for all pages
+const cost = await cursor.getConsumedCapacity();
+
+console.log('Found:', results.length);
+console.log('Cost:', cost);
+// Output: { totalRCU: 15.5, totalWCU: 0, operationCount: 3 }
+// Note: 3 pages fetched to retrieve all results
+```
+
+### Cost Information Structure
+
+The `consumedCapacity` field contains:
+
+```typescript
+interface AggregatedCost {
+  /** Total Read Capacity Units consumed */
+  totalRCU: number;
+
+  /** Total Write Capacity Units consumed */
+  totalWCU: number;
+
+  /** Number of DynamoDB operations performed */
+  operationCount: number;
+}
+```
+
+### Cost Optimization Tips
+
+1. **Monitor High-Cost Operations**: Operations with `totalRCU > 100` or `totalWCU > 50` may need optimization
+2. **Use Pagination**: Large result sets are automatically paginated to avoid high costs
+3. **Batch Operations**: Use `insertMany`, `updateMany`, `deleteMany` for bulk operations
+4. **Shadow Records**: Efficient sorting without expensive Global Secondary Indexes
+
+### Logging
+
+Cost information is automatically logged for all operations:
+
+```typescript
+// Info log for normal operations
+logger.info('Operation completed', {
+  operation: 'find',
+  resource: 'articles',
+  consumedCapacity: { totalRCU: 5.5, totalWCU: 0, operationCount: 2 },
+});
+
+// Warning log for high-cost operations
+logger.warn('High cost operation detected', {
+  operation: 'updateMany',
+  resource: 'articles',
+  consumedCapacity: { totalRCU: 150.0, totalWCU: 200.0, operationCount: 50 },
+});
+```
+
+### Backward Compatibility
+
+Cost tracking is fully backward compatible:
+
+- Existing code works without changes
+- `consumedCapacity` field is optional
+- No breaking changes to existing APIs
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions!

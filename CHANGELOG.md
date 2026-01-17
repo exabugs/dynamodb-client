@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.44] - 2026-01-17
+
+### Added
+
+- **コスト追跡機能**: DynamoDB操作のRCU/WCU消費量を追跡・集計
+  - すべてのDynamoDB操作で`ReturnConsumedCapacity: 'TOTAL'`を設定
+  - `CostTracker`クラスでコスト情報を収集・集計
+  - `ConsumedCapacity`型と`AggregatedCost`型を追加
+  - MongoDB-likeインターフェースのレスポンスに`consumedCapacity`フィールドを追加
+  - `FindCursor.getConsumedCapacity()`メソッドを追加
+  - 完全なユニットテスト・統合テスト・エッジケーステストを実装（全テスト成功）
+
+### Changed
+
+- **レスポンス型の拡張**: すべての操作レスポンスに`consumedCapacity?`フィールドを追加
+  - `InsertOneResult`, `InsertManyResult`, `UpdateResult`, `DeleteResult`
+  - `FindResult`（HTTP APIレスポンス）
+  - 後方互換性100%維持（オプショナルフィールド）
+
 ## [1.3.43] - 2026-01-17
 
 ### Changed

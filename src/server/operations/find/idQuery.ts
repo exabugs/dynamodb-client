@@ -6,6 +6,7 @@
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 import { createLogger } from '../../../shared/index.js';
+import { CostTracker } from '../../utils/cost-tracker.js';
 import {
   executeDynamoDBOperation,
   extractCleanRecord,
@@ -69,6 +70,7 @@ async function executeSpecificIdQuery(
 ): Promise<FindResult> {
   const dbClient = getDBClient();
   const tableName = getTableName();
+  const costTracker = new CostTracker();
 
   const queryResult = await executeDynamoDBOperation(
     () =>
@@ -81,10 +83,14 @@ async function executeSpecificIdQuery(
             ':sk': `id#${targetId}`,
           },
           ConsistentRead: true,
+          ReturnConsumedCapacity: 'TOTAL',
         })
       ),
     'Query'
   );
+
+  // コスト情報を収集
+  costTracker.add(queryResult.ConsumedCapacity);
 
   const mainRecords = queryResult.Items || [];
   const items = mainRecords.map((item) => extractCleanRecord(item));
@@ -102,6 +108,7 @@ async function executeSpecificIdQuery(
       hasNextPage: false,
       hasPreviousPage: false,
     },
+    consumedCapacity: costTracker.getAggregated(),
   };
 }
 
@@ -126,6 +133,7 @@ async function executeAllRecordsQuery(
 ): Promise<FindResult> {
   const dbClient = getDBClient();
   const tableName = getTableName();
+  const costTracker = new CostTracker();
 
   // ExclusiveStartKeyの設定
   let exclusiveStartKey: Record<string, string> | undefined;
@@ -152,10 +160,14 @@ async function executeAllRecordsQuery(
           Limit: perPage,
           ExclusiveStartKey: exclusiveStartKey,
           ConsistentRead: true,
+          ReturnConsumedCapacity: 'TOTAL',
         })
       ),
     'Query'
   );
+
+  // コスト情報を収集
+  costTracker.add(queryResult.ConsumedCapacity);
 
   const mainRecords = queryResult.Items || [];
 
@@ -167,6 +179,7 @@ async function executeAllRecordsQuery(
         hasNextPage: false,
         hasPreviousPage: false,
       },
+      consumedCapacity: costTracker.getAggregated(),
     };
   }
 
@@ -203,5 +216,6 @@ async function executeAllRecordsQuery(
       hasPreviousPage: !!nextToken,
     },
     ...(nextTokenValue && { nextToken: nextTokenValue }),
+    consumedCapacity: costTracker.getAggregated(),
   };
 }

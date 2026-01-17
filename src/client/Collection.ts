@@ -5,6 +5,7 @@
  */
 import { DEFAULT_HTTP_TIMEOUT_MS } from '../shared/constants/http.js';
 import type {
+  AggregatedCost,
   DeleteResult,
   Filter,
   FindOptions,
@@ -169,22 +170,24 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
 
   async insertOne(document: InputBase & Omit<TSchema, 'id'>): Promise<InsertOneResult> {
     const response = await this.request('insertOne', { document });
-    const result = response as { insertedId: string };
+    const result = response as { insertedId: string; consumedCapacity?: AggregatedCost };
     return {
       acknowledged: true,
       insertedId: result.insertedId,
+      consumedCapacity: result.consumedCapacity,
     };
   }
 
   async insertMany(documents: (InputBase & Omit<TSchema, 'id'>)[]): Promise<InsertManyResult> {
     const response = await this.request('insertMany', { documents });
-    // Records Lambdaは統一形式 { count, successIds, failedIds, errors } を返す
+    // Records Lambdaは統一形式 { count, successIds, failedIds, errors, consumedCapacity } を返す
     // MongoDB互換形式に変換
     const result = response as {
       count?: number;
       successIds?: Record<number, string>;
       failedIds?: string[];
       errors?: Array<{ id: string; code: string; message: string }>;
+      consumedCapacity?: AggregatedCost;
     };
     return {
       acknowledged: true,
@@ -192,6 +195,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
       insertedIds: result.successIds || {},
       failedIds: result.failedIds,
       errors: result.errors,
+      consumedCapacity: result.consumedCapacity,
     };
   }
 
@@ -206,6 +210,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
       modifiedCount: number;
       upsertedId?: string;
       __upsertedId?: string;
+      consumedCapacity?: AggregatedCost;
     };
 
     // __upsertedIdフラグをupsertedIdに変換
@@ -216,6 +221,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
       matchedCount: upsertedId ? 0 : 1, // upsertで新規作成の場合は0
       modifiedCount: upsertedId ? 0 : 1, // upsertで新規作成の場合は0
       upsertedId,
+      consumedCapacity: result.consumedCapacity,
     };
   }
 
@@ -225,12 +231,13 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
     options?: { upsert?: boolean }
   ): Promise<UpdateResult> {
     const response = await this.request('updateMany', { filter, update, options });
-    // Records Lambdaは統一形式 { count, successIds, failedIds, errors } を返す
+    // Records Lambdaは統一形式 { count, successIds, failedIds, errors, consumedCapacity } を返す
     // MongoDB互換形式に変換
     const result = response as {
       count?: number;
       successIds?: Record<string, string>;
       failedIds?: Record<string, string>;
+      consumedCapacity?: AggregatedCost;
     };
     const successCount = Object.keys(result.successIds || {}).length;
     const failedCount = Object.keys(result.failedIds || {}).length;
@@ -238,26 +245,29 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
       acknowledged: true,
       matchedCount: successCount + failedCount, // 成功 + 失敗の合計
       modifiedCount: result.count || 0, // 実際に更新された件数
+      consumedCapacity: result.consumedCapacity,
     };
   }
 
   async deleteOne(filter: Filter<TSchema>): Promise<DeleteResult> {
     const response = await this.request('deleteOne', { filter });
-    const result = response as { deletedCount: number };
+    const result = response as { deletedCount: number; consumedCapacity?: AggregatedCost };
     return {
       acknowledged: true,
       deletedCount: result.deletedCount,
+      consumedCapacity: result.consumedCapacity,
     };
   }
 
   async deleteMany(filter: Filter<TSchema>): Promise<DeleteResult> {
     const response = await this.request('deleteMany', { filter });
-    // Records Lambdaは統一形式 { count, successIds, failedIds, errors } を返す
+    // Records Lambdaは統一形式 { count, successIds, failedIds, errors, consumedCapacity } を返す
     // MongoDB互換形式に変換
-    const result = response as { count?: number };
+    const result = response as { count?: number; consumedCapacity?: AggregatedCost };
     return {
       acknowledged: true,
       deletedCount: result.count || 0, // 実際に削除された件数
+      consumedCapacity: result.consumedCapacity,
     };
   }
 }

@@ -79,7 +79,11 @@ export async function handleUpdateOne(
       throw new Error('updateMany did not return items');
     }
 
-    return updateManyResult.items[0];
+    // コスト情報を含めて返却
+    return {
+      ...updateManyResult.items[0],
+      consumedCapacity: updateManyResult.consumedCapacity,
+    };
   } else {
     // filterが指定されている場合
     logger.debug('Executing updateOne with filter', {
@@ -116,6 +120,10 @@ export async function handleUpdateOne(
       throw new Error('updateMany did not return items');
     }
 
-    return updateManyResult.items[0];
+    // コスト情報を含めて返却
+    return {
+      ...updateManyResult.items[0],
+      consumedCapacity: updateManyResult.consumedCapacity,
+    };
   }
 }

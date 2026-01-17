@@ -6,7 +6,7 @@
  */
 import { TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import { createLogger, ulid, ErrorCode } from '../../shared/index.js';
+import { ErrorCode, createLogger, ulid } from '../../shared/index.js';
 import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
 import { generateMainRecordSK } from '../shadow/index.js';
 import type { InsertManyParams, InsertManyResult, OperationError } from '../types.js';
@@ -18,6 +18,7 @@ import {
   logPreparationTimeoutRisk,
 } from '../utils/bulkOperations.js';
 import { calculateChunks, executeChunks } from '../utils/chunking.js';
+import { CostTracker } from '../utils/cost-tracker.js';
 import { executeDynamoDBOperation, getDBClient, getTableName } from '../utils/dynamodb.js';
 import { addCreateTimestamps } from '../utils/timestamps.js';
 import { addTTL } from '../utils/ttl.js';
@@ -61,6 +62,7 @@ export async function handleInsertMany(
 ): Promise<InsertManyResult> {
   const { data: recordsData } = params;
   const startTime = Date.now();
+  const costTracker = new CostTracker();
 
   logger.debug('Executing insertMany', {
     requestId,
@@ -75,6 +77,7 @@ export async function handleInsertMany(
       successIds: {},
       failedIds: {},
       errors: {},
+      consumedCapacity: costTracker.getAggregated(),
     };
   }
 
@@ -201,15 +204,25 @@ export async function handleInsertMany(
     }
 
     // TransactWriteItemsを実行
-    await executeDynamoDBOperation(
+    const result = await executeDynamoDBOperation(
       () =>
         dbClient.send(
           new TransactWriteCommand({
             TransactItems: transactItems,
+            ReturnConsumedCapacity: 'TOTAL',
           })
         ),
       'TransactWriteItems'
     );
+
+    // コスト情報を収集（TransactWriteCommandは配列の可能性がある）
+    if (Array.isArray(result.ConsumedCapacity)) {
+      for (const capacity of result.ConsumedCapacity) {
+        costTracker.add(capacity);
+      }
+    } else {
+      costTracker.add(result.ConsumedCapacity);
+    }
 
     // 成功したレコードを返す
     return chunk;
@@ -310,6 +323,7 @@ export async function handleInsertMany(
     successIds,
     failedIds: failedIdsMap,
     errors: errorsMap,
+    consumedCapacity: costTracker.getAggregated(),
   };
 }
 

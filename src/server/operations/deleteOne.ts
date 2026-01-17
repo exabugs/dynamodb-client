@@ -67,7 +67,10 @@ export async function handleDeleteOne(
     }
 
     // 既存のインターフェースを維持: { id } を返す
-    return { id: targetId };
+    return {
+      id: targetId,
+      consumedCapacity: deleteManyResult.consumedCapacity,
+    };
   } else {
     // filterが指定されている場合
     logger.debug('Executing deleteOne with filter', {
@@ -109,6 +112,9 @@ export async function handleDeleteOne(
     });
 
     // 既存のインターフェースを維持: { id } を返す
-    return { id: deletedId };
+    return {
+      id: deletedId,
+      consumedCapacity: deleteManyResult.consumedCapacity,
+    };
   }
 }

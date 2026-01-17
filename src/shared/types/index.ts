@@ -1,3 +1,6 @@
+// ConsumedCapacity型定義をインポート
+import type { WithConsumedCapacity } from './consumed-capacity.js';
+
 /**
  * 共通型定義
  *
@@ -144,7 +147,7 @@ export interface UpdateManyOptions {
 /**
  * 挿入結果
  */
-export interface InsertOneResult {
+export interface InsertOneResult extends WithConsumedCapacity {
   /** 操作が確認されたか */
   acknowledged: boolean;
   /** 挿入されたドキュメントのID */
@@ -154,7 +157,7 @@ export interface InsertOneResult {
 /**
  * 複数挿入結果
  */
-export interface InsertManyResult {
+export interface InsertManyResult extends WithConsumedCapacity {
   /** 操作が確認されたか */
   acknowledged: boolean;
   /** 挿入されたドキュメントの数 */
@@ -170,7 +173,7 @@ export interface InsertManyResult {
 /**
  * 更新結果
  */
-export interface UpdateResult {
+export interface UpdateResult extends WithConsumedCapacity {
   /** 操作が確認されたか */
   acknowledged: boolean;
   /** マッチしたドキュメントの数 */
@@ -184,9 +187,12 @@ export interface UpdateResult {
 /**
  * 削除結果
  */
-export interface DeleteResult {
+export interface DeleteResult extends WithConsumedCapacity {
   /** 操作が確認されたか */
   acknowledged: boolean;
   /** 削除されたドキュメントの数 */
   deletedCount: number;
 }
+
+// ConsumedCapacity型定義
+export * from './consumed-capacity.js';
