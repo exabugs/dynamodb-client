@@ -17,6 +17,31 @@ import {
 } from '../../shared/geohash/index.js';
 
 /**
+ * GeoHash精度ごとの誤差範囲（メートル）
+ * 9ブロック検索（3×3）での実効カバー範囲を計算
+ */
+const GEOHASH_COVERAGE: Record<number, number> = {
+  8: 19 * 3, // ±19m × 3 = 約57m
+  7: 76 * 3, // ±76m × 3 = 約228m
+  6: 610 * 3, // ±610m × 3 = 約1,830m (1.8km)
+  5: 2400 * 3, // ±2.4km × 3 = 約7,200m (7.2km)
+  4: 20000 * 3, // ±20km × 3 = 約60,000m (60km)
+  3: 78000 * 3, // ±78km × 3 = 約234,000m (234km)
+  2: 630000 * 3, // ±630km × 3 = 約1,890,000m (1,890km)
+};
+
+/**
+ * 指定された精度での9ブロック検索がmaxDistanceをカバーしているか判定
+ */
+function coversMaxDistance(precision: number, maxDistance: number): boolean {
+  const coverage = GEOHASH_COVERAGE[precision];
+  if (!coverage) {
+    return false;
+  }
+  return coverage >= maxDistance;
+}
+
+/**
  * 9ブロック検索の結果
  */
 export interface NearSearchResult<T> {
@@ -99,6 +124,57 @@ export async function executeNearSearch<T extends Record<string, unknown>>(
     for (const candidate of candidates) {
       if (!allCandidates.some((c) => c.id === candidate.id)) {
         allCandidates.push(candidate);
+      }
+    }
+
+    // maxDistanceが指定されている場合、距離内の候補数をチェック
+    if (maxDistance !== undefined) {
+      // 現在の候補から距離内のものをカウント
+      let candidatesWithinDistance = 0;
+      for (const candidate of allCandidates) {
+        const location = candidate[fieldName] as
+          | { latitude: number; longitude: number }
+          | undefined;
+        if (
+          location &&
+          typeof location.latitude === 'number' &&
+          typeof location.longitude === 'number'
+        ) {
+          const distance = calculateDistance(
+            latitude,
+            longitude,
+            location.latitude,
+            location.longitude
+          );
+          if (distance <= maxDistance) {
+            candidatesWithinDistance++;
+          }
+        }
+      }
+
+      // 距離内の候補が十分に見つかったら終了
+      if (candidatesWithinDistance >= limit) {
+        console.log('[nearSearch] Early termination: found enough candidates within maxDistance', {
+          candidatesWithinDistance,
+          limit,
+          maxDistance,
+          precision,
+          iterations,
+        });
+        break;
+      }
+
+      // 現在の精度での検索範囲がmaxDistanceを完全にカバーしている場合、
+      // これ以上精度を緩和しても意味がないので終了
+      if (coversMaxDistance(precision, maxDistance)) {
+        console.log('[nearSearch] Early termination: current precision covers maxDistance', {
+          precision,
+          maxDistance,
+          coverage: GEOHASH_COVERAGE[precision],
+          candidatesWithinDistance,
+          iterations,
+        });
+        break;
       }
     }
 

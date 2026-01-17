@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.43] - 2026-01-17
+
+### Changed
+
+- **$near検索の最適化**: maxDistanceによる早期終了条件を追加
+  - 候補数による早期終了: maxDistance内の候補がlimit件以上見つかったら終了
+  - カバー範囲による早期終了: 現在の精度での9ブロック検索範囲がmaxDistanceを完全にカバーしたら終了
+  - GEOHASH_COVERAGE定義を拡張: Precision 2-8のカバー範囲を定義（従来は6-8のみ）
+  - 不要な精度緩和を削減し、検索パフォーマンスを向上
+
 ## [1.3.42] - 2026-01-15
 
 ### Added
