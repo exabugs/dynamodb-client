@@ -1,1 +1,8 @@
 type: object
+description: MongoDB-style filter conditions
+additionalProperties: true
+example:
+  status: "active"
+  age: { $gte: 18, $lte: 65 }
+  tags: { $in: ["premium", "verified"] }
+  name: { $regex: "^John" }

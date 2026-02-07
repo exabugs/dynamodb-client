@@ -8,11 +8,11 @@ dynamodb-clientのAPIエンドポイントをOpenAPI 3.1形式で文書化し、
 
 ### 1. 環境セットアップ
 
-- [ ] 1.1 Redocly CLIのインストール
+- [x] 1.1 Redocly CLIのインストール
   - `@redocly/cli`をdevDependenciesに追加
   - バージョン: 最新安定版
 
-- [ ] 1.2 ディレクトリ構造の作成
+- [x] 1.2 ディレクトリ構造の作成
   ```
   docs/specs/
   ├── .redocly.yaml
@@ -28,7 +28,7 @@ dynamodb-clientのAPIエンドポイントをOpenAPI 3.1形式で文書化し、
       └── queries/
   ```
 
-- [ ] 1.3 Makefile作成（ルートディレクトリに作成）
+- [x] 1.3 Makefile作成（ルートディレクトリに作成）
   - `docs-bundle`: 分割ファイルを結合
   - `docs-validate`: OpenAPI仕様の検証
   - `docs-preview`: ローカルプレビュー
@@ -37,20 +37,20 @@ dynamodb-clientのAPIエンドポイントをOpenAPI 3.1形式で文書化し、
 
 ### 2. OpenAPI基本構造
 
-- [ ] 2.1 openapi.yamlメインファイル作成
+- [x] 2.1 openapi.yamlメインファイル作成
   - OpenAPI 3.1.0
   - 基本情報（title, version, description）
   - サーバー情報
   - 外部ファイル参照設定
 
-- [ ] 2.2 .redocly.yaml設定ファイル作成
+- [x] 2.2 .redocly.yaml設定ファイル作成
   - lint設定
   - bundle設定
   - プレビュー設定
 
 ### 3. 共通コンポーネント定義
 
-- [ ] 3.1 スキーマ定義（components/schemas/）
+- [x] 3.1 スキーマ定義（components/schemas/）
   - Collection.yaml
   - Document.yaml
   - Query.yaml
@@ -104,21 +104,21 @@ dynamodb-clientのAPIエンドポイントをOpenAPI 3.1形式で文書化し、
 
 ### 6. 検証とビルド
 
-- [ ] 6.1 OpenAPI仕様の検証
+- [x] 6.1 OpenAPI仕様の検証
   - `make docs-validate`実行
   - エラー修正
 
-- [ ] 6.2 プレビュー確認
+- [x] 6.2 プレビュー確認
   - `make docs-preview`実行
   - ブラウザで表示確認
 
-- [ ] 6.3 HTML生成
+- [x] 6.3 HTML生成
   - `make docs-build`実行
   - 生成されたHTMLの確認
 
 ### 7. ドキュメント整備
 
-- [ ] 7.1 README.md作成
+- [x] 7.1 README.md作成
   - 仕様書の使い方
   - ビルド方法
   - 開発ガイドライン

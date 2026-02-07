@@ -12,7 +12,7 @@ help:
 	@echo "=== ドキュメント ==="
 	@echo "  make docs-bundle       - OpenAPI仕様を結合"
 	@echo "  make docs-validate     - OpenAPI仕様を検証"
-	@echo "  make docs-preview      - ローカルでプレビュー"
+	@echo "  make docs-preview      - プレビュー生成・表示"
 	@echo "  make docs-build        - HTML生成"
 	@echo "  make docs-clean        - 生成ファイル削除"
 
@@ -50,9 +50,10 @@ docs-validate:
 	@npx @redocly/cli lint docs/specs/openapi.yaml
 
 docs-preview:
-	@echo "Starting preview server..."
-	@echo "Open http://localhost:8080 in your browser"
-	@npx @redocly/cli preview-docs docs/specs/openapi.yaml
+	@echo "Generating preview HTML..."
+	@npx @redocly/cli build-docs docs/specs/openapi.yaml -o docs/specs/preview.html
+	@echo "Opening preview in browser..."
+	@open docs/specs/preview.html || xdg-open docs/specs/preview.html || start docs/specs/preview.html
 
 docs-build:
 	@echo "Building HTML documentation..."
@@ -61,4 +62,4 @@ docs-build:
 
 docs-clean:
 	@echo "Cleaning generated documentation..."
-	@rm -f docs/specs/openapi.bundled.yaml docs/specs/index.html
+	@rm -f docs/specs/openapi.bundled.yaml docs/specs/index.html docs/specs/preview.html

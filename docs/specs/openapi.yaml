@@ -1,12 +1,24 @@
 openapi: 3.1.0
 info:
   title: DynamoDB Client API
-  version: 1.3.4
+  version: 1.3.34
   description: |
     MongoDB-like API for DynamoDB with shadow record support for efficient querying.
     
     This API provides a familiar MongoDB-style interface for interacting with DynamoDB,
-    including support for collections, documents, and complex queries.
+    supporting 10 operations compatible with react-admin.
+    
+    **Supported Operations:**
+    - find: Query documents with filters
+    - findOne: Get a single document
+    - findMany: Get multiple documents by IDs
+    - findManyReference: Get documents by reference field
+    - insertOne: Create a single document
+    - insertMany: Create multiple documents
+    - updateOne: Update a single document
+    - updateMany: Update multiple documents
+    - deleteOne: Delete a single document
+    - deleteMany: Delete multiple documents
   contact:
     name: DynamoDB Client Support
     url: https://github.com/exabugs/dynamodb-client
@@ -15,43 +27,145 @@ info:
     url: https://github.com/exabugs/dynamodb-client/blob/main/LICENSE
 
 servers:
-  - url: https://api.example.com/v1
-    description: Production server
-  - url: http://localhost:3000
-    description: Local development server
+  - url: '{apiUrl}'
+    description: DynamoDB Client API (Lambda Function URL)
+    variables:
+      apiUrl:
+        default: https://your-lambda-url.lambda-url.us-east-1.on.aws
+        description: Lambda Function URL
 
 tags:
-  - name: Collections
-    description: Collection management operations
-  - name: Documents
-    description: Document CRUD operations
-  - name: Queries
-    description: Query and search operations
+  - name: Operations
+    description: MongoDB-style CRUD operations
+  - name: System
+    description: System endpoints
 
 paths:
-  # Collection operations
-  /collections:
-    $ref: './paths/collections/list.yaml'
-  /collections/{collectionName}:
-    $ref: './paths/collections/collection.yaml'
+  /version:
+    get:
+      tags:
+        - System
+      summary: Get API version
+      description: Returns the current API version and timestamp
+      operationId: getVersion
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        example: "1.3.34"
+                      timestamp:
+                        type: string
+                        format: date-time
   
-  # Document operations
-  /collections/{collectionName}/documents:
-    $ref: './paths/documents/create.yaml'
-  /collections/{collectionName}/documents/{documentId}:
-    $ref: './paths/documents/document.yaml'
-  /collections/{collectionName}/documents/bulk:
-    $ref: './paths/documents/bulk.yaml'
-  
-  # Query operations
-  /collections/{collectionName}/find:
-    $ref: './paths/queries/find.yaml'
-  /collections/{collectionName}/findOne:
-    $ref: './paths/queries/findOne.yaml'
-  /collections/{collectionName}/count:
-    $ref: './paths/queries/count.yaml'
-  /collections/{collectionName}/aggregate:
-    $ref: './paths/queries/aggregate.yaml'
+  /:
+    post:
+      tags:
+        - Operations
+      summary: Execute MongoDB-style operation
+      description: |
+        Execute one of the 10 supported MongoDB-style operations.
+        All operations use POST method with operation type in request body.
+      operationId: executeOperation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - op
+                - resource
+              properties:
+                op:
+                  type: string
+                  enum:
+                    - find
+                    - findOne
+                    - findMany
+                    - findManyReference
+                    - insertOne
+                    - insertMany
+                    - updateOne
+                    - updateMany
+                    - deleteOne
+                    - deleteMany
+                  description: Operation type
+                resource:
+                  type: string
+                  description: Resource name (collection name)
+                  example: "users"
+                params:
+                  type: object
+                  description: Operation-specific parameters
+            examples:
+              find:
+                summary: Find documents
+                value:
+                  op: find
+                  resource: users
+                  params:
+                    filter: { status: "active" }
+                    limit: 10
+              findOne:
+                summary: Find one document
+                value:
+                  op: findOne
+                  resource: users
+                  params:
+                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+              insertOne:
+                summary: Insert one document
+                value:
+                  op: insertOne
+                  resource: users
+                  params:
+                    data:
+                      name: "John Doe"
+                      email: "john@example.com"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    description: Operation result
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:

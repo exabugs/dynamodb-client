@@ -1,0 +1,13 @@
+type: object
+description: Parameters for insertOne operation
+required:
+  - data
+properties:
+  data:
+    type: object
+    description: Document data to insert
+    additionalProperties: true
+    example:
+      name: "John Doe"
+      email: "john@example.com"
+      status: "active"

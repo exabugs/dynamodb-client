@@ -1,1 +1,40 @@
 type: object
+description: MongoDB-style update operators
+properties:
+  $set:
+    type: object
+    description: Set field values
+    additionalProperties: true
+    example:
+      status: "inactive"
+      updatedAt: "2024-01-01T00:00:00Z"
+  
+  $unset:
+    type: object
+    description: Remove fields
+    additionalProperties: true
+    example:
+      temporaryField: ""
+  
+  $inc:
+    type: object
+    description: Increment numeric fields
+    additionalProperties:
+      type: number
+    example:
+      viewCount: 1
+      score: -5
+  
+  $push:
+    type: object
+    description: Add items to arrays
+    additionalProperties: true
+    example:
+      tags: "new-tag"
+  
+  $pull:
+    type: object
+    description: Remove items from arrays
+    additionalProperties: true
+    example:
+      tags: "old-tag"

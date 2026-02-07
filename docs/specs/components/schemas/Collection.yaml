@@ -1,1 +1,9 @@
 type: object
+description: Collection (resource) name
+properties:
+  name:
+    type: string
+    description: Resource name (e.g., "users", "venues", "participations")
+    example: "users"
+required:
+  - name

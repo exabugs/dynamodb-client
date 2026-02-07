@@ -1,0 +1,18 @@
+oneOf:
+  - type: object
+    description: Find by ID
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Record ID
+        example: "01KETJHF08KEDW320XX6NP2CZ3"
+  
+  - type: object
+    description: Find by filter
+    required:
+      - filter
+    properties:
+      filter:
+        $ref: '../Filter.yaml'

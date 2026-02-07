@@ -1,0 +1,41 @@
+type: object
+description: Find operation result
+required:
+  - items
+  - pageInfo
+properties:
+  items:
+    type: array
+    description: List of documents
+    items:
+      $ref: '../Document.yaml'
+  
+  pageInfo:
+    type: object
+    required:
+      - hasNextPage
+      - hasPreviousPage
+    properties:
+      hasNextPage:
+        type: boolean
+        description: Whether next page exists
+      hasPreviousPage:
+        type: boolean
+        description: Whether previous page exists
+  
+  nextToken:
+    type: string
+    description: Next page token (if hasNextPage is true)
+  
+  total:
+    type: integer
+    description: Total count (optional, performance impact)
+  
+  consumedCapacity:
+    type: object
+    description: DynamoDB consumed capacity
+    properties:
+      readCapacityUnits:
+        type: number
+      writeCapacityUnits:
+        type: number

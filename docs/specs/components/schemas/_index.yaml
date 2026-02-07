@@ -1,3 +1,4 @@
+# Base schemas
 Document:
   $ref: './Document.yaml'
 Collection:
@@ -10,3 +11,19 @@ UpdateOperators:
   $ref: './UpdateOperators.yaml'
 Error:
   $ref: './Error.yaml'
+
+# Operation parameters
+FindParams:
+  $ref: './operations/FindParams.yaml'
+FindOneParams:
+  $ref: './operations/FindOneParams.yaml'
+InsertOneParams:
+  $ref: './operations/InsertOneParams.yaml'
+UpdateOneParams:
+  $ref: './operations/UpdateOneParams.yaml'
+
+# Response schemas
+FindResult:
+  $ref: './responses/FindResult.yaml'
+BulkOperationResult:
+  $ref: './responses/BulkOperationResult.yaml'

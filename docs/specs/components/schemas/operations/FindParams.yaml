@@ -1,0 +1,26 @@
+type: object
+description: Parameters for find operation
+properties:
+  filter:
+    $ref: '../Filter.yaml'
+  sort:
+    type: object
+    properties:
+      field:
+        type: string
+        description: Shadow field name to sort by
+      order:
+        type: string
+        enum: [ASC, DESC]
+  pagination:
+    type: object
+    properties:
+      page:
+        type: integer
+        minimum: 1
+      perPage:
+        type: integer
+        minimum: 1
+        maximum: 50
+      nextToken:
+        type: string
