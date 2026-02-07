@@ -1,0 +1,20 @@
+oneOf:
+  - type: object
+    description: Find by IDs
+    required:
+      - ids
+    properties:
+      ids:
+        type: array
+        description: Array of record IDs
+        items:
+          type: string
+        example: ["01KETJHF08KEDW320XX6NP2CZ3", "01KETJHF08KEDW320XX6NP2CZ4"]
+  
+  - type: object
+    description: Find by filter
+    required:
+      - filter
+    properties:
+      filter:
+        $ref: '../Filter.yaml'

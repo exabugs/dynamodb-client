@@ -1,0 +1,30 @@
+type: object
+description: updateOne operation result
+required:
+  - id
+properties:
+  id:
+    type: string
+    description: Updated record ID
+    example: "01KETJHF08KEDW320XX6NP2CZ3"
+  
+  consumedCapacity:
+    type: object
+    description: DynamoDB consumed capacity
+    properties:
+      readCapacityUnits:
+        type: number
+      writeCapacityUnits:
+        type: number
+
+additionalProperties: true
+
+example:
+  id: "01KETJHF08KEDW320XX6NP2CZ3"
+  name: "John Doe"
+  email: "john@example.com"
+  status: "inactive"
+  updatedAt: "2024-01-01T00:00:00Z"
+  consumedCapacity:
+    readCapacityUnits: 1
+    writeCapacityUnits: 1

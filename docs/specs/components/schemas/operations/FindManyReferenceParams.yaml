@@ -1,0 +1,40 @@
+type: object
+description: Parameters for findManyReference operation
+required:
+  - target
+  - id
+properties:
+  target:
+    type: string
+    description: Reference field name
+    example: "userId"
+  
+  id:
+    type: string
+    description: Reference target ID
+    example: "01KETJHF08KEDW320XX6NP2CZ3"
+  
+  filter:
+    $ref: '../Filter.yaml'
+  
+  sort:
+    type: object
+    properties:
+      field:
+        type: string
+      order:
+        type: string
+        enum: [ASC, DESC]
+  
+  pagination:
+    type: object
+    properties:
+      page:
+        type: integer
+        minimum: 1
+      perPage:
+        type: integer
+        minimum: 1
+        maximum: 50
+      nextToken:
+        type: string

@@ -1,0 +1,16 @@
+type: object
+description: Parameters for insertMany operation
+required:
+  - data
+properties:
+  data:
+    type: array
+    description: Array of documents to insert
+    items:
+      type: object
+      additionalProperties: true
+    example:
+      - name: "John Doe"
+        email: "john@example.com"
+      - name: "Jane Smith"
+        email: "jane@example.com"

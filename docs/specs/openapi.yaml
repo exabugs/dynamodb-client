@@ -111,20 +111,48 @@ paths:
                   description: Operation-specific parameters
             examples:
               find:
-                summary: Find documents
+                summary: Find documents with filter and pagination
                 value:
                   op: find
                   resource: users
                   params:
-                    filter: { status: "active" }
-                    limit: 10
+                    filter: 
+                      status: "active"
+                      age: { $gte: 18 }
+                    sort:
+                      field: "createdAt"
+                      order: "DESC"
+                    pagination:
+                      page: 1
+                      perPage: 10
+              
               findOne:
-                summary: Find one document
+                summary: Find one document by ID
                 value:
                   op: findOne
                   resource: users
                   params:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
+              
+              findMany:
+                summary: Find multiple documents by IDs
+                value:
+                  op: findMany
+                  resource: users
+                  params:
+                    ids: ["01KETJHF08KEDW320XX6NP2CZ3", "01KETJHF08KEDW320XX6NP2CZ4"]
+              
+              findManyReference:
+                summary: Find documents by reference field
+                value:
+                  op: findManyReference
+                  resource: participations
+                  params:
+                    target: "userId"
+                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+                    filter:
+                      status: "confirmed"
+              
               insertOne:
                 summary: Insert one document
                 value:
@@ -134,6 +162,61 @@ paths:
                     data:
                       name: "John Doe"
                       email: "john@example.com"
+                      status: "active"
+              
+              insertMany:
+                summary: Insert multiple documents
+                value:
+                  op: insertMany
+                  resource: users
+                  params:
+                    data:
+                      - name: "John Doe"
+                        email: "john@example.com"
+                      - name: "Jane Smith"
+                        email: "jane@example.com"
+              
+              updateOne:
+                summary: Update one document
+                value:
+                  op: updateOne
+                  resource: users
+                  params:
+                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+                    data:
+                      status: "inactive"
+                      updatedAt: "2024-01-01T00:00:00Z"
+                    options:
+                      upsert: false
+              
+              updateMany:
+                summary: Update multiple documents
+                value:
+                  op: updateMany
+                  resource: users
+                  params:
+                    filter:
+                      status: "pending"
+                    data:
+                      status: "active"
+              
+              deleteOne:
+                summary: Delete one document
+                value:
+                  op: deleteOne
+                  resource: users
+                  params:
+                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+              
+              deleteMany:
+                summary: Delete multiple documents
+                value:
+                  op: deleteMany
+                  resource: users
+                  params:
+                    filter:
+                      status: "inactive"
+                      lastActiveAt: { $lt: "2023-01-01T00:00:00Z" }
       responses:
         '200':
           description: Success

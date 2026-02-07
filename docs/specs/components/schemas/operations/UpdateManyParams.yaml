@@ -1,0 +1,36 @@
+allOf:
+  - oneOf:
+      - type: object
+        required:
+          - ids
+        properties:
+          ids:
+            type: array
+            items:
+              type: string
+            description: Array of record IDs to update
+      - type: object
+        required:
+          - filter
+        properties:
+          filter:
+            $ref: '../Filter.yaml'
+  
+  - type: object
+    required:
+      - data
+    properties:
+      data:
+        type: object
+        description: Update data (JSON Merge Patch format)
+        additionalProperties: true
+        example:
+          status: "inactive"
+          updatedAt: "2024-01-01T00:00:00Z"
+      options:
+        type: object
+        properties:
+          upsert:
+            type: boolean
+            description: Create if not exists
+            default: false

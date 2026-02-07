@@ -1,0 +1,18 @@
+oneOf:
+  - type: object
+    description: Delete by ID
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Record ID
+        example: "01KETJHF08KEDW320XX6NP2CZ3"
+  
+  - type: object
+    description: Delete by filter
+    required:
+      - filter
+    properties:
+      filter:
+        $ref: '../Filter.yaml'

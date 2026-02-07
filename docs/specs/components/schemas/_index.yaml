@@ -17,13 +17,31 @@ FindParams:
   $ref: './operations/FindParams.yaml'
 FindOneParams:
   $ref: './operations/FindOneParams.yaml'
+FindManyParams:
+  $ref: './operations/FindManyParams.yaml'
+FindManyReferenceParams:
+  $ref: './operations/FindManyReferenceParams.yaml'
 InsertOneParams:
   $ref: './operations/InsertOneParams.yaml'
+InsertManyParams:
+  $ref: './operations/InsertManyParams.yaml'
 UpdateOneParams:
   $ref: './operations/UpdateOneParams.yaml'
+UpdateManyParams:
+  $ref: './operations/UpdateManyParams.yaml'
+DeleteOneParams:
+  $ref: './operations/DeleteOneParams.yaml'
+DeleteManyParams:
+  $ref: './operations/DeleteManyParams.yaml'
 
 # Response schemas
 FindResult:
   $ref: './responses/FindResult.yaml'
+InsertOneResult:
+  $ref: './responses/InsertOneResult.yaml'
+UpdateOneResult:
+  $ref: './responses/UpdateOneResult.yaml'
+DeleteOneResult:
+  $ref: './responses/DeleteOneResult.yaml'
 BulkOperationResult:
   $ref: './responses/BulkOperationResult.yaml'

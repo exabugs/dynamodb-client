@@ -1,0 +1,24 @@
+type: object
+description: deleteOne operation result
+required:
+  - id
+properties:
+  id:
+    type: string
+    description: Deleted record ID
+    example: "01KETJHF08KEDW320XX6NP2CZ3"
+  
+  consumedCapacity:
+    type: object
+    description: DynamoDB consumed capacity
+    properties:
+      readCapacityUnits:
+        type: number
+      writeCapacityUnits:
+        type: number
+
+example:
+  id: "01KETJHF08KEDW320XX6NP2CZ3"
+  consumedCapacity:
+    readCapacityUnits: 1
+    writeCapacityUnits: 1
