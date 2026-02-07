@@ -1,0 +1,75 @@
+openapi: 3.1.0
+info:
+  title: DynamoDB Client API
+  version: 1.3.4
+  description: |
+    MongoDB-like API for DynamoDB with shadow record support for efficient querying.
+    
+    This API provides a familiar MongoDB-style interface for interacting with DynamoDB,
+    including support for collections, documents, and complex queries.
+  contact:
+    name: DynamoDB Client Support
+    url: https://github.com/exabugs/dynamodb-client
+  license:
+    name: MIT
+    url: https://github.com/exabugs/dynamodb-client/blob/main/LICENSE
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Collections
+    description: Collection management operations
+  - name: Documents
+    description: Document CRUD operations
+  - name: Queries
+    description: Query and search operations
+
+paths:
+  # Collection operations
+  /collections:
+    $ref: './paths/collections/list.yaml'
+  /collections/{collectionName}:
+    $ref: './paths/collections/collection.yaml'
+  
+  # Document operations
+  /collections/{collectionName}/documents:
+    $ref: './paths/documents/create.yaml'
+  /collections/{collectionName}/documents/{documentId}:
+    $ref: './paths/documents/document.yaml'
+  /collections/{collectionName}/documents/bulk:
+    $ref: './paths/documents/bulk.yaml'
+  
+  # Query operations
+  /collections/{collectionName}/find:
+    $ref: './paths/queries/find.yaml'
+  /collections/{collectionName}/findOne:
+    $ref: './paths/queries/findOne.yaml'
+  /collections/{collectionName}/count:
+    $ref: './paths/queries/count.yaml'
+  /collections/{collectionName}/aggregate:
+    $ref: './paths/queries/aggregate.yaml'
+
+components:
+  securitySchemes:
+    IAMAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: AWS IAM authentication using Signature Version 4
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Records Lambda (BFF)
+
+  schemas:
+    $ref: './components/schemas/_index.yaml'
+
+security:
+  - IAMAuth: []
+  - BearerAuth: []

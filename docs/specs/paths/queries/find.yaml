@@ -1,0 +1,52 @@
+post:
+  tags:
+    - Queries
+  summary: ドキュメント検索
+  description: MongoDB風のクエリでドキュメントを検索
+  operationId: findDocuments
+  parameters:
+    - name: collectionName
+      in: path
+      required: true
+      schema:
+        type: string
+      description: コレクション名
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            filter:
+              type: object
+              description: 検索条件
+            limit:
+              type: integer
+              description: 取得件数
+              default: 100
+            skip:
+              type: integer
+              description: スキップ件数
+              default: 0
+  responses:
+    '200':
+      description: 成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [true]
+              data:
+                type: array
+                items:
+                  $ref: '../../components/schemas/Document.yaml'
+    '400':
+      description: バリデーションエラー
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/Error.yaml'

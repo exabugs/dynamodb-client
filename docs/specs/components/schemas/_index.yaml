@@ -1,0 +1,12 @@
+Document:
+  $ref: './Document.yaml'
+Collection:
+  $ref: './Collection.yaml'
+Query:
+  $ref: './Query.yaml'
+Filter:
+  $ref: './Filter.yaml'
+UpdateOperators:
+  $ref: './UpdateOperators.yaml'
+Error:
+  $ref: './Error.yaml'

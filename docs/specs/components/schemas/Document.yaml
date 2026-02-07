@@ -1,0 +1,18 @@
+type: object
+description: DynamoDBドキュメント（レコード）
+properties:
+  id:
+    type: string
+    description: ドキュメントID（ULID形式）
+    example: "01KETJHF08KEDW320XX6NP2CZ3"
+  createdAt:
+    type: string
+    format: date-time
+    description: 作成日時
+  updatedAt:
+    type: string
+    format: date-time
+    description: 更新日時
+additionalProperties: true
+required:
+  - id

@@ -1,0 +1,14 @@
+post:
+  tags:
+    - Queries
+  summary: count operation
+  operationId: countDocuments
+  parameters:
+    - name: collectionName
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: Success

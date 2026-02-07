@@ -1,0 +1,14 @@
+post:
+  tags:
+    - Queries
+  summary: aggregate operation
+  operationId: aggregateDocuments
+  parameters:
+    - name: collectionName
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: Success

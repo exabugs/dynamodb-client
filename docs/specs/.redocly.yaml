@@ -1,0 +1,26 @@
+apis:
+  main:
+    root: openapi.yaml
+
+lint:
+  extends:
+    - recommended
+  rules:
+    no-unused-components: warning
+    operation-operationId: error
+    operation-summary: error
+    operation-description: warning
+    tag-description: warning
+
+theme:
+  openapi:
+    generateCodeSamples:
+      languages:
+        - lang: curl
+        - lang: javascript
+        - lang: typescript
+        - lang: python
+
+resolve:
+  http:
+    headers: []
