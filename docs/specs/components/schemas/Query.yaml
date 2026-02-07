@@ -25,13 +25,8 @@ properties:
   
   pagination:
     type: object
-    description: Pagination parameters
+    description: Pagination parameters (DynamoDB cursor-based)
     properties:
-      page:
-        type: integer
-        minimum: 1
-        description: Page number (1-based)
-        example: 1
       perPage:
         type: integer
         minimum: 1
@@ -40,5 +35,5 @@ properties:
         example: 10
       nextToken:
         type: string
-        description: Next page token (Base64URL encoded)
+        description: Next page token (Base64URL encoded, from previous response)
         example: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"

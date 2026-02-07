@@ -29,9 +29,6 @@ properties:
   pagination:
     type: object
     properties:
-      page:
-        type: integer
-        minimum: 1
       perPage:
         type: integer
         minimum: 1

@@ -123,8 +123,8 @@ paths:
                       field: "createdAt"
                       order: "DESC"
                     pagination:
-                      page: 1
                       perPage: 10
+                      nextToken: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"
               
               findOne:
                 summary: Find one document by ID
