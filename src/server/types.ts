@@ -53,8 +53,6 @@ export interface FindParams {
   };
   /** ページネーション条件 */
   pagination?: {
-    /** ページ番号（1始まり） */
-    page?: number;
     /** 1ページあたりの件数（最大50件） */
     perPage?: number;
     /** 次ページトークン（Base64URL エンコード） */
@@ -89,7 +87,6 @@ export interface FindManyReferenceParams {
   };
   /** ページネーション条件 */
   pagination?: {
-    page?: number;
     perPage?: number;
     nextToken?: string;
   };
