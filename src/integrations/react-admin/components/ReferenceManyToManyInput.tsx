@@ -7,6 +7,16 @@
  * **重要**: このコンポーネントはフォーム保存時に自動的に中間テーブルを更新します。
  * DataProviderが自動的に処理するため、transform関数を書く必要はありません。
  *
+ * NOTE: react-adminの型定義による any の使用
+ *
+ * このファイルでは、react-adminのDataProviderとコンポーネントの型定義の制約により、
+ * 一部で any 型を使用しています。これはreact-adminの設計上の制約です。
+ *
+ * 実行時の型安全性は以下により確保されています：
+ * 1. DataProviderのgetListメソッドは中間テーブルのレコードを返す
+ * 2. cloneElementのpropsはreact-adminの標準プロパティ
+ * 3. 実際のデータ型は実行時に検証される
+ *
  * @example
  * ```typescript
  * <ReferenceManyToManyInput
@@ -19,6 +29,7 @@
  * </ReferenceManyToManyInput>
  * ```
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cloneElement, useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import { ReferenceArrayInput, useDataProvider, useNotify, useRecordContext } from 'react-admin';

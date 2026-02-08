@@ -94,9 +94,16 @@ async function processRecord<TAuthOptions = unknown>(
         await waitForRateLimit();
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    /**
+     * NOTE: スクリプトでのエラーハンドリング
+     *
+     * このスクリプトはメンテナンス用のツールであり、本番コードではありません。
+     * エラーメッセージの取得のために unknown 型から Error 型への変換を行っています。
+     */
     stats.failed++;
-    stats.errors.push({ id: recordId, error: error.message });
-    console.error(`  ✗ Failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    stats.errors.push({ id: recordId, error: errorMessage });
+    console.error(`  ✗ Failed: ${errorMessage}`);
   }
 }

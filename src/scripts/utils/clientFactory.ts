@@ -38,5 +38,12 @@ export async function createDynamoClientCollection(
     .db()
     .collection<{ id: string; [key: string]: unknown }>(resource);
 
+  /**
+   * NOTE: テストユーティリティでの型アサーション
+   *
+   * このファイルはテスト・スクリプト用のユーティリティであり、本番コードではありません。
+   * Collection型の柔軟性を保つため、型アサーションを使用しています。
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { client, collection: collection as any };
 }

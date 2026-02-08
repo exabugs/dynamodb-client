@@ -5,6 +5,7 @@ import { ConfigError } from '../../../shared/errors/index.js';
 import type { NearQuery } from '../../../shared/geohash/types.js';
 import { createLogger } from '../../../shared/index.js';
 import { getShadowConfig } from '../../shadow/index.js';
+import type { ShadowConfig } from '../../shadow/config.js';
 import type { FindParams } from '../../types.js';
 import { parseFilterField } from '../../utils/filter.js';
 import {
@@ -36,7 +37,7 @@ export function initializeFindConfig() {
  * @returns 正規化されたパラメータ
  */
 export function normalizeFindParams(
-  config: any,
+  config: ShadowConfig,
   resource: string,
   params: FindParams
 ): NormalizedFindParams {
@@ -132,7 +133,7 @@ export function matchesAllFilters(
   return parsedFilters.every((filter) => {
     const { field, operator } = filter.parsed;
     const recordValue = record[field];
-    const filterValue = filter.value as any;
+    const filterValue = filter.value;
 
     switch (operator) {
       case '$eq':
@@ -140,13 +141,33 @@ export function matchesAllFilters(
       case '$ne':
         return recordValue !== filterValue;
       case '$gt':
-        return recordValue != null && recordValue > (filterValue as any);
+        return (
+          recordValue != null &&
+          typeof recordValue === typeof filterValue &&
+          (typeof recordValue === 'number' || typeof recordValue === 'string') &&
+          recordValue > (filterValue as number | string)
+        );
       case '$gte':
-        return recordValue != null && recordValue >= (filterValue as any);
+        return (
+          recordValue != null &&
+          typeof recordValue === typeof filterValue &&
+          (typeof recordValue === 'number' || typeof recordValue === 'string') &&
+          recordValue >= (filterValue as number | string)
+        );
       case '$lt':
-        return recordValue != null && recordValue < (filterValue as any);
+        return (
+          recordValue != null &&
+          typeof recordValue === typeof filterValue &&
+          (typeof recordValue === 'number' || typeof recordValue === 'string') &&
+          recordValue < (filterValue as number | string)
+        );
       case '$lte':
-        return recordValue != null && recordValue <= (filterValue as any);
+        return (
+          recordValue != null &&
+          typeof recordValue === typeof filterValue &&
+          (typeof recordValue === 'number' || typeof recordValue === 'string') &&
+          recordValue <= (filterValue as number | string)
+        );
       case '$in':
         return Array.isArray(filterValue) && filterValue.includes(recordValue);
       case '$nin':

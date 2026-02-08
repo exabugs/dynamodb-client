@@ -87,16 +87,69 @@ export interface DynamoQuery {
  * //   conditions: [
  * //     { field: 'status', operator: 'eq', value: 'active' },
  * //     { field: 'priority', operator: 'gte', value: 5 }
- * //   ],
- * //   logicalOperator: 'OR'
- * // }
+/**
+ * MongoDB風のフィルタ条件をDynamoDBクエリに変換する
+ *
+ * ## 変換例
+ *
+ * ### 単純な等価条件
+ * ```typescript
+ * // Input
+ * { status: 'active' }
+ *
+ * // Output
+ * {
+ *   pk: 'users',
+ *   conditions: [
+ *     { field: 'status', operator: 'eq', value: 'active' }
+ *   ]
+ * }
+ * ```
+ *
+ * ### 演算子を使用した条件
+ * ```typescript
+ * // Input
+ * { age: { $gte: 18, $lt: 65 } }
+ *
+ * // Output
+ * {
+ *   pk: 'users',
+ *   conditions: [
+ *     { field: 'age', operator: 'gte', value: 18 },
+ *     { field: 'age', operator: 'lt', value: 65 }
+ *   ]
+ * }
+ * ```
+ *
+ * ### OR条件
+ * ```typescript
+ * // Input
+ * {
+ *   $or: [
+ *     { status: 'active' },
+ *     { status: 'pending' }
+ *   ]
+ * }
+ *
+ * // Output
+ * {
+ *   pk: 'users',
+ *   conditions: [
+ *     { field: 'status', operator: 'eq', value: 'active' },
+ *     { field: 'status', operator: 'eq', value: 'pending' }
+ *   ],
+ *   logicalOperator: 'OR'
+ * }
  * ```
  *
  * @param collection - コレクション名（リソース名）
  * @param filter - MongoDB風のフィルタ条件
  * @returns DynamoDBクエリ
  */
-export function convertFilterToDynamo<T = any>(collection: string, filter: Filter<T>): DynamoQuery {
+export function convertFilterToDynamo<T = Record<string, unknown>>(
+  collection: string,
+  filter: Filter<T>
+): DynamoQuery {
   const conditions: DynamoCondition[] = [];
   let logicalOperator: 'AND' | 'OR' = 'AND';
 
@@ -140,7 +193,9 @@ export function convertFilterToDynamo<T = any>(collection: string, filter: Filte
       for (const [op, opValue] of Object.entries(value)) {
         if (opValue === undefined) continue;
 
-        const operator = mapOperatorToDynamo(op as keyof FilterOperators<any>);
+        const operator = mapOperatorToDynamo(
+          op as keyof FilterOperators<Record<string, unknown>>
+        );
         conditions.push({
           field: key,
           operator,
@@ -170,7 +225,7 @@ export function convertFilterToDynamo<T = any>(collection: string, filter: Filte
  * @param value - チェック対象の値
  * @returns FilterOperatorsオブジェクトの場合true
  */
-function isFilterOperators(value: unknown): value is FilterOperators<any> {
+function isFilterOperators(value: unknown): value is FilterOperators<Record<string, unknown>> {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -199,7 +254,9 @@ function isFilterOperators(value: unknown): value is FilterOperators<any> {
  * @param operator - MongoDB風の演算子（$プレフィックス付き）
  * @returns DynamoDB演算子
  */
-function mapOperatorToDynamo(operator: keyof FilterOperators<any>): DynamoComparisonOperator {
+function mapOperatorToDynamo(
+  operator: keyof FilterOperators<Record<string, unknown>>
+): DynamoComparisonOperator {
   switch (operator) {
     case '$eq':
       return 'eq';

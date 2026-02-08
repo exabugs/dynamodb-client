@@ -78,7 +78,7 @@ export function formatBoolean(value: boolean | null | undefined): string {
  * @param value - Array (null/undefined allowed)
  * @returns JSON string or empty string
  */
-export function formatArray(value: any[] | null | undefined): string {
+export function formatArray(value: unknown[] | null | undefined): string {
   // Return empty string for null/undefined
   if (value === null || value === undefined) {
     return '';
@@ -117,10 +117,7 @@ export function formatObject(value: object | null | undefined): string {
  * @param value - Value to format (null/undefined allowed)
  * @returns Formatted string
  */
-export function formatFieldValue(
-  type: ShadowFieldType,
-  value: any
-): string {
+export function formatFieldValue(type: ShadowFieldType, value: unknown): string {
   switch (type) {
     case 'string':
       // For string type, treat null/undefined as empty string
@@ -135,7 +132,7 @@ export function formatFieldValue(
     case 'boolean':
       return formatBoolean(value as boolean | null | undefined);
     case 'array':
-      return formatArray(value as any[] | null | undefined);
+      return formatArray(value as unknown[] | null | undefined);
     case 'object':
       return formatObject(value as object | null | undefined);
     default:
@@ -179,7 +176,7 @@ export function formatFieldValue(
  */
 export function generateShadowSK(
   fieldName: string,
-  value: any,
+  value: unknown,
   recordId: string,
   type: ShadowFieldType = 'string'
 ): string {

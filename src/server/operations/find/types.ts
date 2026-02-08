@@ -42,7 +42,7 @@ export interface FindContext {
   resource: string;
   params: FindParams;
   requestId: string;
-  shadowConfig: any;
+  shadowConfig: Record<string, unknown>;
   sort: {
     field: string;
     order: 'ASC' | 'DESC';
@@ -58,7 +58,7 @@ export interface FindContext {
  * クエリ実行結果
  */
 export interface QueryExecutionResult {
-  items: any[];
+  items: Record<string, unknown>[];
   pageInfo: {
     hasNextPage: boolean;
     hasPreviousPage: boolean;

@@ -55,17 +55,17 @@ export async function executeOperation(request: ApiRequest, requestId: string): 
   // MongoDB風のparamsを内部形式に変換してから各ハンドラーを呼び出す
   switch (op as ApiOperation) {
     case 'find': {
-      const internalParams = convertFindParams(request.params as any);
+      const internalParams = convertFindParams(request.params as Record<string, unknown>);
       return await handleFind(resource, internalParams, requestId);
     }
 
     case 'findOne': {
-      const internalParams = convertFindOneParams(request.params as any);
+      const internalParams = convertFindOneParams(request.params as Record<string, unknown>);
       return await handleFindOne(resource, internalParams, requestId);
     }
 
     case 'findMany': {
-      const internalParams = convertFindManyParams(request.params as any);
+      const internalParams = convertFindManyParams(request.params as Record<string, unknown>);
       return await handleFindMany(resource, internalParams, requestId);
     }
 
@@ -77,32 +77,32 @@ export async function executeOperation(request: ApiRequest, requestId: string): 
       );
 
     case 'insertOne': {
-      const internalParams = convertInsertOneParams(request.params as any);
+      const internalParams = convertInsertOneParams(request.params as Record<string, unknown>);
       return await handleInsertOne(resource, internalParams, requestId);
     }
 
     case 'updateOne': {
-      const internalParams = convertUpdateOneParams(request.params as any);
+      const internalParams = convertUpdateOneParams(request.params as Record<string, unknown>);
       return await handleUpdateOne(resource, internalParams, requestId);
     }
 
     case 'updateMany': {
-      const internalParams = convertUpdateManyParams(request.params as any);
+      const internalParams = convertUpdateManyParams(request.params as Record<string, unknown>);
       return await handleUpdateMany(resource, internalParams, requestId);
     }
 
     case 'deleteOne': {
-      const internalParams = convertDeleteOneParams(request.params as any);
+      const internalParams = convertDeleteOneParams(request.params as Record<string, unknown>);
       return await handleDeleteOne(resource, internalParams, requestId);
     }
 
     case 'deleteMany': {
-      const internalParams = convertDeleteManyParams(request.params as any);
+      const internalParams = convertDeleteManyParams(request.params as Record<string, unknown>);
       return await handleDeleteMany(resource, internalParams, requestId);
     }
 
     case 'insertMany': {
-      const internalParams = convertInsertManyParams(request.params as any);
+      const internalParams = convertInsertManyParams(request.params as Record<string, unknown>);
       return await handleInsertMany(resource, internalParams, requestId);
     }
 

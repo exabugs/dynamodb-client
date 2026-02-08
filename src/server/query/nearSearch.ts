@@ -239,7 +239,7 @@ export async function executeNearSearch<T extends Record<string, unknown>>(
       } as T & DocumentWithDistance;
     })
     .filter((doc): doc is T & DocumentWithDistance => doc !== null)
-    .sort((a, b) => a.__distance! - b.__distance!)
+    .sort((a, b) => (a.__distance ?? 0) - (b.__distance ?? 0))
     .slice(0, limit);
 
   return {

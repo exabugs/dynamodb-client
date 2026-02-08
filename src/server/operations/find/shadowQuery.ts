@@ -157,7 +157,10 @@ async function executeShadowRecordQuery(
   optimizableFilter: OptimizableFilter | undefined,
   costTracker: CostTracker,
   _requestId: string
-): Promise<any> {
+): Promise<{
+  Items?: Record<string, unknown>[];
+  LastEvaluatedKey?: Record<string, string>;
+}> {
   const dbClient = getDBClient();
   const tableName = getTableName();
 
@@ -321,7 +324,7 @@ function encodeValueForShadowSK(value: unknown, type?: string): string {
  * @param shadowRecords - シャドウレコードの配列
  * @returns レコードIDの配列
  */
-function extractRecordIds(shadowRecords: any[]): string[] {
+function extractRecordIds(shadowRecords: Record<string, unknown>[]): string[] {
   return shadowRecords
     .map((record) => {
       const sk = record.SK as string;
@@ -346,7 +349,7 @@ async function fetchMainRecords(
   recordIds: string[],
   costTracker: CostTracker,
   requestId: string
-): Promise<any[]> {
+): Promise<Record<string, unknown>[]> {
   const dbClient = getDBClient();
   const tableName = getTableName();
 

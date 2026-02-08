@@ -14,7 +14,7 @@ import {
   getTableName,
 } from '../../utils/dynamodb.js';
 import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
-import type { FindResult, NormalizedFindParams } from './types.js';
+import type { FindResult, NormalizedFindParams, ParsedFilter } from './types.js';
 import { matchesAllFilters } from './utils.js';
 
 const logger = createLogger({
@@ -128,7 +128,7 @@ async function executeAllRecordsQuery(
   sort: { field: string; order: 'ASC' | 'DESC' },
   perPage: number,
   nextToken: string | undefined,
-  parsedFilters: any[],
+  parsedFilters: ParsedFilter[],
   requestId: string
 ): Promise<FindResult> {
   const dbClient = getDBClient();
