@@ -207,7 +207,7 @@ describe('Lambda Handler', () => {
         operation: 'insertOne',
         collection: 'articles',
         params: {
-          document: {
+          data: {
             title: 'テスト記事',
             content: '内容',
             status: 'draft',
@@ -218,7 +218,7 @@ describe('Lambda Handler', () => {
       const parsed = JSON.parse(body);
       expect(parsed.operation).toBe('insertOne');
       expect(parsed.collection).toBe('articles');
-      expect(parsed.params.document).toEqual({
+      expect(parsed.params.data).toEqual({
         title: 'テスト記事',
         content: '内容',
         status: 'draft',
@@ -266,7 +266,7 @@ describe('Lambda Handler', () => {
         operation: 'insertMany',
         collection: 'articles',
         params: {
-          documents: [
+          data: [
             { title: '記事1', content: '内容1' },
             { title: '記事2', content: '内容2' },
           ],
@@ -276,7 +276,7 @@ describe('Lambda Handler', () => {
       const parsed = JSON.parse(body);
       expect(parsed.operation).toBe('insertMany');
       expect(parsed.collection).toBe('articles');
-      expect(parsed.params.documents).toHaveLength(2);
+      expect(parsed.params.data).toHaveLength(2);
     });
 
     it('updateMany 操作のリクエスト形式', () => {

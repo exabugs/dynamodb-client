@@ -110,7 +110,7 @@ describe('operationDispatcher', () => {
       const request: ApiRequest = {
         op: 'insertOne',
         resource: 'users',
-        params: { document: { name: 'Test User' } },
+        params: { data: { name: 'Test User' } },
       };
 
       const result = await executeOperation(request, 'test-request-id');
@@ -177,7 +177,7 @@ describe('operationDispatcher', () => {
         op: 'insertMany',
         resource: 'users',
         params: {
-          documents: [{ name: 'User 1' }, { name: 'User 2' }],
+          data: [{ name: 'User 1' }, { name: 'User 2' }],
         },
       };
 

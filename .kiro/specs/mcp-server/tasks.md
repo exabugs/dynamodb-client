@@ -1,10 +1,21 @@
 # DynamoDB Client MCP Server - タスクリスト
 
+## 重要な方針変更
+
+**OpenAPI仕様をSingle Source of Truthとして、MCPツールを自動生成する方式に変更しました。**
+
+- OpenAPI仕様（`docs/specs/openapi.yaml`）がすべてのツール定義の元となります
+- MCPツール定義は`make generate-mcp-tools`コマンドで自動生成されます
+- **手動でツールファイルを編集しないでください**（自動生成時に上書きされます）
+- ツールを追加・変更する場合は、OpenAPI仕様を編集してから`make generate-mcp-tools`を実行してください
+
 ## 1. 環境準備
 
 - [x] 1.1 MCP SDK依存関係を追加
 - [x] 1.2 tsconfig.mcp.jsonを作成
 - [x] 1.3 package.jsonにbinとexportsを追加
+- [x] 1.4 自動生成スクリプトを作成（scripts/generate-mcp-tools.ts）
+- [x] 1.5 Makefileにgenerate-mcp-toolsターゲットを追加
 
 ## 2. MCPサーバー基盤実装
 
@@ -15,43 +26,75 @@
 
 ## 3. Adapter Layer実装
 
-- [ ] 3.1 MCPAdapterクラスを実装（src/mcp/adapter.ts）
-- [ ] 3.2 Lambda操作呼び出しロジックを実装
-- [ ] 3.3 エラーハンドリングを実装
-- [ ] 3.4 リクエストID生成を実装
+- [x] 3.1 MCPAdapterクラスを実装（src/mcp/adapter.ts）
+- [x] 3.2 Lambda操作呼び出しロジックを実装
+- [x] 3.3 エラーハンドリングを実装
+- [x] 3.4 リクエストID生成を実装
+- [x] 3.5 キャメルケース→スネークケース変換を実装
 
 ## 4. MCPツール実装（P0: 必須）
 
-- [ ] 4.1 dynamodb_findツールを実装
-  - [ ] 4.1.1 ツール定義（src/mcp/tools/find.ts）
-  - [ ] 4.1.2 inputSchemaを定義
-  - [ ] 4.1.3 handleFindとの統合
-  - [ ] 4.1.4 ユニットテスト
-  - [ ] 4.1.5 統合テスト
+**注意**: ツール定義は`make generate-mcp-tools`で自動生成されます。テストのみ実装してください。
 
-- [ ] 4.2 dynamodb_find_oneツールを実装
-  - [ ] 4.2.1 ツール定義（src/mcp/tools/findOne.ts）
-  - [ ] 4.2.2 inputSchemaを定義
-  - [ ] 4.2.3 handleFindOneとの統合
-  - [ ] 4.2.4 ユニットテスト
-  - [ ] 4.2.5 統合テスト
+- [x] 4.1 dynamodb_findツールのテストを実装
+  - [x] 4.1.1 ツール定義（自動生成済み: src/mcp/tools/find.ts）
+  - [x] 4.1.2 inputSchema（自動生成済み）
+  - [x] 4.1.3 MCPAdapter統合（完了済み）
+  - [x] 4.1.4 ユニットテスト（__tests__/mcp/tools/find.test.ts）
+  - [x] 4.1.5 統合テスト（__tests__/mcp/integration/find.test.ts）
 
-- [ ] 4.3 dynamodb_insert_oneツールを実装
-  - [ ] 4.3.1 ツール定義（src/mcp/tools/insertOne.ts）
-  - [ ] 4.3.2 inputSchemaを定義
-  - [ ] 4.3.3 handleInsertOneとの統合
-  - [ ] 4.3.4 ユニットテスト
-  - [ ] 4.3.5 統合テスト
+- [x] 4.2 dynamodb_findOneツールのテストを実装
+  - [x] 4.2.1 ツール定義（自動生成済み: src/mcp/tools/findOne.ts）
+  - [x] 4.2.2 inputSchema（自動生成済み）
+  - [x] 4.2.3 MCPAdapter統合（完了済み）
+  - [x] 4.2.4 ユニットテスト（__tests__/mcp/tools/findOne.test.ts）
+  - [x] 4.2.5 統合テスト（__tests__/mcp/integration/findOne.test.ts）
+
+- [x] 4.3 dynamodb_insertOneツールのテストを実装
+  - [x] 4.3.1 ツール定義（自動生成済み: src/mcp/tools/insertOne.ts）
+  - [x] 4.3.2 inputSchema（自動生成済み）
+  - [x] 4.3.3 MCPAdapter統合（完了済み）
+  - [x] 4.3.4 ユニットテスト（__tests__/mcp/tools/insertOne.test.ts）
+  - [x] 4.3.5 統合テスト（__tests__/mcp/integration/insertOne.test.ts）
 
 ## 5. MCPツール実装（P1: 重要）
 
-- [ ] 5.1 dynamodb_find_manyツールを実装
-- [ ] 5.2 dynamodb_find_many_referenceツールを実装
-- [ ] 5.3 dynamodb_insert_manyツールを実装
-- [ ] 5.4 dynamodb_update_oneツールを実装
-- [ ] 5.5 dynamodb_update_manyツールを実装
-- [ ] 5.6 dynamodb_delete_oneツールを実装
-- [ ] 5.7 dynamodb_delete_manyツールを実装
+**注意**: ツール定義は`make generate-mcp-tools`で自動生成されます。テストのみ実装してください。
+
+- [ ] 5.1 dynamodb_findManyツールのテストを実装
+  - [x] 5.1.1 ツール定義（自動生成済み: src/mcp/tools/findMany.ts）
+  - [ ] 5.1.2 ユニットテスト
+  - [ ] 5.1.3 統合テスト
+
+- [ ] 5.2 dynamodb_findManyReferenceツールのテストを実装
+  - [x] 5.2.1 ツール定義（自動生成済み: src/mcp/tools/findManyReference.ts）
+  - [ ] 5.2.2 ユニットテスト
+  - [ ] 5.2.3 統合テスト
+
+- [ ] 5.3 dynamodb_insertManyツールのテストを実装
+  - [x] 5.3.1 ツール定義（自動生成済み: src/mcp/tools/insertMany.ts）
+  - [ ] 5.3.2 ユニットテスト
+  - [ ] 5.3.3 統合テスト
+
+- [ ] 5.4 dynamodb_updateOneツールのテストを実装
+  - [x] 5.4.1 ツール定義（自動生成済み: src/mcp/tools/updateOne.ts）
+  - [ ] 5.4.2 ユニットテスト
+  - [ ] 5.4.3 統合テスト
+
+- [ ] 5.5 dynamodb_updateManyツールのテストを実装
+  - [x] 5.5.1 ツール定義（自動生成済み: src/mcp/tools/updateMany.ts）
+  - [ ] 5.5.2 ユニットテスト
+  - [ ] 5.5.3 統合テスト
+
+- [ ] 5.6 dynamodb_deleteOneツールのテストを実装
+  - [x] 5.6.1 ツール定義（自動生成済み: src/mcp/tools/deleteOne.ts）
+  - [ ] 5.6.2 ユニットテスト
+  - [ ] 5.6.3 統合テスト
+
+- [ ] 5.7 dynamodb_deleteManyツールのテストを実装
+  - [x] 5.7.1 ツール定義（自動生成済み: src/mcp/tools/deleteMany.ts）
+  - [ ] 5.7.2 ユニットテスト
+  - [ ] 5.7.3 統合テスト
 
 ## 6. テスト
 
@@ -90,12 +133,81 @@
 
 ## タスク詳細
 
+### OpenAPI駆動の開発ワークフロー
+
+このプロジェクトでは、OpenAPI仕様をSingle Source of Truthとして使用します。
+
+#### ツールを追加・変更する場合
+
+1. **OpenAPI仕様を編集**
+   ```bash
+   vim docs/specs/openapi.yaml
+   ```
+   
+   `paths['/'].post.requestBody.content['application/json'].examples`セクションに新しい操作を追加します：
+   
+   ```yaml
+   examples:
+     newOperation:
+       summary: 新しい操作の説明
+       value:
+         op: newOperation
+         resource: users
+         params:
+           # パラメータ例
+           filter: { status: "active" }
+   ```
+
+2. **MCPツール定義を自動生成**
+   ```bash
+   make generate-mcp-tools
+   # または
+   npm run generate-mcp-tools
+   ```
+   
+   これにより、以下のファイルが自動生成されます：
+   - `src/mcp/tools/newOperation.ts` - ツール定義
+   - `src/mcp/tools/index.ts` - ツールエクスポート（更新）
+
+3. **テストを実装**
+   - ユニットテスト: `__tests__/mcp/tools/newOperation.test.ts`
+   - 統合テスト: `__tests__/mcp/integration/newOperation.test.ts`
+
+4. **動作確認**
+   ```bash
+   npm test
+   npm run lint
+   npm run build
+   ```
+
+#### 重要な注意事項
+
+- **自動生成されたファイルは手動で編集しないでください**
+- 各ツールファイルには以下の警告コメントがあります：
+  ```typescript
+  /**
+   * このファイルは scripts/generate-mcp-tools.ts によって自動生成されます。
+   * 手動で編集しないでください。
+   */
+  ```
+- ツール定義を変更する場合は、必ずOpenAPI仕様を編集してから再生成してください
+
 ### 1.1 MCP SDK依存関係を追加
 
 ```bash
 cd dynamodb-client
 npm install @modelcontextprotocol/sdk
 ```
+
+### 1.4 自動生成スクリプトを作成
+
+`scripts/generate-mcp-tools.ts`は以下の処理を行います：
+
+1. `docs/specs/openapi.yaml`を読み込む
+2. `examples`セクションから各操作を抽出
+3. 各操作のパラメータからJSON Schemaを生成
+4. TypeScriptのツール定義ファイルを生成
+5. `src/mcp/tools/index.ts`を更新
 
 ### 2.1 MCPサーバークラスを実装
 
@@ -147,46 +259,64 @@ export class DynamoDBMCPServer {
 }
 ```
 
-### 4.1.1 dynamodb_findツール定義
+### 3.5 キャメルケース→スネークケース変換を実装
+
+MCPAdapterは、MCPツール名（例: `dynamodb_findOne`）を以下のように処理します：
+
+1. プレフィックス除去: `dynamodb_findOne` → `findOne`
+2. スネークケース変換（検証用）: `findOne` → `find_one`
+3. 有効な操作名リストと照合
+4. キャメルケース変換（API呼び出し用）: `find_one` → `findOne`
+
+これにより、MCPツール名とRPC API操作名の両方をサポートします。
+
+### 4.x.4 ユニットテストの実装パターン
+
+各ツールのユニットテストは以下をテストします：
 
 ```typescript
-// src/mcp/tools/find.ts
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+// __tests__/mcp/tools/[operation].test.ts
+describe('[operation]Tool', () => {
+  it('正しいツール名を持つ', () => {
+    expect([operation]Tool.name).toBe('dynamodb_[operation]');
+  });
 
-export const findTool: Tool = {
-  name: 'dynamodb_find',
-  description: 'DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      collection: {
-        type: 'string',
-        description: 'コレクション名（例: venues, users）',
-      },
-      filter: {
-        type: 'object',
-        description: 'フィルター条件（MongoDB形式）',
-      },
-      sort: {
-        type: 'object',
-        description: 'ソート条件',
-        properties: {
-          field: { type: 'string' },
-          order: { type: 'string', enum: ['ASC', 'DESC'] },
-        },
-      },
-      pagination: {
-        type: 'object',
-        description: 'ページネーション設定',
-        properties: {
-          perPage: { type: 'number' },
-          nextToken: { type: 'string' },
-        },
-      },
-    },
-    required: ['collection'],
-  },
-};
+  it('説明文が日本語である', () => {
+    expect([operation]Tool.description).toContain('DynamoDB');
+  });
+
+  it('inputSchemaが正しく定義されている', () => {
+    expect([operation]Tool.inputSchema.type).toBe('object');
+    expect([operation]Tool.inputSchema.properties).toHaveProperty('collection');
+  });
+
+  // パラメータ固有のテスト
+  // ...
+});
+```
+
+### 4.x.5 統合テストの実装パターン
+
+各ツールの統合テストは以下をテストします：
+
+```typescript
+// __tests__/mcp/integration/[operation].test.ts
+describe('MCPAdapter - [operation]', () => {
+  it('正常系: [operation]が成功する', async () => {
+    // DynamoDBクライアントをモック
+    // MCPAdapterを初期化
+    // executeTool()を呼び出し
+    // 結果を検証
+  });
+
+  it('異常系: collectionパラメータが必須', async () => {
+    // collectionなしで呼び出し
+    // MCPErrorがスローされることを確認
+  });
+
+  // その他のエッジケース
+  // ...
+});
 ```
 
 ## 完了条件

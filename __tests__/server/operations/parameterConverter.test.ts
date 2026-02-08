@@ -178,9 +178,9 @@ describe('parameterConverter', () => {
   });
 
   describe('convertInsertOneParams', () => {
-    it('documentを使用してinsertOneパラメータを変換できる', () => {
+    it('dataを使用してinsertOneパラメータを変換できる', () => {
       const result = convertInsertOneParams({
-        document: { name: 'Alice', email: 'alice@example.com' },
+        data: { name: 'Alice', email: 'alice@example.com' },
       });
 
       expect(result).toEqual({
@@ -188,10 +188,10 @@ describe('parameterConverter', () => {
       });
     });
 
-    it('documentが存在しない場合はエラーをスローする', () => {
+    it('dataが存在しない場合はエラーをスローする', () => {
       expect(() => {
         convertInsertOneParams({});
-      }).toThrow('insertOne requires document');
+      }).toThrow('insertOne requires data');
     });
   });
 
@@ -378,9 +378,9 @@ describe('parameterConverter', () => {
   });
 
   describe('convertInsertManyParams', () => {
-    it('documentsを使用してinsertManyパラメータを変換できる', () => {
+    it('dataを使用してinsertManyパラメータを変換できる', () => {
       const result = convertInsertManyParams({
-        documents: [
+        data: [
           { name: 'Alice', email: 'alice@example.com' },
           { name: 'Bob', email: 'bob@example.com' },
         ],
@@ -394,10 +394,10 @@ describe('parameterConverter', () => {
       });
     });
 
-    it('documentsが存在しない場合はエラーをスローする', () => {
+    it('dataが存在しない場合はエラーをスローする', () => {
       expect(() => {
         convertInsertManyParams({});
-      }).toThrow('insertMany requires documents');
+      }).toThrow('insertMany requires data');
     });
   });
 });

@@ -54,14 +54,14 @@ interface MongoUpdateParams extends MongoFilterParams {
  * MongoDB風のドキュメントパラメータ
  */
 interface MongoDocumentParams {
-  document?: Record<string, unknown>;
+  data?: Record<string, unknown>;
 }
 
 /**
  * MongoDB風の複数ドキュメントパラメータ
  */
 interface MongoDocumentsParams {
-  documents?: Array<Record<string, unknown>>;
+  data?: Array<Record<string, unknown>>;
 }
 
 /**
@@ -149,14 +149,14 @@ export function convertFindManyParams(mongoParams: MongoFilterParams): FindManyP
  *
  * @param mongoParams - MongoDB風のinsertOneパラメータ
  * @returns 内部形式のinsertOneパラメータ
- * @throws {Error} documentが指定されていない場合
+ * @throws {Error} dataが指定されていない場合
  */
 export function convertInsertOneParams(mongoParams: MongoDocumentParams): InsertOneParams {
-  if (!mongoParams.document) {
-    throw new Error('insertOne requires document');
+  if (!mongoParams.data) {
+    throw new Error('insertOne requires data');
   }
   return {
-    data: mongoParams.document,
+    data: mongoParams.data,
   };
 }
 
@@ -268,13 +268,13 @@ export function convertDeleteManyParams(mongoParams: MongoFilterParams): DeleteM
  *
  * @param mongoParams - MongoDB風のinsertManyパラメータ
  * @returns 内部形式のinsertManyパラメータ
- * @throws {Error} documentsが指定されていない場合
+ * @throws {Error} dataが指定されていない場合
  */
 export function convertInsertManyParams(mongoParams: MongoDocumentsParams): InsertManyParams {
-  if (!mongoParams.documents) {
-    throw new Error('insertMany requires documents');
+  if (!mongoParams.data) {
+    throw new Error('insertMany requires data');
   }
   return {
-    data: mongoParams.documents,
+    data: mongoParams.data,
   };
 }

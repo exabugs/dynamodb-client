@@ -1,4 +1,4 @@
-.PHONY: help build test lint clean docs-bundle docs-validate docs-preview docs-build docs-clean
+.PHONY: help build test lint clean docs-bundle docs-validate docs-preview docs-build docs-clean generate-mcp-tools
 
 help:
 	@echo "DynamoDB Client - Makefile"
@@ -8,6 +8,9 @@ help:
 	@echo "  make test              - テストを実行"
 	@echo "  make lint              - Lintを実行"
 	@echo "  make clean             - ビルド成果物を削除"
+	@echo ""
+	@echo "=== MCP ==="
+	@echo "  make generate-mcp-tools - OpenAPI仕様からMCPツール定義を生成"
 	@echo ""
 	@echo "=== ドキュメント ==="
 	@echo "  make docs-bundle       - OpenAPI仕様を結合"
@@ -35,6 +38,17 @@ lint:
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf dist coverage
+
+# ========================================
+# MCP
+# ========================================
+
+generate-mcp-tools:
+	@echo "Generating MCP tools from OpenAPI specification..."
+	@npm run generate-mcp-tools
+	@echo "Formatting generated files..."
+	@npm run lint -- --fix || true
+	@echo "✨ MCP tools generated successfully!"
 
 # ========================================
 # ドキュメント
