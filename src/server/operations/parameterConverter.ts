@@ -34,6 +34,7 @@ interface MongoFilterParams {
   filter?: {
     id?: string | { $in?: string[] };
   };
+  ids?: string[]; // MCP用: 直接IDリストを指定
 }
 
 /**
@@ -124,12 +125,16 @@ export function convertFindOneParams(mongoParams: MongoFilterParams): FindOnePar
  *
  * @param mongoParams - MongoDB風のfindManyパラメータ
  * @returns 内部形式のfindManyパラメータ
- * @throws {Error} filterが指定されていない場合
  */
 export function convertFindManyParams(mongoParams: MongoFilterParams): FindManyParams {
+  // MCP用: idsが直接指定されている場合
+  if (mongoParams.ids !== undefined) {
+    return { ids: mongoParams.ids };
+  }
+
   // filterが存在しない場合はエラー
   if (!mongoParams.filter) {
-    throw new Error('findMany requires filter');
+    throw new Error('findMany requires either ids or filter');
   }
 
   const idFilter = mongoParams.filter.id;
@@ -168,11 +173,6 @@ export function convertInsertOneParams(mongoParams: MongoDocumentParams): Insert
  * @throws {Error} idまたはfilterが指定されていない場合
  */
 export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOneParams {
-  // filterが存在しない場合はエラー
-  if (!mongoParams.filter) {
-    throw new Error('updateOne requires filter');
-  }
-
   // 更新データを抽出（$set と $setOnInsert を両方含める）
   let updateData: Record<string, unknown>;
 
@@ -186,6 +186,20 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
     }
   } else {
     updateData = {};
+  }
+
+  // MCPツールから直接idが指定されている場合（優先）
+  if (typeof (mongoParams as any).id === 'string') {
+    return {
+      id: (mongoParams as any).id,
+      data: updateData,
+      options: mongoParams.options,
+    };
+  }
+
+  // filterが存在しない場合はエラー
+  if (!mongoParams.filter) {
+    throw new Error('updateOne requires filter');
   }
 
   // filter.idが存在する場合はidとして使用（後方互換性）
@@ -241,6 +255,12 @@ export function convertUpdateManyParams(mongoParams: MongoUpdateParams): UpdateM
  * @throws {Error} idが指定されていない場合
  */
 export function convertDeleteOneParams(mongoParams: MongoFilterParams): DeleteOneParams {
+  // MCPツールから直接idが指定されている場合（優先）
+  if (typeof (mongoParams as any).id === 'string') {
+    return { id: (mongoParams as any).id };
+  }
+
+  // filter.idから取得（後方互換性）
   const id = typeof mongoParams.filter?.id === 'string' ? mongoParams.filter.id : undefined;
   if (!id) {
     throw new Error('deleteOne requires filter.id');

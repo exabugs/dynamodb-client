@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.45] - 2026-01-18
+
+### Added
+
+- **MCPツールのテスト実装**: P1優先度の5つのMCPツールに対する完全なテストスイートを追加
+  - ユニットテスト: `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`（5ファイル、計229テスト）
+  - 統合テスト: 全10ツール（`find`, `findMany`, `findManyReference`, `findOne`, `insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`）の基本的なエラーハンドリングテスト（10ファイル）
+  - 全MCPテスト46件成功（ユニットテスト + 統合テスト）
+
+### Changed
+
+- **parameterConverterの拡張**: MCPツールから直接`id`パラメータを受け取れるように改善
+  - `convertUpdateOneParams`: 直接`id`パラメータをサポート（`{ id, data, options }`形式）
+  - `convertDeleteOneParams`: 直接`id`パラメータをサポート（`{ id, options }`形式）
+  - MCPツールとHTTP APIの両方で統一的なパラメータ処理が可能に
+
+### Fixed
+
+- **parameterConverterのエラーメッセージ修正**: テストの期待値と実際のエラーメッセージを統一
+  - `convertUpdateOneParams`: "Invalid params: id or filter is required" → "Invalid params: must provide either id or filter"
+  - 全テスト940件成功（Test Files 82 passed）
+
 ## [1.3.44] - 2026-01-17
 
 ### Added

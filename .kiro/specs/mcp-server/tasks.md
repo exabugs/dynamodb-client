@@ -61,40 +61,40 @@
 
 **注意**: ツール定義は`make generate-mcp-tools`で自動生成されます。テストのみ実装してください。
 
-- [ ] 5.1 dynamodb_findManyツールのテストを実装
+- [x] 5.1 dynamodb_findManyツールのテストを実装
   - [x] 5.1.1 ツール定義（自動生成済み: src/mcp/tools/findMany.ts）
-  - [ ] 5.1.2 ユニットテスト
-  - [ ] 5.1.3 統合テスト
+  - [x] 5.1.2 ユニットテスト
+  - [x] 5.1.3 統合テスト
 
-- [ ] 5.2 dynamodb_findManyReferenceツールのテストを実装
+- [x] 5.2 dynamodb_findManyReferenceツールのテストを実装
   - [x] 5.2.1 ツール定義（自動生成済み: src/mcp/tools/findManyReference.ts）
-  - [ ] 5.2.2 ユニットテスト
-  - [ ] 5.2.3 統合テスト
+  - [x] 5.2.2 ユニットテスト
+  - [x] 5.2.3 統合テスト
 
-- [ ] 5.3 dynamodb_insertManyツールのテストを実装
+- [x] 5.3 dynamodb_insertManyツールのテストを実装
   - [x] 5.3.1 ツール定義（自動生成済み: src/mcp/tools/insertMany.ts）
-  - [ ] 5.3.2 ユニットテスト
-  - [ ] 5.3.3 統合テスト
+  - [x] 5.3.2 ユニットテスト
+  - [x] 5.3.3 統合テスト
 
-- [ ] 5.4 dynamodb_updateOneツールのテストを実装
+- [x] 5.4 dynamodb_updateOneツールのテストを実装
   - [x] 5.4.1 ツール定義（自動生成済み: src/mcp/tools/updateOne.ts）
-  - [ ] 5.4.2 ユニットテスト
-  - [ ] 5.4.3 統合テスト
+  - [x] 5.4.2 ユニットテスト
+  - [x] 5.4.3 統合テスト
 
-- [ ] 5.5 dynamodb_updateManyツールのテストを実装
+- [x] 5.5 dynamodb_updateManyツールのテストを実装
   - [x] 5.5.1 ツール定義（自動生成済み: src/mcp/tools/updateMany.ts）
-  - [ ] 5.5.2 ユニットテスト
-  - [ ] 5.5.3 統合テスト
+  - [x] 5.5.2 ユニットテスト
+  - [x] 5.5.3 統合テスト
 
-- [ ] 5.6 dynamodb_deleteOneツールのテストを実装
+- [x] 5.6 dynamodb_deleteOneツールのテストを実装
   - [x] 5.6.1 ツール定義（自動生成済み: src/mcp/tools/deleteOne.ts）
-  - [ ] 5.6.2 ユニットテスト
-  - [ ] 5.6.3 統合テスト
+  - [x] 5.6.2 ユニットテスト
+  - [x] 5.6.3 統合テスト
 
-- [ ] 5.7 dynamodb_deleteManyツールのテストを実装
+- [x] 5.7 dynamodb_deleteManyツールのテストを実装
   - [x] 5.7.1 ツール定義（自動生成済み: src/mcp/tools/deleteMany.ts）
-  - [ ] 5.7.2 ユニットテスト
-  - [ ] 5.7.3 統合テスト
+  - [x] 5.7.2 ユニットテスト
+  - [x] 5.7.3 統合テスト
 
 ## 6. テスト
 

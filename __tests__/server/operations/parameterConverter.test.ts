@@ -173,7 +173,7 @@ describe('parameterConverter', () => {
     it('filterが存在しない場合はエラーをスローする', () => {
       expect(() => {
         convertFindManyParams({});
-      }).toThrow('findMany requires filter');
+      }).toThrow('findMany requires either ids or filter');
     });
   });
 
