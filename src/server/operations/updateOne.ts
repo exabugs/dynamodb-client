@@ -66,7 +66,7 @@ export async function handleUpdateOne(
     // 結果を検証
     if (updateManyResult.count === 0) {
       // 更新に失敗した場合
-      const error = Object.values(updateManyResult.errors)[0];
+      const error = Object.values(updateManyResult.errors || {})[0];
       if (error) {
         throw new Error(`Failed to update record: ${error.message}`);
       } else {
@@ -79,9 +79,15 @@ export async function handleUpdateOne(
       throw new Error('updateMany did not return items');
     }
 
+    const updatedItem = updateManyResult.items[0];
+    if (!updatedItem) {
+      throw new Error('updateMany returned empty item');
+    }
+
     // コスト情報を含めて返却
     return {
-      ...updateManyResult.items[0],
+      id: targetId,
+      ...updatedItem,
       consumedCapacity: updateManyResult.consumedCapacity,
     };
   } else {
@@ -107,7 +113,7 @@ export async function handleUpdateOne(
     // 結果を検証
     if (updateManyResult.count === 0) {
       // 更新に失敗した場合
-      const error = Object.values(updateManyResult.errors)[0];
+      const error = Object.values(updateManyResult.errors || {})[0];
       if (error) {
         throw new Error(`Failed to update record: ${error.message}`);
       } else {
@@ -120,9 +126,21 @@ export async function handleUpdateOne(
       throw new Error('updateMany did not return items');
     }
 
+    const updatedItem = updateManyResult.items[0];
+    if (!updatedItem) {
+      throw new Error('updateMany returned empty item');
+    }
+
+    // 成功した場合は削除されたレコードのIDを取得
+    const updatedId = updatedItem.id as string;
+    if (!updatedId) {
+      throw new Error('Failed to get updated record ID');
+    }
+
     // コスト情報を含めて返却
     return {
-      ...updateManyResult.items[0],
+      id: updatedId,
+      ...updatedItem,
       consumedCapacity: updateManyResult.consumedCapacity,
     };
   }

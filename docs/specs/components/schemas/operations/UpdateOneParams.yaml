@@ -32,3 +32,4 @@ allOf:
             type: boolean
             description: Create if not exists
             default: false
+        additionalProperties: false

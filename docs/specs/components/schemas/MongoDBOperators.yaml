@@ -9,51 +9,52 @@ description: |
   - 地理演算子: $near（簡易形式のみ）
 properties:
   $eq:
+    description: '等しい（例: { age: { $eq: 25 } } または { age: 25 }）'
     oneOf:
       - type: string
       - type: number
       - type: boolean
-    description: 等しい（例: { age: { $eq: 25 } } または { age: 25 }）
   $ne:
+    description: '等しくない（例: { status: { $ne: "deleted" } }）'
     oneOf:
       - type: string
       - type: number
       - type: boolean
-    description: 等しくない（例: { status: { $ne: "deleted" } }）
   $gt:
+    description: 'より大きい（例: { age: { $gt: 18 } }）'
     type: number
-    description: より大きい（例: { age: { $gt: 18 } }）
   $gte:
+    description: '以上（例: { age: { $gte: 18 } }）'
     type: number
-    description: 以上（例: { age: { $gte: 18 } }）
   $lt:
+    description: 'より小さい（例: { age: { $lt: 65 } }）'
     type: number
-    description: より小さい（例: { age: { $lt: 65 } }）
   $lte:
+    description: '以下（例: { age: { $lte: 65 } }）'
     type: number
-    description: 以下（例: { age: { $lte: 65 } }）
   $in:
+    description: '配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }）'
     type: array
     items:
       oneOf:
         - type: string
         - type: number
         - type: boolean
-    description: 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }）
   $nin:
+    description: '配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }）'
     type: array
     items:
       oneOf:
         - type: string
         - type: number
         - type: boolean
-    description: 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }）
   $regex:
+    description: '正規表現マッチ（例: { name: { $regex: "^John" } }）'
     type: string
-    description: 正規表現マッチ（例: { name: { $regex: "^John" } }）
   $near:
-    $ref: './NearOperator.yaml'
-    description: 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }）
+    description: '近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }）'
+    allOf:
+      - $ref: './NearOperator.yaml'
 examples:
   - $eq: 25
   - $gte: 18

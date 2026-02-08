@@ -15,14 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `adapter.ts`で`process.env.TABLE_NAME`を設定
   - 既存のLambda操作が`TABLE_NAME`を使用するため必要
 
-## [1.3.47] - 2026-02-08
-
-### Fixed
-
-- MCPサーバーで`TABLE_NAME`環境変数を設定するように修正
-  - `adapter.ts`で`process.env.TABLE_NAME`を設定
-  - 既存のLambda操作が`TABLE_NAME`を使用するため必要
-
 ## [1.3.46] - 2026-02-08
 
 ### Added

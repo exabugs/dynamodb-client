@@ -69,6 +69,18 @@ paths:
                       timestamp:
                         type: string
                         format: date-time
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   
   /:
     post:
@@ -125,29 +137,6 @@ paths:
                     pagination:
                       perPage: 10
                       nextToken: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    filter:
-                      type: object
-                      description: "フィルター条件（MongoDB形式）。例: { status: \"active\", age: { $gte: 18 } }"
-                    sort:
-                      type: object
-                      description: "ソート条件"
-                      properties:
-                        field:
-                          type: string
-                          description: "ソート対象フィールド名"
-                        order:
-                          type: string
-                          enum: [ASC, DESC]
-                          description: "ソート順序（ASC: 昇順, DESC: 降順）"
-                      required: [field, order]
-                    pagination:
-                      type: object
                       description: "ページネーション設定"
                       properties:
                         perPage:
@@ -158,7 +147,6 @@ paths:
                         nextToken:
                           type: string
                           description: "次ページトークン（前回のレスポンスから取得）"
-                  required: [collection]
               
               findOne:
                 summary: Find one document by ID
@@ -168,16 +156,6 @@ paths:
                   resource: users
                   params:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    id:
-                      type: string
-                      description: "レコードID"
-                  required: [collection]
               
               findMany:
                 summary: Find multiple documents by IDs
@@ -187,18 +165,6 @@ paths:
                   resource: users
                   params:
                     ids: ["01KETJHF08KEDW320XX6NP2CZ3", "01KETJHF08KEDW320XX6NP2CZ4"]
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    ids:
-                      type: array
-                      items:
-                        type: string
-                      description: "レコードIDの配列"
-                  required: [collection, ids]
               
               findManyReference:
                 summary: Find documents by reference field
@@ -211,22 +177,6 @@ paths:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
                     filter:
                       status: "confirmed"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    target:
-                      type: string
-                      description: "参照フィールド名（例: userId）"
-                    id:
-                      type: string
-                      description: "参照先のレコードID"
-                    filter:
-                      type: object
-                      description: "フィルター条件（MongoDB形式）"
-                  required: [collection, target, id]
               
               insertOne:
                 summary: Insert one document
@@ -239,16 +189,6 @@ paths:
                       name: "John Doe"
                       email: "john@example.com"
                       status: "active"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    data:
-                      type: object
-                      description: "作成するデータ"
-                  required: [collection, data]
               
               insertMany:
                 summary: Insert multiple documents
@@ -262,18 +202,6 @@ paths:
                         email: "john@example.com"
                       - name: "Jane Smith"
                         email: "jane@example.com"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    data:
-                      type: array
-                      items:
-                        type: object
-                      description: "作成するデータの配列"
-                  required: [collection, data]
               
               updateOne:
                 summary: Update one document
@@ -288,26 +216,6 @@ paths:
                       updatedAt: "2024-01-01T00:00:00Z"
                     options:
                       upsert: false
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    id:
-                      type: string
-                      description: "レコードID"
-                    data:
-                      type: object
-                      description: "更新するデータ"
-                    options:
-                      type: object
-                      description: "操作オプション"
-                      properties:
-                        upsert:
-                          type: boolean
-                          description: "レコードが存在しない場合に新規作成するか（デフォルト: false）"
-                  required: [collection, id, data]
               
               updateMany:
                 summary: Update multiple documents
@@ -320,19 +228,6 @@ paths:
                       status: "pending"
                     data:
                       status: "active"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    filter:
-                      type: object
-                      description: "フィルター条件（MongoDB形式）"
-                    data:
-                      type: object
-                      description: "更新するデータ"
-                  required: [collection, filter, data]
               
               deleteOne:
                 summary: Delete one document
@@ -342,16 +237,6 @@ paths:
                   resource: users
                   params:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    id:
-                      type: string
-                      description: "レコードID"
-                  required: [collection, id]
               
               deleteMany:
                 summary: Delete multiple documents
@@ -363,16 +248,6 @@ paths:
                     filter:
                       status: "inactive"
                       lastActiveAt: { $lt: "2023-01-01T00:00:00Z" }
-                schema:
-                  type: object
-                  properties:
-                    collection:
-                      type: string
-                      description: "コレクション名（例: venues, users）"
-                    filter:
-                      type: object
-                      description: "フィルター条件（MongoDB形式）"
-                  required: [collection, filter]
       responses:
         '200':
           description: Success

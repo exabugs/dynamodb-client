@@ -50,7 +50,7 @@ export async function handleInsertOne(
   // 結果を検証
   if (insertManyResult.count === 0) {
     // 作成に失敗した場合
-    const error = Object.values(insertManyResult.errors)[0];
+    const error = Object.values(insertManyResult.errors || {})[0];
     if (error) {
       throw new Error(`Failed to create record: ${error.message}`);
     } else {
@@ -59,7 +59,7 @@ export async function handleInsertOne(
   }
 
   // 成功した場合は作成されたレコードのIDを取得
-  const createdId = Object.values(insertManyResult.successIds)[0];
+  const createdId = Object.values(insertManyResult.successIds || {})[0];
   if (!createdId) {
     throw new Error('Failed to get created record ID');
   }
@@ -76,6 +76,7 @@ export async function handleInsertOne(
 
   // コスト情報を含めて返却
   return {
+    id: createdId,
     ...createdRecord,
     consumedCapacity: insertManyResult.consumedCapacity,
   };

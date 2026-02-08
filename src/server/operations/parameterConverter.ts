@@ -189,11 +189,12 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
   }
 
   // MCPツールから直接idが指定されている場合（優先）
-  if (typeof (mongoParams as any).id === 'string') {
+  const directId = 'id' in mongoParams && typeof mongoParams.id === 'string' ? mongoParams.id : undefined;
+  if (directId) {
     return {
-      id: (mongoParams as any).id,
+      id: directId,
       data: updateData,
-      options: mongoParams.options,
+      ...(mongoParams.options?.upsert !== undefined && { options: { upsert: mongoParams.options.upsert } }),
     };
   }
 
@@ -210,7 +211,7 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
     return {
       id,
       data: updateData,
-      options: mongoParams.options,
+      ...(mongoParams.options?.upsert !== undefined && { options: { upsert: mongoParams.options.upsert } }),
     };
   }
 
@@ -218,7 +219,7 @@ export function convertUpdateOneParams(mongoParams: MongoUpdateParams): UpdateOn
   return {
     filter: mongoParams.filter,
     data: updateData,
-    options: mongoParams.options,
+    ...(mongoParams.options?.upsert !== undefined && { options: { upsert: mongoParams.options.upsert } }),
   };
 }
 
@@ -243,7 +244,7 @@ export function convertUpdateManyParams(mongoParams: MongoUpdateParams): UpdateM
   return {
     ids,
     data: updateData,
-    options: mongoParams.options,
+    ...(mongoParams.options?.upsert !== undefined && { options: { upsert: mongoParams.options.upsert } }),
   };
 }
 
@@ -256,8 +257,9 @@ export function convertUpdateManyParams(mongoParams: MongoUpdateParams): UpdateM
  */
 export function convertDeleteOneParams(mongoParams: MongoFilterParams): DeleteOneParams {
   // MCPツールから直接idが指定されている場合（優先）
-  if (typeof (mongoParams as any).id === 'string') {
-    return { id: (mongoParams as any).id };
+  const directId = 'id' in mongoParams && typeof mongoParams.id === 'string' ? mongoParams.id : undefined;
+  if (directId) {
+    return { id: directId };
   }
 
   // filter.idから取得（後方互換性）

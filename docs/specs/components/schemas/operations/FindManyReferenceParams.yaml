@@ -19,12 +19,18 @@ properties:
   
   sort:
     type: object
+    description: Sort options (if not specified, defaults to updatedAt DESC)
+    required:
+      - field
+      - order
     properties:
       field:
         type: string
+        description: Shadow field name to sort by
       order:
         type: string
         enum: [ASC, DESC]
+        description: Sort order
   
   pagination:
     type: object
@@ -33,5 +39,7 @@ properties:
         type: integer
         minimum: 1
         maximum: 50
+        description: Items per page (max 50)
       nextToken:
         type: string
+        description: Next page token (Base64URL encoded)

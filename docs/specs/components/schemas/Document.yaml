@@ -14,5 +14,3 @@ properties:
     format: date-time
     description: 更新日時
 additionalProperties: true
-required:
-  - id

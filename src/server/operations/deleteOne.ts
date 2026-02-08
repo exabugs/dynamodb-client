@@ -58,7 +58,7 @@ export async function handleDeleteOne(
     // 結果を検証
     if (deleteManyResult.count === 0) {
       // 削除に失敗した場合
-      const error = Object.values(deleteManyResult.errors)[0];
+      const error = Object.values(deleteManyResult.errors || {})[0];
       if (error) {
         throw new Error(`Failed to delete record: ${error.message}`);
       } else {
@@ -91,7 +91,7 @@ export async function handleDeleteOne(
     // 結果を検証
     if (deleteManyResult.count === 0) {
       // 削除に失敗した場合
-      const error = Object.values(deleteManyResult.errors)[0];
+      const error = Object.values(deleteManyResult.errors || {})[0];
       if (error) {
         throw new Error(`Failed to delete record: ${error.message}`);
       } else {
@@ -100,7 +100,7 @@ export async function handleDeleteOne(
     }
 
     // 成功した場合は削除されたレコードのIDを取得
-    const deletedId = Object.values(deleteManyResult.successIds)[0];
+    const deletedId = Object.values(deleteManyResult.successIds || {})[0];
     if (!deletedId) {
       throw new Error('Failed to get deleted record ID');
     }

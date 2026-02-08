@@ -33,9 +33,14 @@ properties:
   
   consumedCapacity:
     type: object
-    description: DynamoDB consumed capacity
+    description: DynamoDB consumed capacity (aggregated)
     properties:
-      readCapacityUnits:
+      totalRCU:
         type: number
-      writeCapacityUnits:
+        description: Total read capacity units
+      totalWCU:
         type: number
+        description: Total write capacity units
+      operationCount:
+        type: number
+        description: Number of DynamoDB operations

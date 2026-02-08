@@ -10,12 +10,17 @@ properties:
   
   consumedCapacity:
     type: object
-    description: DynamoDB consumed capacity
+    description: DynamoDB consumed capacity (aggregated)
     properties:
-      readCapacityUnits:
+      totalRCU:
         type: number
-      writeCapacityUnits:
+        description: Total read capacity units
+      totalWCU:
         type: number
+        description: Total write capacity units
+      operationCount:
+        type: number
+        description: Number of DynamoDB operations
 
 additionalProperties: true
 
@@ -26,5 +31,6 @@ example:
   status: "inactive"
   updatedAt: "2024-01-01T00:00:00Z"
   consumedCapacity:
-    readCapacityUnits: 1
-    writeCapacityUnits: 1
+    totalRCU: 1
+    totalWCU: 1
+    operationCount: 1

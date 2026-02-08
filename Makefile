@@ -1,4 +1,4 @@
-.PHONY: help build test lint clean docs-bundle docs-validate docs-preview docs-build docs-clean generate-mcp-tools
+.PHONY: help build test lint clean docs-bundle docs-validate docs-preview docs-build docs-clean generate-mcp-tools generate-types
 
 help:
 	@echo "DynamoDB Client - Makefile"
@@ -8,6 +8,7 @@ help:
 	@echo "  make test              - テストを実行"
 	@echo "  make lint              - Lintを実行"
 	@echo "  make clean             - ビルド成果物を削除"
+	@echo "  make generate-types    - OpenAPI仕様からTypeScript型定義を生成"
 	@echo ""
 	@echo "=== MCP ==="
 	@echo "  make generate-mcp-tools - OpenAPI仕様からMCPツール定義を生成"
@@ -38,6 +39,11 @@ lint:
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf dist coverage
+
+generate-types:
+	@echo "Generating TypeScript types from OpenAPI specification..."
+	@npm run generate-types
+	@echo "✨ TypeScript types generated successfully!"
 
 # ========================================
 # MCP

@@ -5,6 +5,10 @@ properties:
     $ref: '../Filter.yaml'
   sort:
     type: object
+    description: Sort options (if not specified, defaults to updatedAt DESC)
+    required:
+      - field
+      - order
     properties:
       field:
         type: string
@@ -12,6 +16,7 @@ properties:
       order:
         type: string
         enum: [ASC, DESC]
+        description: Sort order
   pagination:
     type: object
     properties:

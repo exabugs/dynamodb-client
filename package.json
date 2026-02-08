@@ -98,11 +98,12 @@
     }
   },
   "scripts": {
+    "prebuild": "npm run generate-types",
     "build": "tsc && node esbuild.config.js",
     "build:client": "tsc",
     "build:lambda": "node esbuild.config.js",
     "clean": "rm -rf dist",
-    "lint": "eslint src --ext ts --max-warnings 40",
+    "lint": "eslint src --ext ts --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
@@ -112,6 +113,7 @@
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
     "analyze-functions": "node scripts/find-large-functions.js",
     "generate-mcp-tools": "tsx scripts/generate-mcp-tools-v2.ts",
+    "generate-types": "openapi-typescript docs/specs/openapi.yaml -o src/__generated__/openapi.ts",
     "prepublishOnly": "npm run build && npm run test:unit"
   },
   "dependencies": {
@@ -141,6 +143,7 @@
     "esbuild": "^0.27.1",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.0.0",
     "react-admin": "^5.0.0",
     "tsx": "^4.21.0",
