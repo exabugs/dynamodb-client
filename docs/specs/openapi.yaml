@@ -46,8 +46,9 @@ paths:
       tags:
         - System
       summary: Get API version
-      description: Returns the current API version and timestamp
+      description: Returns the current API version and timestamp (no authentication required)
       operationId: getVersion
+      security: []
       responses:
         '200':
           description: Success
