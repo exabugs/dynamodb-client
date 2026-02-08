@@ -1,0 +1,13 @@
+type: string
+enum:
+  - find
+  - findOne
+  - findMany
+  - findManyReference
+  - insertOne
+  - insertMany
+  - updateOne
+  - updateMany
+  - deleteOne
+  - deleteMany
+description: API操作タイプ（MongoDB風）

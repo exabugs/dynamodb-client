@@ -16,30 +16,15 @@ import type { components } from '../__generated__/openapi.js';
  * API操作タイプ（MongoDB 風）
  * OpenAPI仕様から生成された型を使用
  */
-export type ApiOperation = 
-  | 'find'
-  | 'findOne'
-  | 'findMany'
-  | 'findManyReference'
-  | 'insertOne'
-  | 'insertMany'
-  | 'updateOne'
-  | 'updateMany'
-  | 'deleteOne'
-  | 'deleteMany';
+export type ApiOperation = components['schemas']['ApiOperation'];
 
 /**
  * API リクエスト（共通）
  * OpenAPI仕様から生成された型を使用
  */
-export interface ApiRequest<T = unknown> {
-  /** 操作名 */
-  op: ApiOperation;
-  /** リソース名（例: "articles", "tasks"） */
-  resource: string;
-  /** 操作パラメータ */
+export type ApiRequest<T = unknown> = Omit<components['schemas']['ApiRequest'], 'params'> & {
   params: T;
-}
+};
 
 /**
  * find パラメータ
@@ -119,32 +104,17 @@ export type InsertManyParams = components['schemas']['InsertManyParams'];
 
 /**
  * API 成功レスポンス
+ * OpenAPI仕様から生成された型を使用
  */
-export interface ApiSuccessResponse<T> {
-  /** 成功フラグ */
-  success: true;
-  /** レスポンスデータ */
+export type ApiSuccessResponse<T> = Omit<components['schemas']['ApiSuccessResponse'], 'data'> & {
   data: T;
-}
+};
 
 /**
  * API エラーレスポンス
+ * OpenAPI仕様から生成された型を使用
  */
-export interface ApiErrorResponse {
-  /** 成功フラグ */
-  success: false;
-  /** エラー情報 */
-  error: {
-    /** エラーコード */
-    code: string;
-    /** エラーメッセージ */
-    message: string;
-    /** HTTPステータスコード */
-    statusCode: number;
-    /** 追加詳細情報（オプション） */
-    details?: unknown;
-  };
-}
+export type ApiErrorResponse = components['schemas']['ApiErrorResponse'];
 
 /**
  * API レスポンス（共通）
@@ -173,20 +143,9 @@ export type FindManyResult = Record<string, unknown>[];
 
 /**
  * findManyReference レスポンスデータ
+ * OpenAPI仕様から生成された型を使用
  */
-export interface FindManyReferenceResult {
-  /** レコードリスト */
-  items: Record<string, unknown>[];
-  /** ページ情報 */
-  pageInfo: {
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-  /** 次ページトークン（存在する場合） */
-  nextToken?: string;
-  /** 総件数（オプション） */
-  total?: number;
-}
+export type FindManyReferenceResult = components['schemas']['FindManyReferenceResult'];
 
 /**
  * insertOne レスポンスデータ
@@ -203,15 +162,9 @@ export type UpdateOneResult = components['schemas']['UpdateOneResult'];
 /**
  * 操作エラー
  * 部分失敗時の個別エラー情報
+ * OpenAPI仕様から生成された型を使用
  */
-export interface OperationError {
-  /** エラーが発生したレコードのID */
-  id: string;
-  /** エラーコード */
-  code: string;
-  /** エラーメッセージ */
-  message: string;
-}
+export type OperationError = components['schemas']['OperationError'];
 
 /**
  * バルク操作の統一レスポンス形式（Records Lambda内部形式）

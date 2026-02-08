@@ -1,0 +1,31 @@
+type: object
+required:
+  - items
+  - pageInfo
+properties:
+  items:
+    type: array
+    items:
+      type: object
+      additionalProperties: true
+    description: レコードリスト
+  pageInfo:
+    type: object
+    required:
+      - hasNextPage
+      - hasPreviousPage
+    properties:
+      hasNextPage:
+        type: boolean
+        description: 次ページが存在するか
+      hasPreviousPage:
+        type: boolean
+        description: 前ページが存在するか
+    description: ページ情報
+  nextToken:
+    type: string
+    description: 次ページトークン（存在する場合）
+  total:
+    type: integer
+    description: 総件数（オプション）
+description: findManyReferenceレスポンスデータ

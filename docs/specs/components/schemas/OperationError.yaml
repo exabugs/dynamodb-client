@@ -1,0 +1,16 @@
+type: object
+required:
+  - id
+  - code
+  - message
+properties:
+  id:
+    type: string
+    description: エラーが発生したレコードのID
+  code:
+    type: string
+    description: エラーコード
+  message:
+    type: string
+    description: エラーメッセージ
+description: 操作エラー（部分失敗時の個別エラー情報）

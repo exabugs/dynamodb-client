@@ -1,0 +1,13 @@
+type: object
+description: API 成功レスポンス
+required:
+  - success
+  - data
+properties:
+  success:
+    type: boolean
+    enum: [true]
+    description: 成功フラグ
+  data:
+    type: object
+    description: レスポンスデータ

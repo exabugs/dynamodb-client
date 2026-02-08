@@ -345,6 +345,56 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * @description API操作タイプ（MongoDB風）
+         * @enum {string}
+         */
+        ApiOperation: "find" | "findOne" | "findMany" | "findManyReference" | "insertOne" | "insertMany" | "updateOne" | "updateMany" | "deleteOne" | "deleteMany";
+        /** @description API リクエスト（共通） */
+        ApiRequest: {
+            op: components["schemas"]["ApiOperation"];
+            /** @description リソース名（例："articles", "tasks"） */
+            resource: string;
+            /** @description 操作パラメータ */
+            params: Record<string, never>;
+        };
+        /** @description API 成功レスポンス */
+        ApiSuccessResponse: {
+            /**
+             * @description 成功フラグ
+             * @enum {boolean}
+             */
+            success: true;
+            /** @description レスポンスデータ */
+            data: Record<string, never>;
+        };
+        /** @description APIエラーレスポンス */
+        ApiErrorResponse: {
+            /**
+             * @description 成功フラグ（常にfalse）
+             * @enum {boolean}
+             */
+            success: false;
+            error: {
+                /** @description エラーコード */
+                code: string;
+                /** @description エラーメッセージ */
+                message: string;
+                /** @description HTTPステータスコード */
+                statusCode: number;
+                /** @description 追加詳細情報（オプション） */
+                details?: unknown;
+            };
+        };
+        /** @description 操作エラー（部分失敗時の個別エラー情報） */
+        OperationError: {
+            /** @description エラーが発生したレコードのID */
+            id: string;
+            /** @description エラーコード */
+            code: string;
+            /** @description エラーメッセージ */
+            message: string;
+        };
         /** @description Parameters for find operation */
         FindParams: {
             filter?: components["schemas"]["Filter"];
@@ -541,6 +591,24 @@ export interface components {
                 /** @description Number of DynamoDB operations */
                 operationCount?: number;
             };
+        };
+        /** @description findManyReferenceレスポンスデータ */
+        FindManyReferenceResult: {
+            /** @description レコードリスト */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** @description ページ情報 */
+            pageInfo: {
+                /** @description 次ページが存在するか */
+                hasNextPage: boolean;
+                /** @description 前ページが存在するか */
+                hasPreviousPage: boolean;
+            };
+            /** @description 次ページトークン（存在する場合） */
+            nextToken?: string;
+            /** @description 総件数（オプション） */
+            total?: number;
         };
         /**
          * @description insertOne operation result

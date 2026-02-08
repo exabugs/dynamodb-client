@@ -18,6 +18,18 @@ UpdateOperators:
 Error:
   $ref: './Error.yaml'
 
+# API schemas
+ApiOperation:
+  $ref: './ApiOperation.yaml'
+ApiRequest:
+  $ref: './ApiRequest.yaml'
+ApiSuccessResponse:
+  $ref: './ApiSuccessResponse.yaml'
+ApiErrorResponse:
+  $ref: './ApiErrorResponse.yaml'
+OperationError:
+  $ref: './OperationError.yaml'
+
 # Operation parameters
 FindParams:
   $ref: './operations/FindParams.yaml'
@@ -43,6 +55,8 @@ DeleteManyParams:
 # Response schemas
 FindResult:
   $ref: './responses/FindResult.yaml'
+FindManyReferenceResult:
+  $ref: './responses/FindManyReferenceResult.yaml'
 InsertOneResult:
   $ref: './responses/InsertOneResult.yaml'
 UpdateOneResult:

@@ -1,0 +1,15 @@
+type: object
+description: API リクエスト（共通）
+required:
+  - op
+  - resource
+  - params
+properties:
+  op:
+    $ref: './ApiOperation.yaml'
+  resource:
+    type: string
+    description: リソース名（例："articles", "tasks"）
+  params:
+    type: object
+    description: 操作パラメータ
