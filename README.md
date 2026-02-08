@@ -565,6 +565,47 @@ We welcome contributions!
 - Update documentation as needed
 - Ensure all tests pass before submitting
 
+### OpenAPI-Driven Development
+
+This project uses OpenAPI specification as the Single Source of Truth (SSOT) for MCP tool definitions.
+
+#### Workflow
+
+1. **Update OpenAPI Specification**
+   ```bash
+   # Edit the OpenAPI spec
+   vim docs/specs/openapi.yaml
+   ```
+
+2. **Generate MCP Tools**
+   ```bash
+   # Regenerate MCP tool definitions from OpenAPI spec
+   npm run generate-mcp-tools
+   ```
+
+3. **Verify Changes**
+   ```bash
+   # Build and test
+   npm run build
+   npm test
+   ```
+
+#### OpenAPI Specification
+
+- **Location**: `docs/specs/openapi.yaml`
+- **Components**: `docs/specs/components/schemas/`
+- **Generator**: `scripts/generate-mcp-tools-v2.ts`
+- **Output**: `src/mcp/tools/generated.ts` (auto-generated, do not edit manually)
+
+#### Key Design Principles
+
+- **OpenAPI as SSOT**: All MCP tool definitions are derived from OpenAPI spec
+- **Minimal Inference**: Generator extracts information directly from OpenAPI, avoiding complex inference logic
+- **Type Safety**: Generated TypeScript code maintains full type safety
+- **Consistency**: All tools follow the same structure and naming conventions
+
+For more details, see the [OpenAPI to MCP Generator Spec](.kiro/specs/openapi-to-mcp-generator/design.md).
+
 ---
 
 ## 📄 License

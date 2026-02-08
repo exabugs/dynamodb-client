@@ -1,8 +1,27 @@
 type: object
-description: MongoDB-style filter conditions
+description: |
+  MongoDB形式のフィルター条件。
+  
+  サポートされる演算子:
+  - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
+  - 配列演算子: $in, $nin
+  - 文字列演算子: $regex
+  - 地理演算子: $near（プロジェクト固有、簡易形式のみ）
+  
+  例:
+  - 単純な等価: { status: "active" }
+  - 比較演算子: { age: { $gte: 18 } }
+  - 配列演算子: { status: { $in: ["active", "pending"] } }
+  - 複数条件: { status: "active", age: { $gte: 18 } }
+  - 地理検索: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }
 additionalProperties: true
-example:
-  status: "active"
-  age: { $gte: 18, $lte: 65 }
-  tags: { $in: ["premium", "verified"] }
-  name: { $regex: "^John" }
+examples:
+  - status: "active"
+  - age: { $gte: 18, $lte: 65 }
+  - status: { $in: ["premium", "verified"] }
+  - name: { $regex: "^John" }
+  - location:
+      $near:
+        latitude: 35.6895
+        longitude: 139.7036
+        maxDistance: 5000

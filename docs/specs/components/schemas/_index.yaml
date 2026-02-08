@@ -3,10 +3,16 @@ Document:
   $ref: './Document.yaml'
 Collection:
   $ref: './Collection.yaml'
+ResourceName:
+  $ref: './ResourceName.yaml'
 Query:
   $ref: './Query.yaml'
 Filter:
   $ref: './Filter.yaml'
+MongoDBOperators:
+  $ref: './MongoDBOperators.yaml'
+NearOperator:
+  $ref: './NearOperator.yaml'
 UpdateOperators:
   $ref: './UpdateOperators.yaml'
 Error:

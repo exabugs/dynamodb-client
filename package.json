@@ -111,7 +111,7 @@
     "test:watch": "vitest",
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
     "analyze-functions": "node scripts/find-large-functions.js",
-    "generate-mcp-tools": "tsx scripts/generate-mcp-tools.ts",
+    "generate-mcp-tools": "tsx scripts/generate-mcp-tools-v2.ts",
     "prepublishOnly": "npm run build && npm run test:unit"
   },
   "dependencies": {

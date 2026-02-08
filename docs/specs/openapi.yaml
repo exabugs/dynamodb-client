@@ -104,15 +104,14 @@ paths:
                     - deleteMany
                   description: Operation type
                 resource:
-                  type: string
-                  description: Resource name (collection name)
-                  example: "users"
+                  $ref: '#/components/schemas/ResourceName'
                 params:
                   type: object
                   description: Operation-specific parameters
             examples:
               find:
                 summary: Find documents with filter and pagination
+                description: DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。
                 value:
                   op: find
                   resource: users
@@ -126,25 +125,84 @@ paths:
                     pagination:
                       perPage: 10
                       nextToken: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    filter:
+                      type: object
+                      description: "フィルター条件（MongoDB形式）。例: { status: \"active\", age: { $gte: 18 } }"
+                    sort:
+                      type: object
+                      description: "ソート条件"
+                      properties:
+                        field:
+                          type: string
+                          description: "ソート対象フィールド名"
+                        order:
+                          type: string
+                          enum: [ASC, DESC]
+                          description: "ソート順序（ASC: 昇順, DESC: 降順）"
+                      required: [field, order]
+                    pagination:
+                      type: object
+                      description: "ページネーション設定"
+                      properties:
+                        perPage:
+                          type: number
+                          minimum: 1
+                          maximum: 50
+                          description: "1ページあたりの件数（最大50件）"
+                        nextToken:
+                          type: string
+                          description: "次ページトークン（前回のレスポンスから取得）"
+                  required: [collection]
               
               findOne:
                 summary: Find one document by ID
+                description: DynamoDBから単一レコードを取得します。IDで指定。
                 value:
                   op: findOne
                   resource: users
                   params:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    id:
+                      type: string
+                      description: "レコードID"
+                  required: [collection]
               
               findMany:
                 summary: Find multiple documents by IDs
+                description: DynamoDBから複数レコードをIDで取得します。
                 value:
                   op: findMany
                   resource: users
                   params:
                     ids: ["01KETJHF08KEDW320XX6NP2CZ3", "01KETJHF08KEDW320XX6NP2CZ4"]
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    ids:
+                      type: array
+                      items:
+                        type: string
+                      description: "レコードIDの配列"
+                  required: [collection, ids]
               
               findManyReference:
                 summary: Find documents by reference field
+                description: DynamoDBから参照フィールドでレコードを取得します。
                 value:
                   op: findManyReference
                   resource: participations
@@ -153,9 +211,26 @@ paths:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
                     filter:
                       status: "confirmed"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    target:
+                      type: string
+                      description: "参照フィールド名（例: userId）"
+                    id:
+                      type: string
+                      description: "参照先のレコードID"
+                    filter:
+                      type: object
+                      description: "フィルター条件（MongoDB形式）"
+                  required: [collection, target, id]
               
               insertOne:
                 summary: Insert one document
+                description: DynamoDBに単一レコードを作成します。
                 value:
                   op: insertOne
                   resource: users
@@ -164,9 +239,20 @@ paths:
                       name: "John Doe"
                       email: "john@example.com"
                       status: "active"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    data:
+                      type: object
+                      description: "作成するデータ"
+                  required: [collection, data]
               
               insertMany:
                 summary: Insert multiple documents
+                description: DynamoDBに複数レコードを作成します。
                 value:
                   op: insertMany
                   resource: users
@@ -176,9 +262,22 @@ paths:
                         email: "john@example.com"
                       - name: "Jane Smith"
                         email: "jane@example.com"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    data:
+                      type: array
+                      items:
+                        type: object
+                      description: "作成するデータの配列"
+                  required: [collection, data]
               
               updateOne:
                 summary: Update one document
+                description: DynamoDBの単一レコードを更新します。
                 value:
                   op: updateOne
                   resource: users
@@ -189,9 +288,30 @@ paths:
                       updatedAt: "2024-01-01T00:00:00Z"
                     options:
                       upsert: false
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    id:
+                      type: string
+                      description: "レコードID"
+                    data:
+                      type: object
+                      description: "更新するデータ"
+                    options:
+                      type: object
+                      description: "操作オプション"
+                      properties:
+                        upsert:
+                          type: boolean
+                          description: "レコードが存在しない場合に新規作成するか（デフォルト: false）"
+                  required: [collection, id, data]
               
               updateMany:
                 summary: Update multiple documents
+                description: DynamoDBの複数レコードを更新します。
                 value:
                   op: updateMany
                   resource: users
@@ -200,17 +320,42 @@ paths:
                       status: "pending"
                     data:
                       status: "active"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    filter:
+                      type: object
+                      description: "フィルター条件（MongoDB形式）"
+                    data:
+                      type: object
+                      description: "更新するデータ"
+                  required: [collection, filter, data]
               
               deleteOne:
                 summary: Delete one document
+                description: DynamoDBから単一レコードを削除します。
                 value:
                   op: deleteOne
                   resource: users
                   params:
                     id: "01KETJHF08KEDW320XX6NP2CZ3"
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    id:
+                      type: string
+                      description: "レコードID"
+                  required: [collection, id]
               
               deleteMany:
                 summary: Delete multiple documents
+                description: DynamoDBから複数レコードを削除します。
                 value:
                   op: deleteMany
                   resource: users
@@ -218,6 +363,16 @@ paths:
                     filter:
                       status: "inactive"
                       lastActiveAt: { $lt: "2023-01-01T00:00:00Z" }
+                schema:
+                  type: object
+                  properties:
+                    collection:
+                      type: string
+                      description: "コレクション名（例: venues, users）"
+                    filter:
+                      type: object
+                      description: "フィルター条件（MongoDB形式）"
+                  required: [collection, filter]
       responses:
         '200':
           description: Success

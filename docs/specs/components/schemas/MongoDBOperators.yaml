@@ -1,0 +1,61 @@
+type: object
+description: |
+  MongoDB形式の演算子をサポートします。
+  
+  サポートされる演算子:
+  - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
+  - 配列演算子: $in, $nin
+  - 文字列演算子: $regex
+  - 地理演算子: $near（簡易形式のみ）
+properties:
+  $eq:
+    oneOf:
+      - type: string
+      - type: number
+      - type: boolean
+    description: 等しい（例: { age: { $eq: 25 } } または { age: 25 }）
+  $ne:
+    oneOf:
+      - type: string
+      - type: number
+      - type: boolean
+    description: 等しくない（例: { status: { $ne: "deleted" } }）
+  $gt:
+    type: number
+    description: より大きい（例: { age: { $gt: 18 } }）
+  $gte:
+    type: number
+    description: 以上（例: { age: { $gte: 18 } }）
+  $lt:
+    type: number
+    description: より小さい（例: { age: { $lt: 65 } }）
+  $lte:
+    type: number
+    description: 以下（例: { age: { $lte: 65 } }）
+  $in:
+    type: array
+    items:
+      oneOf:
+        - type: string
+        - type: number
+        - type: boolean
+    description: 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }）
+  $nin:
+    type: array
+    items:
+      oneOf:
+        - type: string
+        - type: number
+        - type: boolean
+    description: 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }）
+  $regex:
+    type: string
+    description: 正規表現マッチ（例: { name: { $regex: "^John" } }）
+  $near:
+    $ref: './NearOperator.yaml'
+    description: 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }）
+examples:
+  - $eq: 25
+  - $gte: 18
+  - $in: ["active", "pending"]
+  - $regex: "^John"
