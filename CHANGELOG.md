@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.46] - 2026-02-08
+
+### Added
+
+- **OpenAPI駆動MCP開発**: OpenAPI仕様を真実の情報源（SSOT）として確立
+  - ResourceName、MongoDBOperators、NearOperator スキーマを作成
+  - Filter スキーマに MongoDB 演算子の詳細定義を追加
+  - openapi.yaml の全10操作に詳細な schema を追加
+  - MCPツール生成スクリプト `generate-mcp-tools-v2.ts` を実装（150行以内）
+  - `src/mcp/tools/generated.ts` を OpenAPI 仕様から自動生成
+  - README に OpenAPI駆動開発のセクションを追加
+
+### Changed
+
+- **仕様駆動開発ワークフロー**: OpenAPI仕様 → MCPツール生成 → 実装の流れを確立
+  - `npm run generate-mcp-tools` で MCPツール定義を自動生成
+  - 推論ロジックを最小化し、OpenAPI から直接情報を取得
+  - 生成されたツール定義は既存のツールより正確（必須パラメータを `required` 配列に含む）
+
+### Fixed
+
+- **MCPツール定義の改善**: OpenAPI仕様に基づき、必須パラメータを正しく定義
+  - `findMany`: `ids` を required に追加
+  - `insertOne`, `insertMany`: `data` を required に追加
+  - `updateOne`: `id` と `data` を required に追加
+  - `updateMany`: `filter` と `data` を required に追加
+  - `deleteOne`: `id` を required に追加
+  - `deleteMany`: `filter` を required に追加
+
 ## [1.3.45] - 2026-01-18
 
 ### Added
