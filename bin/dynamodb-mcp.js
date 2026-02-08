@@ -3,11 +3,10 @@
 /**
  * DynamoDB Client MCP Server
  * 実行可能スクリプト
- * 
- * このスクリプトは、ビルド後のCLIエントリポイント（dist/mcp/cli.js）を実行します。
  */
 
+// ES Modulesのインポート
 import('../dist/mcp/cli.js').catch((error) => {
-  console.error('Failed to start DynamoDB MCP Server:', error);
+  console.error('Failed to start MCP server:', error);
   process.exit(1);
 });

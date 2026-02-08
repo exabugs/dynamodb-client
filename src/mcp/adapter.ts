@@ -24,6 +24,7 @@ export class MCPAdapter {
   constructor(config: MCPServerConfig) {
     // 環境変数を設定（既存のLambda操作が使用）
     if (config.tableName) {
+      process.env.TABLE_NAME = config.tableName;
       process.env.DYNAMODB_TABLE = config.tableName;
     }
     if (config.region) {
