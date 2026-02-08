@@ -3,9 +3,10 @@
  * MCPツール呼び出しを既存のLambda操作に変換
  */
 import { randomUUID } from 'node:crypto';
-import { createLogger } from '../shared/index.js';
+
 import { executeOperation } from '../server/operations/operationDispatcher.js';
 import type { ApiRequest } from '../server/types.js';
+import { createLogger } from '../shared/index.js';
 import { MCPError, MCPErrorCode, type MCPServerConfig } from './types.js';
 
 /**
@@ -146,10 +147,7 @@ export class MCPAdapter {
         });
       }
 
-      if (
-        error.message.includes('Invalid parameter') ||
-        error.message.includes('invalid')
-      ) {
+      if (error.message.includes('Invalid parameter') || error.message.includes('invalid')) {
         return new MCPError(MCPErrorCode.INVALID_PARAMETER, error.message, {
           toolName,
           requestId,
@@ -173,15 +171,11 @@ export class MCPAdapter {
     }
 
     // その他の不明なエラー
-    return new MCPError(
-      MCPErrorCode.INTERNAL_ERROR,
-      'An unknown error occurred',
-      {
-        toolName,
-        requestId,
-        error: String(error),
-      }
-    );
+    return new MCPError(MCPErrorCode.INTERNAL_ERROR, 'An unknown error occurred', {
+      toolName,
+      requestId,
+      error: String(error),
+    });
   }
 
   /**
@@ -190,14 +184,11 @@ export class MCPAdapter {
    * @param args ツール引数
    * @returns APIリクエスト
    */
-  private convertToolToApiRequest(
-    toolName: string,
-    args: Record<string, unknown>
-  ): ApiRequest {
+  private convertToolToApiRequest(toolName: string, args: Record<string, unknown>): ApiRequest {
     // ツール名から操作名とリソース名を抽出
     // 例: "dynamodb_find" -> { op: "find", resource: args.collection }
     const toolPrefix = 'dynamodb_';
-    
+
     if (!toolName.startsWith(toolPrefix)) {
       throw new MCPError(
         MCPErrorCode.INVALID_TOOL_NAME,
@@ -209,11 +200,11 @@ export class MCPAdapter {
     // ツール名から操作名を抽出（キャメルケース）
     // 例: "dynamodb_findOne" -> "findOne"
     const operationCamelCase = toolName.substring(toolPrefix.length);
-    
+
     // キャメルケースをスネークケースに変換して検証
     // 例: "findOne" -> "find_one"
     const operationSnakeCase = operationCamelCase.replace(/([A-Z])/g, '_$1').toLowerCase();
-    
+
     const resource = args.collection as string;
 
     if (!resource) {
@@ -248,7 +239,9 @@ export class MCPAdapter {
 
     // スネークケースをキャメルケースに変換（API呼び出し用）
     // 例: "find_one" -> "findOne"
-    const camelCaseOp = operationSnakeCase.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    const camelCaseOp = operationSnakeCase.replace(/_([a-z])/g, (_, letter) =>
+      letter.toUpperCase()
+    );
 
     // collectionを除いたパラメータを抽出
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

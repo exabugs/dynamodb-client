@@ -5,11 +5,11 @@
  */
 import type { Collection } from '../../client/index.iam.js';
 import {
+  type RepairStats,
   checkShadowIntegrity,
   displayRepairSummary,
   repairRecordViaDynamoClient,
   waitForRateLimit,
-  type RepairStats,
 } from '../utils/repairUtils.js';
 
 /**

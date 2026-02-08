@@ -6,9 +6,9 @@ properties:
     description: Filter conditions (MongoDB-style)
     additionalProperties: true
     example:
-      status: "active"
+      status: 'active'
       age: { $gte: 18 }
-  
+
   sort:
     type: object
     description: Sort conditions
@@ -16,13 +16,13 @@ properties:
       field:
         type: string
         description: Field name to sort by (shadow field name)
-        example: "createdAt"
+        example: 'createdAt'
       order:
         type: string
         enum: [ASC, DESC]
         description: Sort order
-        example: "DESC"
-  
+        example: 'DESC'
+
   pagination:
     type: object
     description: Pagination parameters (DynamoDB cursor-based)
@@ -36,4 +36,4 @@ properties:
       nextToken:
         type: string
         description: Next page token (Base64URL encoded, from previous response)
-        example: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"
+        example: 'eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9'

@@ -572,12 +572,14 @@ This project uses OpenAPI specification as the Single Source of Truth (SSOT) for
 #### Workflow
 
 1. **Update OpenAPI Specification**
+
    ```bash
    # Edit the OpenAPI spec
    vim docs/specs/openapi.yaml
    ```
 
 2. **Generate MCP Tools**
+
    ```bash
    # Regenerate MCP tool definitions from OpenAPI spec
    npm run generate-mcp-tools

@@ -1,6 +1,6 @@
 /**
  * バリデーションユーティリティ
- * 
+ *
  * 共通のバリデーション処理を提供します。
  */
 import { InvalidFilterError } from '../errors/index.js';
@@ -13,8 +13,8 @@ import { InvalidFilterError } from '../errors/index.js';
  * @throws {Error} 必須フィールドが不足している場合
  */
 export function validateRequiredFields(obj: Record<string, unknown>, fields: string[]): void {
-  const missingFields = fields.filter(field => obj[field] === undefined || obj[field] === null);
-  
+  const missingFields = fields.filter((field) => obj[field] === undefined || obj[field] === null);
+
   if (missingFields.length > 0) {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
@@ -104,7 +104,7 @@ export function validateULID(value: unknown, fieldName: string): void {
 
   // ULID形式: 26文字のCrockford's Base32
   const ulidPattern = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/;
-  
+
   if (!ulidPattern.test(value)) {
     throw new Error(`${fieldName} must be a valid ULID format (26 characters, Crockford's Base32)`);
   }
@@ -123,14 +123,14 @@ export function validateISO8601DateTime(value: unknown, fieldName: string): void
   }
 
   const date = new Date(value);
-  
+
   if (isNaN(date.getTime())) {
     throw new Error(`${fieldName} must be a valid ISO 8601 datetime string`);
   }
 
   // ISO 8601形式かどうかをチェック（厳密）
   const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
-  
+
   if (!iso8601Pattern.test(value)) {
     throw new Error(`${fieldName} must be in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)`);
   }

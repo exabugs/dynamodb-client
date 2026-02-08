@@ -11,11 +11,11 @@ properties:
       code:
         type: string
         description: エラーコード
-        example: "VALIDATION_ERROR"
+        example: 'VALIDATION_ERROR'
       message:
         type: string
         description: エラーメッセージ
-        example: "Invalid document ID"
+        example: 'Invalid document ID'
       details:
         type: object
         description: エラー詳細情報

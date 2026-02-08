@@ -53,8 +53,10 @@ export function parseRepairScriptArgs(args: string[]): RepairScriptConfig {
 export function displayScriptConfig(config: RepairScriptConfig, apiUrl: string): void {
   console.log(`Records API: ${apiUrl}`);
   console.log(`Resource: ${config.resource}`);
-  console.log(`Mode: ${config.dryRun ? 'DRY RUN' : config.repair ? 'REPAIR' : 'DRY RUN (default)'}`);
-  
+  console.log(
+    `Mode: ${config.dryRun ? 'DRY RUN' : config.repair ? 'REPAIR' : 'DRY RUN (default)'}`
+  );
+
   if (config.recordId) {
     console.log(`Target Record ID: ${config.recordId}`);
   }

@@ -9,7 +9,7 @@ properties:
     description: List of documents
     items:
       $ref: '../Document.yaml'
-  
+
   pageInfo:
     type: object
     required:
@@ -22,15 +22,15 @@ properties:
       hasPreviousPage:
         type: boolean
         description: Whether previous page exists
-  
+
   nextToken:
     type: string
     description: Next page token (if hasNextPage is true)
-  
+
   total:
     type: integer
     description: Total count (optional, performance impact)
-  
+
   consumedCapacity:
     type: object
     description: DynamoDB consumed capacity (aggregated)

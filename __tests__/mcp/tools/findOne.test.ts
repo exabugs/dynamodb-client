@@ -1,7 +1,8 @@
 /**
  * dynamodb_findOne ツールのユニットテスト
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { findOneTool } from '../../../src/mcp/tools/findOne.js';
 
 describe('dynamodb_findOne tool', () => {

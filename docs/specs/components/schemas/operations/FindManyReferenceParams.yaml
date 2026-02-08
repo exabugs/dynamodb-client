@@ -7,16 +7,16 @@ properties:
   target:
     type: string
     description: Reference field name
-    example: "userId"
-  
+    example: 'userId'
+
   id:
     type: string
     description: Reference target ID
-    example: "01KETJHF08KEDW320XX6NP2CZ3"
-  
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
+
   filter:
     $ref: '../Filter.yaml'
-  
+
   sort:
     type: object
     description: Sort options (if not specified, defaults to updatedAt DESC)
@@ -31,7 +31,7 @@ properties:
         type: string
         enum: [ASC, DESC]
         description: Sort order
-  
+
   pagination:
     type: object
     properties:

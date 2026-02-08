@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
+
 /**
  * OpenAPI仕様からMCPツール定義を自動生成するスクリプト
- * 
+ *
  * Usage:
  *   npm run generate-mcp-tools
  *   make generate-mcp-tools
@@ -76,7 +77,7 @@ function toDescription(operation: string, summary?: string): string {
     deleteOne: 'DynamoDBから単一レコードを削除します。',
     deleteMany: 'DynamoDBから複数レコードを一括削除します。',
   };
-  
+
   return descriptions[operation] || `DynamoDB ${operation} operation`;
 }
 
@@ -90,7 +91,7 @@ function generateInputSchema(params?: Record<string, unknown>): Record<string, u
       description: 'コレクション名（例: venues, users）',
     },
   };
-  
+
   if (!params) {
     return {
       type: 'object',
@@ -98,12 +99,12 @@ function generateInputSchema(params?: Record<string, unknown>): Record<string, u
       required: ['collection'],
     };
   }
-  
+
   // paramsの各プロパティをスキーマに変換
   for (const [key, value] of Object.entries(params)) {
     properties[key] = inferSchema(key, value);
   }
-  
+
   return {
     type: 'object',
     properties,
@@ -118,28 +119,28 @@ function inferSchema(key: string, value: unknown): Record<string, unknown> {
   if (value === null || value === undefined) {
     return { type: 'object' };
   }
-  
+
   if (typeof value === 'string') {
     return {
       type: 'string',
       description: getPropertyDescription(key),
     };
   }
-  
+
   if (typeof value === 'number') {
     return {
       type: 'number',
       description: getPropertyDescription(key),
     };
   }
-  
+
   if (typeof value === 'boolean') {
     return {
       type: 'boolean',
       description: getPropertyDescription(key),
     };
   }
-  
+
   if (Array.isArray(value)) {
     return {
       type: 'array',
@@ -147,7 +148,7 @@ function inferSchema(key: string, value: unknown): Record<string, unknown> {
       items: value.length > 0 ? inferSchema('item', value[0]) : { type: 'object' },
     };
   }
-  
+
   if (typeof value === 'object') {
     // 特殊なプロパティの処理
     if (key === 'sort') {
@@ -168,7 +169,7 @@ function inferSchema(key: string, value: unknown): Record<string, unknown> {
         required: ['field', 'order'],
       };
     }
-    
+
     if (key === 'pagination') {
       return {
         type: 'object',
@@ -187,7 +188,7 @@ function inferSchema(key: string, value: unknown): Record<string, unknown> {
         },
       };
     }
-    
+
     if (key === 'options') {
       return {
         type: 'object',
@@ -200,13 +201,13 @@ function inferSchema(key: string, value: unknown): Record<string, unknown> {
         },
       };
     }
-    
+
     return {
       type: 'object',
       description: getPropertyDescription(key),
     };
   }
-  
+
   return { type: 'object' };
 }
 
@@ -221,7 +222,7 @@ function getPropertyDescription(key: string): string {
     ids: 'レコードIDの配列',
     target: '参照フィールド名（例: userId）',
   };
-  
+
   return descriptions[key] || `${key}パラメータ`;
 }
 
@@ -236,7 +237,7 @@ function generateToolDefinition(
   const toolName = toMCPToolName(operation);
   const description = toDescription(operation, summary);
   const inputSchema = generateInputSchema(params);
-  
+
   return `/**
  * ${toolName} ツール定義
  * ${description}
@@ -264,12 +265,10 @@ export const ${operation}Tool: Tool = ${JSON.stringify(
  * tools/index.tsを生成
  */
 function generateToolsIndex(operations: string[]): string {
-  const imports = operations
-    .map((op) => `import { ${op}Tool } from './${op}.js';`)
-    .join('\n');
-  
+  const imports = operations.map((op) => `import { ${op}Tool } from './${op}.js';`).join('\n');
+
   const toolsList = operations.map((op) => `    ${op}Tool,`).join('\n');
-  
+
   return `/**
  * MCPツール定義
  * 
@@ -296,45 +295,45 @@ ${toolsList}
  */
 function main() {
   console.log('🔧 OpenAPI仕様からMCPツール定義を生成中...\n');
-  
+
   // OpenAPI仕様を読み込む
   const spec = loadOpenAPISpec();
-  
+
   // POST /エンドポイントからexamplesを取得
   const postEndpoint = spec.paths['/']?.post;
   const examples = postEndpoint?.requestBody?.content?.['application/json']?.examples;
-  
+
   if (!examples) {
     console.error('❌ OpenAPI仕様にexamplesが見つかりません');
     process.exit(1);
   }
-  
+
   const operations: string[] = [];
   const toolsDir = path.join(process.cwd(), 'src/mcp/tools');
-  
+
   // 各操作のツール定義を生成
   for (const [operation, example] of Object.entries(examples)) {
     console.log(`📝 ${operation}ツールを生成中...`);
-    
+
     const { summary, value } = example;
     const params = value?.params;
-    
+
     const toolCode = generateToolDefinition(operation, summary, params);
     const toolPath = path.join(toolsDir, `${operation}.ts`);
-    
+
     fs.writeFileSync(toolPath, toolCode, 'utf-8');
     operations.push(operation);
-    
+
     console.log(`   ✅ ${toolPath}`);
   }
-  
+
   // tools/index.tsを生成
   console.log('\n📝 tools/index.tsを生成中...');
   const indexCode = generateToolsIndex(operations);
   const indexPath = path.join(toolsDir, 'index.ts');
   fs.writeFileSync(indexPath, indexCode, 'utf-8');
   console.log(`   ✅ ${indexPath}`);
-  
+
   console.log(`\n✨ ${operations.length}個のMCPツール定義を生成しました！`);
   console.log('\n次のステップ:');
   console.log('  1. npm run lint -- --fix  # コードフォーマット');

@@ -588,6 +588,98 @@ components:
           additionalProperties: true
           example:
             tags: old-tag
+    ApiOperation:
+      type: string
+      enum:
+        - find
+        - findOne
+        - findMany
+        - findManyReference
+        - insertOne
+        - insertMany
+        - updateOne
+        - updateMany
+        - deleteOne
+        - deleteMany
+      description: API操作タイプ（MongoDB風）
+    ApiRequest:
+      type: object
+      description: API リクエスト（共通）
+      required:
+        - op
+        - resource
+        - params
+      properties:
+        op:
+          $ref: '#/components/schemas/ApiOperation'
+        resource:
+          type: string
+          description: リソース名（例："articles", "tasks"）
+        params:
+          type: object
+          description: 操作パラメータ
+    ApiSuccessResponse:
+      type: object
+      description: API 成功レスポンス
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+          description: 成功フラグ
+        data:
+          type: object
+          description: レスポンスデータ
+    ApiErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+          description: 成功フラグ（常にfalse）
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - statusCode
+          properties:
+            code:
+              type: string
+              description: エラーコード
+            message:
+              type: string
+              description: エラーメッセージ
+            statusCode:
+              type: integer
+              description: HTTPステータスコード
+            details:
+              description: 追加詳細情報（オプション）
+      description: APIエラーレスポンス
+    OperationError:
+      type: object
+      required:
+        - id
+        - code
+        - message
+      properties:
+        id:
+          type: string
+          description: エラーが発生したレコードのID
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 操作エラー（部分失敗時の個別エラー情報）
     FindParams:
       type: object
       description: Parameters for find operation
@@ -891,6 +983,38 @@ components:
             operationCount:
               type: number
               description: Number of DynamoDB operations
+    FindManyReferenceResult:
+      type: object
+      required:
+        - items
+        - pageInfo
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: レコードリスト
+        pageInfo:
+          type: object
+          required:
+            - hasNextPage
+            - hasPreviousPage
+          properties:
+            hasNextPage:
+              type: boolean
+              description: 次ページが存在するか
+            hasPreviousPage:
+              type: boolean
+              description: 前ページが存在するか
+          description: ページ情報
+        nextToken:
+          type: string
+          description: 次ページトークン（存在する場合）
+        total:
+          type: integer
+          description: 総件数（オプション）
+      description: findManyReferenceレスポンスデータ
     InsertOneResult:
       type: object
       description: insertOne operation result

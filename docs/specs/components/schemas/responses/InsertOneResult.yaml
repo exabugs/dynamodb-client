@@ -6,8 +6,8 @@ properties:
   id:
     type: string
     description: Created record ID
-    example: "01KETJHF08KEDW320XX6NP2CZ3"
-  
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
+
   consumedCapacity:
     type: object
     description: DynamoDB consumed capacity (aggregated)
@@ -25,11 +25,11 @@ properties:
 additionalProperties: true
 
 example:
-  id: "01KETJHF08KEDW320XX6NP2CZ3"
-  name: "John Doe"
-  email: "john@example.com"
-  status: "active"
-  createdAt: "2024-01-01T00:00:00Z"
+  id: '01KETJHF08KEDW320XX6NP2CZ3'
+  name: 'John Doe'
+  email: 'john@example.com'
+  status: 'active'
+  createdAt: '2024-01-01T00:00:00Z'
   consumedCapacity:
     totalWCU: 1
     operationCount: 1

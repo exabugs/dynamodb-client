@@ -13,7 +13,7 @@ allOf:
         properties:
           filter:
             $ref: '../Filter.yaml'
-  
+
   - type: object
     required:
       - data
@@ -23,8 +23,8 @@ allOf:
         description: Update data (JSON Merge Patch format)
         additionalProperties: true
         example:
-          status: "inactive"
-          updatedAt: "2024-01-01T00:00:00Z"
+          status: 'inactive'
+          updatedAt: '2024-01-01T00:00:00Z'
       options:
         type: object
         properties:

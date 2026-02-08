@@ -4,6 +4,7 @@
  * MongoDB風APIの操作を適切なハンドラーに振り分ける
  */
 import { createLogger } from '../../shared/index.js';
+import type { ApiOperation, ApiRequest, FindManyReferenceParams } from '../types.js';
 import { handleDeleteMany } from './deleteMany.js';
 import { handleDeleteOne } from './deleteOne.js';
 import { handleFind } from './find.js';
@@ -12,8 +13,6 @@ import { handleFindManyReference } from './findManyReference.js';
 import { handleFindOne } from './findOne.js';
 import { handleInsertMany } from './insertMany.js';
 import { handleInsertOne } from './insertOne.js';
-import { handleUpdateMany } from './updateMany.js';
-import { handleUpdateOne } from './updateOne.js';
 import {
   convertDeleteManyParams,
   convertDeleteOneParams,
@@ -25,7 +24,8 @@ import {
   convertUpdateManyParams,
   convertUpdateOneParams,
 } from './parameterConverter.js';
-import type { ApiOperation, ApiRequest, FindManyReferenceParams } from '../types.js';
+import { handleUpdateMany } from './updateMany.js';
+import { handleUpdateOne } from './updateOne.js';
 
 /**
  * ロガーインスタンス

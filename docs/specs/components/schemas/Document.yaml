@@ -4,7 +4,7 @@ properties:
   id:
     type: string
     description: ドキュメントID（ULID形式）
-    example: "01KETJHF08KEDW320XX6NP2CZ3"
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
   createdAt:
     type: string
     format: date-time

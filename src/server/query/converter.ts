@@ -193,9 +193,7 @@ export function convertFilterToDynamo<T = Record<string, unknown>>(
       for (const [op, opValue] of Object.entries(value)) {
         if (opValue === undefined) continue;
 
-        const operator = mapOperatorToDynamo(
-          op as keyof FilterOperators<Record<string, unknown>>
-        );
+        const operator = mapOperatorToDynamo(op as keyof FilterOperators<Record<string, unknown>>);
         conditions.push({
           field: key,
           operator,

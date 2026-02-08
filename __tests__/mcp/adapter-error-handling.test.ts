@@ -1,7 +1,8 @@
 /**
  * MCP Adapter エラーハンドリングのテスト
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { MCPAdapter } from '../../src/mcp/adapter.js';
 import { MCPError, MCPErrorCode } from '../../src/mcp/types.js';
 import * as operationDispatcher from '../../src/server/operations/operationDispatcher.js';
@@ -24,9 +25,9 @@ describe('MCPAdapter - エラーハンドリング', () => {
 
   describe('ツール名の検証', () => {
     it('無効なツール名プレフィックスの場合、INVALID_TOOL_NAMEエラーを投げる', async () => {
-      await expect(
-        adapter.executeTool('invalid_find', { collection: 'test' })
-      ).rejects.toThrow(MCPError);
+      await expect(adapter.executeTool('invalid_find', { collection: 'test' })).rejects.toThrow(
+        MCPError
+      );
 
       await expect(
         adapter.executeTool('invalid_find', { collection: 'test' })
@@ -39,13 +40,9 @@ describe('MCPAdapter - エラーハンドリング', () => {
 
   describe('パラメータの検証', () => {
     it('collectionパラメータが欠けている場合、MISSING_REQUIRED_PARAMETERエラーを投げる', async () => {
-      await expect(
-        adapter.executeTool('dynamodb_find', {})
-      ).rejects.toThrow(MCPError);
+      await expect(adapter.executeTool('dynamodb_find', {})).rejects.toThrow(MCPError);
 
-      await expect(
-        adapter.executeTool('dynamodb_find', {})
-      ).rejects.toMatchObject({
+      await expect(adapter.executeTool('dynamodb_find', {})).rejects.toMatchObject({
         code: MCPErrorCode.MISSING_REQUIRED_PARAMETER,
         message: expect.stringContaining('Missing required parameter: collection'),
       });
@@ -71,7 +68,7 @@ describe('MCPAdapter - エラーハンドリング', () => {
     it('DynamoDBエラーをDYNAMODB_ERRORに変換する', async () => {
       const dynamoError = new Error('ResourceNotFoundException: Table not found');
       dynamoError.name = 'ResourceNotFoundException';
-      
+
       vi.mocked(operationDispatcher.executeOperation).mockRejectedValue(dynamoError);
 
       await expect(
@@ -87,7 +84,7 @@ describe('MCPAdapter - エラーハンドリング', () => {
     it('AWS認証エラーをAUTHENTICATION_ERRORに変換する', async () => {
       const authError = new Error('AccessDenied: User is not authorized');
       authError.name = 'AccessDenied';
-      
+
       vi.mocked(operationDispatcher.executeOperation).mockRejectedValue(authError);
 
       await expect(
@@ -101,9 +98,7 @@ describe('MCPAdapter - エラーハンドリング', () => {
 
   describe('内部エラーの処理', () => {
     it('不明なエラーをINTERNAL_ERRORに変換する', async () => {
-      vi.mocked(operationDispatcher.executeOperation).mockRejectedValue(
-        new Error('Unknown error')
-      );
+      vi.mocked(operationDispatcher.executeOperation).mockRejectedValue(new Error('Unknown error'));
 
       await expect(
         adapter.executeTool('dynamodb_find', { collection: 'test' })
@@ -114,9 +109,7 @@ describe('MCPAdapter - エラーハンドリング', () => {
     });
 
     it('文字列エラーをINTERNAL_ERRORに変換する', async () => {
-      vi.mocked(operationDispatcher.executeOperation).mockRejectedValue(
-        'String error message'
-      );
+      vi.mocked(operationDispatcher.executeOperation).mockRejectedValue('String error message');
 
       await expect(
         adapter.executeTool('dynamodb_find', { collection: 'test' })
@@ -144,11 +137,7 @@ describe('MCPAdapter - エラーハンドリング', () => {
 
   describe('MCPError.toJSON', () => {
     it('エラーをJSON形式に変換できる', () => {
-      const error = new MCPError(
-        MCPErrorCode.INVALID_TOOL_NAME,
-        'Test error',
-        { detail: 'test' }
-      );
+      const error = new MCPError(MCPErrorCode.INVALID_TOOL_NAME, 'Test error', { detail: 'test' });
 
       const json = error.toJSON();
 

@@ -6,11 +6,11 @@ DynamoDB Client SDKのセキュリティに関するポリシーと脆弱性報�
 
 以下のバージョンでセキュリティアップデートを提供しています：
 
-| バージョン | サポート状況 |
-| --------- | ----------- |
-| 0.3.x     | ✅ サポート中 |
-| 0.2.x     | ❌ サポート終了 |
-| 0.1.x     | ❌ サポート終了 |
+| バージョン | サポート状況    |
+| ---------- | --------------- |
+| 0.3.x      | ✅ サポート中   |
+| 0.2.x      | ❌ サポート終了 |
+| 0.1.x      | ❌ サポート終了 |
 
 **注意**: メジャーバージョンアップ後は、前のメジャーバージョンのサポートは6ヶ月間継続し、その後終了します。
 
@@ -120,7 +120,7 @@ function validateFilter(filter: unknown): Filter {
   if (!filter || typeof filter !== 'object') {
     throw new ValidationError('Invalid filter format');
   }
-  
+
   // 型安全な検証
   return filterSchema.parse(filter);
 }

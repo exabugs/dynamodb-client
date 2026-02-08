@@ -6,8 +6,8 @@ properties:
   id:
     type: string
     description: Deleted record ID
-    example: "01KETJHF08KEDW320XX6NP2CZ3"
-  
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
+
   consumedCapacity:
     type: object
     description: DynamoDB consumed capacity (aggregated)
@@ -23,7 +23,7 @@ properties:
         description: Number of DynamoDB operations
 
 example:
-  id: "01KETJHF08KEDW320XX6NP2CZ3"
+  id: '01KETJHF08KEDW320XX6NP2CZ3'
   consumedCapacity:
     totalRCU: 1
     totalWCU: 1

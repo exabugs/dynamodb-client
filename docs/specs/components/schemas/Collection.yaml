@@ -4,6 +4,6 @@ properties:
   name:
     type: string
     description: Resource name (e.g., "users", "venues", "participations")
-    example: "users"
+    example: 'users'
 required:
   - name

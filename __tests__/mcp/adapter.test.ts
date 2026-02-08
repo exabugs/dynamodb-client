@@ -1,7 +1,8 @@
 /**
  * MCPAdapter のユニットテスト
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { MCPAdapter } from '../../src/mcp/adapter.js';
 import type { MCPServerConfig } from '../../src/mcp/types.js';
 
@@ -47,9 +48,8 @@ describe('MCPAdapter', () => {
 
   describe('executeTool', () => {
     it('dynamodb_findツールを正しく変換して実行する', async () => {
-      const { executeOperation } = await import(
-        '../../src/server/operations/operationDispatcher.js'
-      );
+      const { executeOperation } =
+        await import('../../src/server/operations/operationDispatcher.js');
       const mockExecuteOperation = vi.mocked(executeOperation);
       mockExecuteOperation.mockResolvedValue({ items: [], pageInfo: {} });
 
@@ -71,9 +71,8 @@ describe('MCPAdapter', () => {
     });
 
     it('dynamodb_find_oneツールを正しく変換する', async () => {
-      const { executeOperation } = await import(
-        '../../src/server/operations/operationDispatcher.js'
-      );
+      const { executeOperation } =
+        await import('../../src/server/operations/operationDispatcher.js');
       const mockExecuteOperation = vi.mocked(executeOperation);
       mockExecuteOperation.mockResolvedValue({ id: '123' });
 
@@ -95,9 +94,8 @@ describe('MCPAdapter', () => {
     });
 
     it('dynamodb_insert_oneツールを正しく変換する', async () => {
-      const { executeOperation } = await import(
-        '../../src/server/operations/operationDispatcher.js'
-      );
+      const { executeOperation } =
+        await import('../../src/server/operations/operationDispatcher.js');
       const mockExecuteOperation = vi.mocked(executeOperation);
       mockExecuteOperation.mockResolvedValue({ id: '123', name: 'Test' });
 
@@ -125,9 +123,9 @@ describe('MCPAdapter', () => {
     });
 
     it('無効なツール名の場合はエラーを投げる', async () => {
-      await expect(
-        adapter.executeTool('invalid_tool', { collection: 'venues' })
-      ).rejects.toThrow('Invalid tool name');
+      await expect(adapter.executeTool('invalid_tool', { collection: 'venues' })).rejects.toThrow(
+        'Invalid tool name'
+      );
     });
 
     it('未知の操作の場合はエラーを投げる', async () => {
@@ -137,15 +135,14 @@ describe('MCPAdapter', () => {
     });
 
     it('executeOperationのエラーを正しく伝播する', async () => {
-      const { executeOperation } = await import(
-        '../../src/server/operations/operationDispatcher.js'
-      );
+      const { executeOperation } =
+        await import('../../src/server/operations/operationDispatcher.js');
       const mockExecuteOperation = vi.mocked(executeOperation);
       mockExecuteOperation.mockRejectedValue(new Error('DynamoDB error'));
 
-      await expect(
-        adapter.executeTool('dynamodb_find', { collection: 'venues' })
-      ).rejects.toThrow('DynamoDB error');
+      await expect(adapter.executeTool('dynamodb_find', { collection: 'venues' })).rejects.toThrow(
+        'DynamoDB error'
+      );
     });
   });
 });

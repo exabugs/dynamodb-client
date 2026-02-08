@@ -2,8 +2,8 @@
  * DynamoDB Client MCP Server CLI
  * CLIエントリポイント
  */
-import { DynamoDBMCPServer } from './server.js';
 import { createLogger } from '../shared/index.js';
+import { DynamoDBMCPServer } from './server.js';
 
 /**
  * ロガーインスタンス
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
     console.error('\nFatal error occurred:');
     if (error instanceof Error) {
       console.error(`  ${error.message}`);
-      
+
       // AWS認証エラーの場合は追加のヘルプを表示
       if (
         error.message.includes('credentials') ||
@@ -92,10 +92,7 @@ async function main(): Promise<void> {
       }
 
       // DynamoDBテーブルエラーの場合
-      if (
-        error.message.includes('ResourceNotFound') ||
-        error.message.includes('Table')
-      ) {
+      if (error.message.includes('ResourceNotFound') || error.message.includes('Table')) {
         console.error('\nDynamoDB table not found. Please check:');
         console.error('  1. DYNAMODB_TABLE is set correctly');
         console.error('  2. The table exists in the specified region');

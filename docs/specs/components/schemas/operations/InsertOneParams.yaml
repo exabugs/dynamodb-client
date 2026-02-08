@@ -8,6 +8,6 @@ properties:
     description: Document data to insert
     additionalProperties: true
     example:
-      name: "John Doe"
-      email: "john@example.com"
-      status: "active"
+      name: 'John Doe'
+      email: 'john@example.com'
+      status: 'active'

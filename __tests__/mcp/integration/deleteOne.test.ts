@@ -2,7 +2,8 @@
  * dynamodb_deleteOne ツールの統合テスト（簡略版）
  * MCPAdapter経由でdeleteOneツールを実行し、基本的なエラーハンドリングを確認
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { MCPAdapter } from '../../../src/mcp/adapter.js';
 import type { MCPServerConfig } from '../../../src/mcp/types.js';
 

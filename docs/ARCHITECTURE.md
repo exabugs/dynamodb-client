@@ -25,6 +25,7 @@ shared/        (共通基盤層)
 **責任**: プロジェクト全体で使用される共通機能を提供
 
 **含まれるもの**:
+
 - 型定義 (`types/`)
 - エラークラス (`errors/`)
 - ユーティリティ (`utils/`)
@@ -33,6 +34,7 @@ shared/        (共通基盤層)
 **依存関係**: なし（最下位層）
 
 **エクスポート**:
+
 - 共通型定義（Filter, UpdateOperators, etc.）
 - エラークラス（AppError, ValidationError, etc.）
 - ユーティリティ（createLogger, ulid, validation）
@@ -43,14 +45,17 @@ shared/        (共通基盤層)
 **責任**: DynamoDB Single-Table設計のシャドウレコード管理
 
 **含まれるもの**:
+
 - シャドウレコード生成 (`generator.ts`)
 - シャドウ差分計算 (`differ.ts`)
 - 型定義 (`types.ts`)
 
-**依存関係**: 
+**依存関係**:
+
 - `shared/` のみ
 
 **エクスポート**:
+
 - シャドウ生成関数（generateShadowSK, formatFieldValue, etc.）
 - 差分計算関数（calculateShadowDiff, isDiffEmpty, etc.）
 - 型定義（ShadowFieldType, ShadowFieldConfig, etc.）
@@ -60,16 +65,19 @@ shared/        (共通基盤層)
 **責任**: Lambda関数でのサーバーサイド処理
 
 **含まれるもの**:
+
 - CRUD操作 (`operations/`)
 - クエリ処理 (`query/`)
 - シャドウ統合 (`shadow/`)
 - ユーティリティ (`utils/`)
 
-**依存関係**: 
+**依存関係**:
+
 - `shared/`
 - `shadows/`（シャドウレコード生成のため）
 
 **エクスポート**:
+
 - CRUD操作ハンドラー
 - クエリ変換関数
 - シャドウ設定管理
@@ -79,15 +87,18 @@ shared/        (共通基盤層)
 **責任**: ブラウザ・Node.jsでのクライアントサイド処理
 
 **含まれるもの**:
+
 - Database クラス
 - Collection クラス
 - FindCursor クラス
 - 認証ハンドラー（IAM, Cognito, Token）
 
-**依存関係**: 
+**依存関係**:
+
 - `shared/` のみ
 
 **エクスポート**:
+
 - Database, Collection クラス
 - 認証別エントリーポイント
 
@@ -96,13 +107,16 @@ shared/        (共通基盤層)
 **責任**: 外部ライブラリとの統合
 
 **含まれるもの**:
+
 - react-admin DataProvider
 
-**依存関係**: 
+**依存関係**:
+
 - `shared/`
 - `client/`
 
 **エクスポート**:
+
 - react-admin用DataProvider
 
 ## 依存関係の原則

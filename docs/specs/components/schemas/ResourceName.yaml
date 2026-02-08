@@ -7,10 +7,10 @@ enum:
   - notifications
 description: |
   Available resource types in the system.
-  
+
   - users: User accounts and profiles
   - venues: Event venues and locations
   - events: Scheduled events
   - participations: User participation in events
   - notifications: System notifications
-example: "users"
+example: 'users'

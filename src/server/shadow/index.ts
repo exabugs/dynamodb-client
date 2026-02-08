@@ -5,11 +5,7 @@
  */
 
 // 型定義のエクスポート
-export type {
-  ShadowFieldType,
-  ShadowFieldConfig,
-  ShadowDiff,
-} from './types.js';
+export type { ShadowFieldType, ShadowFieldConfig, ShadowDiff } from './types.js';
 
 // v0.3.x configuration types
 export type { ShadowConfig } from './config.js';
@@ -32,13 +28,7 @@ export {
 export { calculateShadowDiff, isDiffEmpty, mergeShadowDiffs } from './differ.js';
 
 // 設定管理関数のエクスポート
-export {
-  getShadowConfig,
-  clearShadowConfigCache,
-} from './config.js';
+export { getShadowConfig, clearShadowConfigCache } from './config.js';
 
 // 型推論関数のエクスポート
-export {
-  inferFieldType,
-  extractShadowableFields,
-} from './typeInference.js';
+export { inferFieldType, extractShadowableFields } from './typeInference.js';

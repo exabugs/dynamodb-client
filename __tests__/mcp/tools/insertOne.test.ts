@@ -1,7 +1,8 @@
 /**
  * dynamodb_insertOne ツールのユニットテスト
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { insertOneTool } from '../../../src/mcp/tools/insertOne.js';
 
 describe('dynamodb_insertOne tool', () => {

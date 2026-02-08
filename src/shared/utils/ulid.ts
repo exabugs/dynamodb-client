@@ -1,6 +1,6 @@
 /**
  * ULID（Universally Unique Lexicographically Sortable Identifier）ユーティリティ
- * 
+ *
  * タイムスタンプベースで辞書順ソート可能なIDを生成します。
  */
 import { ulid as generateUlid } from 'ulid';

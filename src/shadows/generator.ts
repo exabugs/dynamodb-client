@@ -33,7 +33,9 @@ export function formatNumber(value: number | null | undefined): string {
   // Treat negative numbers as 0
   const normalized = Math.max(0, Math.floor(value));
 
-  return normalized.toString().padStart(NUMBER_FORMAT.SHADOW_SK_DIGITS, NUMBER_FORMAT.ZERO_PAD_CHAR);
+  return normalized
+    .toString()
+    .padStart(NUMBER_FORMAT.SHADOW_SK_DIGITS, NUMBER_FORMAT.ZERO_PAD_CHAR);
 }
 
 /**

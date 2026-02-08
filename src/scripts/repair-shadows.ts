@@ -13,7 +13,7 @@
 import { repairAllRecords } from './operations/bulkRecordRepair.js';
 import { repairSingleRecord } from './operations/singleRecordRepair.js';
 import { getRecordsApiUrl } from './utils/awsUtils.js';
-import { parseRepairScriptArgs, displayScriptConfig } from './utils/cliParser.js';
+import { displayScriptConfig, parseRepairScriptArgs } from './utils/cliParser.js';
 import { createDynamoClientCollection } from './utils/clientFactory.js';
 
 // 環境変数

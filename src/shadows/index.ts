@@ -10,11 +10,7 @@
  */
 
 // Type definitions export
-export type { 
-  ShadowFieldType, 
-  ShadowFieldConfig, 
-  ShadowDiff 
-} from './types.js';
+export type { ShadowFieldType, ShadowFieldConfig, ShadowDiff } from './types.js';
 
 // Legacy types removed in v0.3.x - use environment variables for configuration
 

@@ -4,10 +4,10 @@ info:
   version: 1.3.34
   description: |
     MongoDB-like API for DynamoDB with shadow record support for efficient querying.
-    
+
     This API provides a familiar MongoDB-style interface for interacting with DynamoDB,
     supporting 10 operations compatible with react-admin.
-    
+
     **Supported Operations:**
     - find: Query documents with filters
     - findOne: Get a single document
@@ -65,7 +65,7 @@ paths:
                     properties:
                       version:
                         type: string
-                        example: "1.3.34"
+                        example: '1.3.34'
                       timestamp:
                         type: string
                         format: date-time
@@ -81,7 +81,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  
+
   /:
     post:
       tags:
@@ -128,26 +128,26 @@ paths:
                   op: find
                   resource: users
                   params:
-                    filter: 
-                      status: "active"
+                    filter:
+                      status: 'active'
                       age: { $gte: 18 }
                     sort:
-                      field: "createdAt"
-                      order: "DESC"
+                      field: 'createdAt'
+                      order: 'DESC'
                     pagination:
                       perPage: 10
-                      nextToken: "eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9"
-                      description: "ページネーション設定"
+                      nextToken: 'eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9'
+                      description: 'ページネーション設定'
                       properties:
                         perPage:
                           type: number
                           minimum: 1
                           maximum: 50
-                          description: "1ページあたりの件数（最大50件）"
+                          description: '1ページあたりの件数（最大50件）'
                         nextToken:
                           type: string
-                          description: "次ページトークン（前回のレスポンスから取得）"
-              
+                          description: '次ページトークン（前回のレスポンスから取得）'
+
               findOne:
                 summary: Find one document by ID
                 description: DynamoDBから単一レコードを取得します。IDで指定。
@@ -155,8 +155,8 @@ paths:
                   op: findOne
                   resource: users
                   params:
-                    id: "01KETJHF08KEDW320XX6NP2CZ3"
-              
+                    id: '01KETJHF08KEDW320XX6NP2CZ3'
+
               findMany:
                 summary: Find multiple documents by IDs
                 description: DynamoDBから複数レコードをIDで取得します。
@@ -164,8 +164,8 @@ paths:
                   op: findMany
                   resource: users
                   params:
-                    ids: ["01KETJHF08KEDW320XX6NP2CZ3", "01KETJHF08KEDW320XX6NP2CZ4"]
-              
+                    ids: ['01KETJHF08KEDW320XX6NP2CZ3', '01KETJHF08KEDW320XX6NP2CZ4']
+
               findManyReference:
                 summary: Find documents by reference field
                 description: DynamoDBから参照フィールドでレコードを取得します。
@@ -173,11 +173,11 @@ paths:
                   op: findManyReference
                   resource: participations
                   params:
-                    target: "userId"
-                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+                    target: 'userId'
+                    id: '01KETJHF08KEDW320XX6NP2CZ3'
                     filter:
-                      status: "confirmed"
-              
+                      status: 'confirmed'
+
               insertOne:
                 summary: Insert one document
                 description: DynamoDBに単一レコードを作成します。
@@ -186,10 +186,10 @@ paths:
                   resource: users
                   params:
                     data:
-                      name: "John Doe"
-                      email: "john@example.com"
-                      status: "active"
-              
+                      name: 'John Doe'
+                      email: 'john@example.com'
+                      status: 'active'
+
               insertMany:
                 summary: Insert multiple documents
                 description: DynamoDBに複数レコードを作成します。
@@ -198,11 +198,11 @@ paths:
                   resource: users
                   params:
                     data:
-                      - name: "John Doe"
-                        email: "john@example.com"
-                      - name: "Jane Smith"
-                        email: "jane@example.com"
-              
+                      - name: 'John Doe'
+                        email: 'john@example.com'
+                      - name: 'Jane Smith'
+                        email: 'jane@example.com'
+
               updateOne:
                 summary: Update one document
                 description: DynamoDBの単一レコードを更新します。
@@ -210,13 +210,13 @@ paths:
                   op: updateOne
                   resource: users
                   params:
-                    id: "01KETJHF08KEDW320XX6NP2CZ3"
+                    id: '01KETJHF08KEDW320XX6NP2CZ3'
                     data:
-                      status: "inactive"
-                      updatedAt: "2024-01-01T00:00:00Z"
+                      status: 'inactive'
+                      updatedAt: '2024-01-01T00:00:00Z'
                     options:
                       upsert: false
-              
+
               updateMany:
                 summary: Update multiple documents
                 description: DynamoDBの複数レコードを更新します。
@@ -225,10 +225,10 @@ paths:
                   resource: users
                   params:
                     filter:
-                      status: "pending"
+                      status: 'pending'
                     data:
-                      status: "active"
-              
+                      status: 'active'
+
               deleteOne:
                 summary: Delete one document
                 description: DynamoDBから単一レコードを削除します。
@@ -236,8 +236,8 @@ paths:
                   op: deleteOne
                   resource: users
                   params:
-                    id: "01KETJHF08KEDW320XX6NP2CZ3"
-              
+                    id: '01KETJHF08KEDW320XX6NP2CZ3'
+
               deleteMany:
                 summary: Delete multiple documents
                 description: DynamoDBから複数レコードを削除します。
@@ -246,8 +246,8 @@ paths:
                   resource: users
                   params:
                     filter:
-                      status: "inactive"
-                      lastActiveAt: { $lt: "2023-01-01T00:00:00Z" }
+                      status: 'inactive'
+                      lastActiveAt: { $lt: '2023-01-01T00:00:00Z' }
       responses:
         '200':
           description: Success
@@ -288,7 +288,7 @@ components:
       in: header
       name: Authorization
       description: AWS IAM authentication using Signature Version 4
-    
+
     BearerAuth:
       type: http
       scheme: bearer

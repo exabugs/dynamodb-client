@@ -5,9 +5,9 @@
  */
 import type { Collection } from '../../client/index.iam.js';
 import {
+  type ShadowIntegrityResult,
   checkShadowIntegrity,
   repairRecordViaDynamoClient,
-  type ShadowIntegrityResult,
 } from '../utils/repairUtils.js';
 
 /**

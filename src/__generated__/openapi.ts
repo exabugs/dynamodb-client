@@ -4,880 +4,914 @@
  */
 
 export interface paths {
-    "/version": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get API version
-         * @description Returns the current API version and timestamp (no authentication required)
-         */
-        get: operations["getVersion"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/version': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Execute MongoDB-style operation
-         * @description Execute one of the 10 supported MongoDB-style operations.
-         *     All operations use POST method with operation type in request body.
-         */
-        post: operations["executeOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get API version
+     * @description Returns the current API version and timestamp (no authentication required)
+     */
+    get: operations['getVersion'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    get?: never;
+    put?: never;
+    /**
+     * Execute MongoDB-style operation
+     * @description Execute one of the 10 supported MongoDB-style operations.
+     *     All operations use POST method with operation type in request body.
+     */
+    post: operations['executeOperation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** @description エラーレスポンス */
-        Error: {
-            /**
-             * @description 常にfalse
-             * @enum {boolean}
-             */
-            success: false;
-            error: {
-                /**
-                 * @description エラーコード
-                 * @example VALIDATION_ERROR
-                 */
-                code: string;
-                /**
-                 * @description エラーメッセージ
-                 * @example Invalid document ID
-                 */
-                message: string;
-                /** @description エラー詳細情報 */
-                details?: {
-                    [key: string]: unknown;
-                };
-            };
-        };
+  schemas: {
+    /** @description エラーレスポンス */
+    Error: {
+      /**
+       * @description 常にfalse
+       * @enum {boolean}
+       */
+      success: false;
+      error: {
         /**
-         * @description Available resource types in the system.
-         *
-         *     - users: User accounts and profiles
-         *     - venues: Event venues and locations
-         *     - events: Scheduled events
-         *     - participations: User participation in events
-         *     - notifications: System notifications
-         * @example users
-         * @enum {string}
+         * @description エラーコード
+         * @example VALIDATION_ERROR
          */
-        ResourceName: "users" | "venues" | "events" | "participations" | "notifications";
-        /** @description DynamoDBドキュメント（レコード） */
-        Document: {
-            /**
-             * @description ドキュメントID（ULID形式）
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id?: string;
-            /**
-             * Format: date-time
-             * @description 作成日時
-             */
-            createdAt?: string;
-            /**
-             * Format: date-time
-             * @description 更新日時
-             */
-            updatedAt?: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /** @description Collection (resource) name */
-        Collection: {
-            /**
-             * @description Resource name (e.g., "users", "venues", "participations")
-             * @example users
-             */
-            name: string;
-        };
-        /** @description Query parameters for find operations */
-        Query: {
-            /**
-             * @description Filter conditions (MongoDB-style)
-             * @example {
-             *       "status": "active",
-             *       "age": {
-             *         "$gte": 18
-             *       }
-             *     }
-             */
-            filter?: {
-                [key: string]: unknown;
-            };
-            /** @description Sort conditions */
-            sort?: {
-                /**
-                 * @description Field name to sort by (shadow field name)
-                 * @example createdAt
-                 */
-                field?: string;
-                /**
-                 * @description Sort order
-                 * @example DESC
-                 * @enum {string}
-                 */
-                order?: "ASC" | "DESC";
-            };
-            /** @description Pagination parameters (DynamoDB cursor-based) */
-            pagination?: {
-                /**
-                 * @description Items per page (max 50)
-                 * @example 10
-                 */
-                perPage?: number;
-                /**
-                 * @description Next page token (Base64URL encoded, from previous response)
-                 * @example eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9
-                 */
-                nextToken?: string;
-            };
-        };
+        code: string;
         /**
-         * @description MongoDB形式のフィルター条件。
-         *
-         *     サポートされる演算子:
-         *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
-         *     - 配列演算子: $in, $nin
-         *     - 文字列演算子: $regex
-         *     - 地理演算子: $near（プロジェクト固有、簡易形式のみ）
-         *
-         *     例:
-         *     - 単純な等価: { status: "active" }
-         *     - 比較演算子: { age: { $gte: 18 } }
-         *     - 配列演算子: { status: { $in: ["active", "pending"] } }
-         *     - 複数条件: { status: "active", age: { $gte: 18 } }
-         *     - 地理検索: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }
-         * @example {
-         *       "status": "active"
-         *     }
-         * @example {
-         *       "age": {
-         *         "$gte": 18,
-         *         "$lte": 65
-         *       }
-         *     }
-         * @example {
-         *       "status": {
-         *         "$in": [
-         *           "premium",
-         *           "verified"
-         *         ]
-         *       }
-         *     }
-         * @example {
-         *       "name": {
-         *         "$regex": "^John"
-         *       }
-         *     }
-         * @example {
-         *       "location": {
-         *         "$near": {
-         *           "latitude": 35.6895,
-         *           "longitude": 139.7036,
-         *           "maxDistance": 5000
-         *         }
-         *       }
-         *     }
+         * @description エラーメッセージ
+         * @example Invalid document ID
          */
-        Filter: {
-            [key: string]: unknown;
+        message: string;
+        /** @description エラー詳細情報 */
+        details?: {
+          [key: string]: unknown;
         };
-        /**
-         * @description $near演算子（簡易形式のみサポート）
-         *
-         *     指定された地点から近い順にドキュメントを検索します。
-         *
-         *     動作:
-         *     1. シャドウレコード: 地理座標フィールドに対して、GeoHashベースのシャドウレコードが自動生成される
-         *     2. 検索精度: GeoHash精度6（±610m）から開始し、段階的に精度を下げて検索
-         *     3. 9ブロック検索: 中心ブロック + 周囲8ブロックを検索して候補を収集
-         *     4. 距離計算: Haversine公式で正確な距離を計算し、距離順にソート
-         *     5. 結果: 指定された件数（limit）まで、距離の近い順に返す
-         *
-         *     制約:
-         *     - ページネーション非対応: $near検索ではnextTokenを使用できない
-         *     - 単一フィールド: 1つのクエリで複数の地理座標フィールドを検索できない
-         *     - 他の演算子との併用: $nearと他のフィルター条件を併用できない
-         * @example {
-         *       "latitude": 35.6895,
-         *       "longitude": 139.7036,
-         *       "maxDistance": 5000
-         *     }
-         */
-        NearOperator: {
-            /**
-             * @description 緯度（-90〜90）
-             * @example 35.6895
-             */
-            latitude: number;
-            /**
-             * @description 経度（-180〜180）
-             * @example 139.7036
-             */
-            longitude: number;
-            /**
-             * @description 最大距離（メートル）。省略時は無制限
-             * @example 5000
-             */
-            maxDistance?: number;
-            /**
-             * @description 最小距離（メートル）。省略時は0
-             * @example 0
-             */
-            minDistance?: number;
-        };
-        /**
-         * @description MongoDB形式の演算子をサポートします。
-         *
-         *     サポートされる演算子:
-         *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
-         *     - 配列演算子: $in, $nin
-         *     - 文字列演算子: $regex
-         *     - 地理演算子: $near（簡易形式のみ）
-         * @example {
-         *       "$eq": 25
-         *     }
-         * @example {
-         *       "$gte": 18
-         *     }
-         * @example {
-         *       "$in": [
-         *         "active",
-         *         "pending"
-         *       ]
-         *     }
-         * @example {
-         *       "$regex": "^John"
-         *     }
-         */
-        MongoDBOperators: {
-            /** @description 等しい（例: { age: { $eq: 25 } } または { age: 25 }） */
-            $eq?: string | number | boolean;
-            /** @description 等しくない（例: { status: { $ne: "deleted" } }） */
-            $ne?: string | number | boolean;
-            /** @description より大きい（例: { age: { $gt: 18 } }） */
-            $gt?: number;
-            /** @description 以上（例: { age: { $gte: 18 } }） */
-            $gte?: number;
-            /** @description より小さい（例: { age: { $lt: 65 } }） */
-            $lt?: number;
-            /** @description 以下（例: { age: { $lte: 65 } }） */
-            $lte?: number;
-            /** @description 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }） */
-            $in?: (string | number | boolean)[];
-            /** @description 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }） */
-            $nin?: (string | number | boolean)[];
-            /** @description 正規表現マッチ（例: { name: { $regex: "^John" } }） */
-            $regex?: string;
-            /** @description 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }） */
-            $near?: components["schemas"]["NearOperator"];
-        };
-        /** @description MongoDB-style update operators */
-        UpdateOperators: {
-            /**
-             * @description Set field values
-             * @example {
-             *       "status": "inactive",
-             *       "updatedAt": "2024-01-01T00:00:00Z"
-             *     }
-             */
-            $set?: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description Remove fields
-             * @example {
-             *       "temporaryField": ""
-             *     }
-             */
-            $unset?: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description Increment numeric fields
-             * @example {
-             *       "viewCount": 1,
-             *       "score": -5
-             *     }
-             */
-            $inc?: {
-                [key: string]: number;
-            };
-            /**
-             * @description Add items to arrays
-             * @example {
-             *       "tags": "new-tag"
-             *     }
-             */
-            $push?: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description Remove items from arrays
-             * @example {
-             *       "tags": "old-tag"
-             *     }
-             */
-            $pull?: {
-                [key: string]: unknown;
-            };
-        };
-        /**
-         * @description API操作タイプ（MongoDB風）
-         * @enum {string}
-         */
-        ApiOperation: "find" | "findOne" | "findMany" | "findManyReference" | "insertOne" | "insertMany" | "updateOne" | "updateMany" | "deleteOne" | "deleteMany";
-        /** @description API リクエスト（共通） */
-        ApiRequest: {
-            op: components["schemas"]["ApiOperation"];
-            /** @description リソース名（例："articles", "tasks"） */
-            resource: string;
-            /** @description 操作パラメータ */
-            params: Record<string, never>;
-        };
-        /** @description API 成功レスポンス */
-        ApiSuccessResponse: {
-            /**
-             * @description 成功フラグ
-             * @enum {boolean}
-             */
-            success: true;
-            /** @description レスポンスデータ */
-            data: Record<string, never>;
-        };
-        /** @description APIエラーレスポンス */
-        ApiErrorResponse: {
-            /**
-             * @description 成功フラグ（常にfalse）
-             * @enum {boolean}
-             */
-            success: false;
-            error: {
-                /** @description エラーコード */
-                code: string;
-                /** @description エラーメッセージ */
-                message: string;
-                /** @description HTTPステータスコード */
-                statusCode: number;
-                /** @description 追加詳細情報（オプション） */
-                details?: unknown;
-            };
-        };
-        /** @description 操作エラー（部分失敗時の個別エラー情報） */
-        OperationError: {
-            /** @description エラーが発生したレコードのID */
-            id: string;
-            /** @description エラーコード */
-            code: string;
-            /** @description エラーメッセージ */
-            message: string;
-        };
-        /** @description Parameters for find operation */
-        FindParams: {
-            filter?: components["schemas"]["Filter"];
-            /** @description Sort options (if not specified, defaults to updatedAt DESC) */
-            sort?: {
-                /** @description Shadow field name to sort by */
-                field: string;
-                /**
-                 * @description Sort order
-                 * @enum {string}
-                 */
-                order: "ASC" | "DESC";
-            };
-            pagination?: {
-                /** @description Items per page (max 50) */
-                perPage?: number;
-                /** @description Next page token (Base64URL encoded) */
-                nextToken?: string;
-            };
-        };
-        FindOneParams: {
-            /**
-             * @description Record ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-        } | {
-            filter: components["schemas"]["Filter"];
-        };
-        FindManyParams: {
-            /**
-             * @description Array of record IDs
-             * @example [
-             *       "01KETJHF08KEDW320XX6NP2CZ3",
-             *       "01KETJHF08KEDW320XX6NP2CZ4"
-             *     ]
-             */
-            ids: string[];
-        } | {
-            filter: components["schemas"]["Filter"];
-        };
-        /** @description Parameters for findManyReference operation */
-        FindManyReferenceParams: {
-            /**
-             * @description Reference field name
-             * @example userId
-             */
-            target: string;
-            /**
-             * @description Reference target ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-            filter?: components["schemas"]["Filter"];
-            /** @description Sort options (if not specified, defaults to updatedAt DESC) */
-            sort?: {
-                /** @description Shadow field name to sort by */
-                field: string;
-                /**
-                 * @description Sort order
-                 * @enum {string}
-                 */
-                order: "ASC" | "DESC";
-            };
-            pagination?: {
-                /** @description Items per page (max 50) */
-                perPage?: number;
-                /** @description Next page token (Base64URL encoded) */
-                nextToken?: string;
-            };
-        };
-        /** @description Parameters for insertOne operation */
-        InsertOneParams: {
-            /**
-             * @description Document data to insert
-             * @example {
-             *       "name": "John Doe",
-             *       "email": "john@example.com",
-             *       "status": "active"
-             *     }
-             */
-            data: {
-                [key: string]: unknown;
-            };
-        };
-        /** @description Parameters for insertMany operation */
-        InsertManyParams: {
-            /**
-             * @description Array of documents to insert
-             * @example [
-             *       {
-             *         "name": "John Doe",
-             *         "email": "john@example.com"
-             *       },
-             *       {
-             *         "name": "Jane Smith",
-             *         "email": "jane@example.com"
-             *       }
-             *     ]
-             */
-            data: {
-                [key: string]: unknown;
-            }[];
-        };
-        UpdateOneParams: ({
-            /** @description Record ID */
-            id: string;
-        } | {
-            filter: components["schemas"]["Filter"];
-        }) & {
-            /**
-             * @description Update data (JSON Merge Patch format)
-             * @example {
-             *       "status": "inactive",
-             *       "updatedAt": "2024-01-01T00:00:00Z"
-             *     }
-             */
-            data: {
-                [key: string]: unknown;
-            };
-            options?: {
-                /**
-                 * @description Create if not exists
-                 * @default false
-                 */
-                upsert: boolean;
-            };
-        };
-        UpdateManyParams: ({
-            /** @description Array of record IDs to update */
-            ids: string[];
-        } | {
-            filter: components["schemas"]["Filter"];
-        }) & {
-            /**
-             * @description Update data (JSON Merge Patch format)
-             * @example {
-             *       "status": "inactive",
-             *       "updatedAt": "2024-01-01T00:00:00Z"
-             *     }
-             */
-            data: {
-                [key: string]: unknown;
-            };
-            options?: {
-                /**
-                 * @description Create if not exists
-                 * @default false
-                 */
-                upsert: boolean;
-            };
-        };
-        DeleteOneParams: {
-            /**
-             * @description Record ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-        } | {
-            filter: components["schemas"]["Filter"];
-        };
-        DeleteManyParams: {
-            /**
-             * @description Array of record IDs to delete
-             * @example [
-             *       "01KETJHF08KEDW320XX6NP2CZ3",
-             *       "01KETJHF08KEDW320XX6NP2CZ4"
-             *     ]
-             */
-            ids: string[];
-        } | {
-            filter: components["schemas"]["Filter"];
-        };
-        /** @description Find operation result */
-        FindResult: {
-            /** @description List of documents */
-            items: components["schemas"]["Document"][];
-            pageInfo: {
-                /** @description Whether next page exists */
-                hasNextPage: boolean;
-                /** @description Whether previous page exists */
-                hasPreviousPage: boolean;
-            };
-            /** @description Next page token (if hasNextPage is true) */
-            nextToken?: string;
-            /** @description Total count (optional, performance impact) */
-            total?: number;
-            /** @description DynamoDB consumed capacity (aggregated) */
-            consumedCapacity?: {
-                /** @description Total read capacity units */
-                totalRCU?: number;
-                /** @description Total write capacity units */
-                totalWCU?: number;
-                /** @description Number of DynamoDB operations */
-                operationCount?: number;
-            };
-        };
-        /** @description findManyReferenceレスポンスデータ */
-        FindManyReferenceResult: {
-            /** @description レコードリスト */
-            items: {
-                [key: string]: unknown;
-            }[];
-            /** @description ページ情報 */
-            pageInfo: {
-                /** @description 次ページが存在するか */
-                hasNextPage: boolean;
-                /** @description 前ページが存在するか */
-                hasPreviousPage: boolean;
-            };
-            /** @description 次ページトークン（存在する場合） */
-            nextToken?: string;
-            /** @description 総件数（オプション） */
-            total?: number;
-        };
-        /**
-         * @description insertOne operation result
-         * @example {
-         *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-         *       "name": "John Doe",
-         *       "email": "john@example.com",
-         *       "status": "active",
-         *       "createdAt": "2024-01-01T00:00:00Z",
-         *       "consumedCapacity": {
-         *         "totalWCU": 1,
-         *         "operationCount": 1
-         *       }
-         *     }
-         */
-        InsertOneResult: {
-            /**
-             * @description Created record ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-            /** @description DynamoDB consumed capacity (aggregated) */
-            consumedCapacity?: {
-                /** @description Total read capacity units */
-                totalRCU?: number;
-                /** @description Total write capacity units */
-                totalWCU?: number;
-                /** @description Number of DynamoDB operations */
-                operationCount?: number;
-            };
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * @description updateOne operation result
-         * @example {
-         *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-         *       "name": "John Doe",
-         *       "email": "john@example.com",
-         *       "status": "inactive",
-         *       "updatedAt": "2024-01-01T00:00:00Z",
-         *       "consumedCapacity": {
-         *         "totalRCU": 1,
-         *         "totalWCU": 1,
-         *         "operationCount": 1
-         *       }
-         *     }
-         */
-        UpdateOneResult: {
-            /**
-             * @description Updated record ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-            /** @description DynamoDB consumed capacity (aggregated) */
-            consumedCapacity?: {
-                /** @description Total read capacity units */
-                totalRCU?: number;
-                /** @description Total write capacity units */
-                totalWCU?: number;
-                /** @description Number of DynamoDB operations */
-                operationCount?: number;
-            };
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * @description deleteOne operation result
-         * @example {
-         *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-         *       "consumedCapacity": {
-         *         "totalRCU": 1,
-         *         "totalWCU": 1,
-         *         "operationCount": 1
-         *       }
-         *     }
-         */
-        DeleteOneResult: {
-            /**
-             * @description Deleted record ID
-             * @example 01KETJHF08KEDW320XX6NP2CZ3
-             */
-            id: string;
-            /** @description DynamoDB consumed capacity (aggregated) */
-            consumedCapacity?: {
-                /** @description Total read capacity units */
-                totalRCU?: number;
-                /** @description Total write capacity units */
-                totalWCU?: number;
-                /** @description Number of DynamoDB operations */
-                operationCount?: number;
-            };
-        };
-        /** @description Bulk operation result (insertMany, updateMany, deleteMany) */
-        BulkOperationResult: {
-            /**
-             * @description Number of successful operations
-             * @example 2
-             */
-            count?: number;
-            /**
-             * @description Map of index to successful record IDs
-             * @example {
-             *       "0": "01KETJHF08KEDW320XX6NP2CZ3",
-             *       "2": "01KETJHF08KEDW320XX6NP2CZ4"
-             *     }
-             */
-            successIds?: {
-                [key: string]: string;
-            };
-            /**
-             * @description Map of index to failed record IDs
-             * @example {
-             *       "1": "01KETJHF08KEDW320XX6NP2CZ5"
-             *     }
-             */
-            failedIds?: {
-                [key: string]: string;
-            };
-            /**
-             * @description Map of index to error details
-             * @example {
-             *       "1": {
-             *         "id": "01KETJHF08KEDW320XX6NP2CZ5",
-             *         "code": "VALIDATION_ERROR",
-             *         "message": "Invalid email format"
-             *       }
-             *     }
-             */
-            errors?: {
-                [key: string]: {
-                    id?: string;
-                    code?: string;
-                    message?: string;
-                };
-            };
-            /** @description Successful record data (updateMany returns only updated fields) */
-            items?: {
-                [key: string]: unknown;
-            }[];
-            /** @description DynamoDB consumed capacity (aggregated) */
-            consumedCapacity?: {
-                /** @description Total read capacity units */
-                totalRCU?: number;
-                /** @description Total write capacity units */
-                totalWCU?: number;
-                /** @description Number of DynamoDB operations */
-                operationCount?: number;
-            };
-        };
+      };
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * @description Available resource types in the system.
+     *
+     *     - users: User accounts and profiles
+     *     - venues: Event venues and locations
+     *     - events: Scheduled events
+     *     - participations: User participation in events
+     *     - notifications: System notifications
+     * @example users
+     * @enum {string}
+     */
+    ResourceName: 'users' | 'venues' | 'events' | 'participations' | 'notifications';
+    /** @description DynamoDBドキュメント（レコード） */
+    Document: {
+      /**
+       * @description ドキュメントID（ULID形式）
+       * @example 01KETJHF08KEDW320XX6NP2CZ3
+       */
+      id?: string;
+      /**
+       * Format: date-time
+       * @description 作成日時
+       */
+      createdAt?: string;
+      /**
+       * Format: date-time
+       * @description 更新日時
+       */
+      updatedAt?: string;
+    } & {
+      [key: string]: unknown;
+    };
+    /** @description Collection (resource) name */
+    Collection: {
+      /**
+       * @description Resource name (e.g., "users", "venues", "participations")
+       * @example users
+       */
+      name: string;
+    };
+    /** @description Query parameters for find operations */
+    Query: {
+      /**
+       * @description Filter conditions (MongoDB-style)
+       * @example {
+       *       "status": "active",
+       *       "age": {
+       *         "$gte": 18
+       *       }
+       *     }
+       */
+      filter?: {
+        [key: string]: unknown;
+      };
+      /** @description Sort conditions */
+      sort?: {
+        /**
+         * @description Field name to sort by (shadow field name)
+         * @example createdAt
+         */
+        field?: string;
+        /**
+         * @description Sort order
+         * @example DESC
+         * @enum {string}
+         */
+        order?: 'ASC' | 'DESC';
+      };
+      /** @description Pagination parameters (DynamoDB cursor-based) */
+      pagination?: {
+        /**
+         * @description Items per page (max 50)
+         * @example 10
+         */
+        perPage?: number;
+        /**
+         * @description Next page token (Base64URL encoded, from previous response)
+         * @example eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9
+         */
+        nextToken?: string;
+      };
+    };
+    /**
+     * @description MongoDB形式のフィルター条件。
+     *
+     *     サポートされる演算子:
+     *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
+     *     - 配列演算子: $in, $nin
+     *     - 文字列演算子: $regex
+     *     - 地理演算子: $near（プロジェクト固有、簡易形式のみ）
+     *
+     *     例:
+     *     - 単純な等価: { status: "active" }
+     *     - 比較演算子: { age: { $gte: 18 } }
+     *     - 配列演算子: { status: { $in: ["active", "pending"] } }
+     *     - 複数条件: { status: "active", age: { $gte: 18 } }
+     *     - 地理検索: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }
+     * @example {
+     *       "status": "active"
+     *     }
+     * @example {
+     *       "age": {
+     *         "$gte": 18,
+     *         "$lte": 65
+     *       }
+     *     }
+     * @example {
+     *       "status": {
+     *         "$in": [
+     *           "premium",
+     *           "verified"
+     *         ]
+     *       }
+     *     }
+     * @example {
+     *       "name": {
+     *         "$regex": "^John"
+     *       }
+     *     }
+     * @example {
+     *       "location": {
+     *         "$near": {
+     *           "latitude": 35.6895,
+     *           "longitude": 139.7036,
+     *           "maxDistance": 5000
+     *         }
+     *       }
+     *     }
+     */
+    Filter: {
+      [key: string]: unknown;
+    };
+    /**
+     * @description $near演算子（簡易形式のみサポート）
+     *
+     *     指定された地点から近い順にドキュメントを検索します。
+     *
+     *     動作:
+     *     1. シャドウレコード: 地理座標フィールドに対して、GeoHashベースのシャドウレコードが自動生成される
+     *     2. 検索精度: GeoHash精度6（±610m）から開始し、段階的に精度を下げて検索
+     *     3. 9ブロック検索: 中心ブロック + 周囲8ブロックを検索して候補を収集
+     *     4. 距離計算: Haversine公式で正確な距離を計算し、距離順にソート
+     *     5. 結果: 指定された件数（limit）まで、距離の近い順に返す
+     *
+     *     制約:
+     *     - ページネーション非対応: $near検索ではnextTokenを使用できない
+     *     - 単一フィールド: 1つのクエリで複数の地理座標フィールドを検索できない
+     *     - 他の演算子との併用: $nearと他のフィルター条件を併用できない
+     * @example {
+     *       "latitude": 35.6895,
+     *       "longitude": 139.7036,
+     *       "maxDistance": 5000
+     *     }
+     */
+    NearOperator: {
+      /**
+       * @description 緯度（-90〜90）
+       * @example 35.6895
+       */
+      latitude: number;
+      /**
+       * @description 経度（-180〜180）
+       * @example 139.7036
+       */
+      longitude: number;
+      /**
+       * @description 最大距離（メートル）。省略時は無制限
+       * @example 5000
+       */
+      maxDistance?: number;
+      /**
+       * @description 最小距離（メートル）。省略時は0
+       * @example 0
+       */
+      minDistance?: number;
+    };
+    /**
+     * @description MongoDB形式の演算子をサポートします。
+     *
+     *     サポートされる演算子:
+     *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
+     *     - 配列演算子: $in, $nin
+     *     - 文字列演算子: $regex
+     *     - 地理演算子: $near（簡易形式のみ）
+     * @example {
+     *       "$eq": 25
+     *     }
+     * @example {
+     *       "$gte": 18
+     *     }
+     * @example {
+     *       "$in": [
+     *         "active",
+     *         "pending"
+     *       ]
+     *     }
+     * @example {
+     *       "$regex": "^John"
+     *     }
+     */
+    MongoDBOperators: {
+      /** @description 等しい（例: { age: { $eq: 25 } } または { age: 25 }） */
+      $eq?: string | number | boolean;
+      /** @description 等しくない（例: { status: { $ne: "deleted" } }） */
+      $ne?: string | number | boolean;
+      /** @description より大きい（例: { age: { $gt: 18 } }） */
+      $gt?: number;
+      /** @description 以上（例: { age: { $gte: 18 } }） */
+      $gte?: number;
+      /** @description より小さい（例: { age: { $lt: 65 } }） */
+      $lt?: number;
+      /** @description 以下（例: { age: { $lte: 65 } }） */
+      $lte?: number;
+      /** @description 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }） */
+      $in?: (string | number | boolean)[];
+      /** @description 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }） */
+      $nin?: (string | number | boolean)[];
+      /** @description 正規表現マッチ（例: { name: { $regex: "^John" } }） */
+      $regex?: string;
+      /** @description 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }） */
+      $near?: components['schemas']['NearOperator'];
+    };
+    /** @description MongoDB-style update operators */
+    UpdateOperators: {
+      /**
+       * @description Set field values
+       * @example {
+       *       "status": "inactive",
+       *       "updatedAt": "2024-01-01T00:00:00Z"
+       *     }
+       */
+      $set?: {
+        [key: string]: unknown;
+      };
+      /**
+       * @description Remove fields
+       * @example {
+       *       "temporaryField": ""
+       *     }
+       */
+      $unset?: {
+        [key: string]: unknown;
+      };
+      /**
+       * @description Increment numeric fields
+       * @example {
+       *       "viewCount": 1,
+       *       "score": -5
+       *     }
+       */
+      $inc?: {
+        [key: string]: number;
+      };
+      /**
+       * @description Add items to arrays
+       * @example {
+       *       "tags": "new-tag"
+       *     }
+       */
+      $push?: {
+        [key: string]: unknown;
+      };
+      /**
+       * @description Remove items from arrays
+       * @example {
+       *       "tags": "old-tag"
+       *     }
+       */
+      $pull?: {
+        [key: string]: unknown;
+      };
+    };
+    /**
+     * @description API操作タイプ（MongoDB風）
+     * @enum {string}
+     */
+    ApiOperation:
+      | 'find'
+      | 'findOne'
+      | 'findMany'
+      | 'findManyReference'
+      | 'insertOne'
+      | 'insertMany'
+      | 'updateOne'
+      | 'updateMany'
+      | 'deleteOne'
+      | 'deleteMany';
+    /** @description API リクエスト（共通） */
+    ApiRequest: {
+      op: components['schemas']['ApiOperation'];
+      /** @description リソース名（例："articles", "tasks"） */
+      resource: string;
+      /** @description 操作パラメータ */
+      params: Record<string, never>;
+    };
+    /** @description API 成功レスポンス */
+    ApiSuccessResponse: {
+      /**
+       * @description 成功フラグ
+       * @enum {boolean}
+       */
+      success: true;
+      /** @description レスポンスデータ */
+      data: Record<string, never>;
+    };
+    /** @description APIエラーレスポンス */
+    ApiErrorResponse: {
+      /**
+       * @description 成功フラグ（常にfalse）
+       * @enum {boolean}
+       */
+      success: false;
+      error: {
+        /** @description エラーコード */
+        code: string;
+        /** @description エラーメッセージ */
+        message: string;
+        /** @description HTTPステータスコード */
+        statusCode: number;
+        /** @description 追加詳細情報（オプション） */
+        details?: unknown;
+      };
+    };
+    /** @description 操作エラー（部分失敗時の個別エラー情報） */
+    OperationError: {
+      /** @description エラーが発生したレコードのID */
+      id: string;
+      /** @description エラーコード */
+      code: string;
+      /** @description エラーメッセージ */
+      message: string;
+    };
+    /** @description Parameters for find operation */
+    FindParams: {
+      filter?: components['schemas']['Filter'];
+      /** @description Sort options (if not specified, defaults to updatedAt DESC) */
+      sort?: {
+        /** @description Shadow field name to sort by */
+        field: string;
+        /**
+         * @description Sort order
+         * @enum {string}
+         */
+        order: 'ASC' | 'DESC';
+      };
+      pagination?: {
+        /** @description Items per page (max 50) */
+        perPage?: number;
+        /** @description Next page token (Base64URL encoded) */
+        nextToken?: string;
+      };
+    };
+    FindOneParams:
+      | {
+          /**
+           * @description Record ID
+           * @example 01KETJHF08KEDW320XX6NP2CZ3
+           */
+          id: string;
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        };
+    FindManyParams:
+      | {
+          /**
+           * @description Array of record IDs
+           * @example [
+           *       "01KETJHF08KEDW320XX6NP2CZ3",
+           *       "01KETJHF08KEDW320XX6NP2CZ4"
+           *     ]
+           */
+          ids: string[];
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        };
+    /** @description Parameters for findManyReference operation */
+    FindManyReferenceParams: {
+      /**
+       * @description Reference field name
+       * @example userId
+       */
+      target: string;
+      /**
+       * @description Reference target ID
+       * @example 01KETJHF08KEDW320XX6NP2CZ3
+       */
+      id: string;
+      filter?: components['schemas']['Filter'];
+      /** @description Sort options (if not specified, defaults to updatedAt DESC) */
+      sort?: {
+        /** @description Shadow field name to sort by */
+        field: string;
+        /**
+         * @description Sort order
+         * @enum {string}
+         */
+        order: 'ASC' | 'DESC';
+      };
+      pagination?: {
+        /** @description Items per page (max 50) */
+        perPage?: number;
+        /** @description Next page token (Base64URL encoded) */
+        nextToken?: string;
+      };
+    };
+    /** @description Parameters for insertOne operation */
+    InsertOneParams: {
+      /**
+       * @description Document data to insert
+       * @example {
+       *       "name": "John Doe",
+       *       "email": "john@example.com",
+       *       "status": "active"
+       *     }
+       */
+      data: {
+        [key: string]: unknown;
+      };
+    };
+    /** @description Parameters for insertMany operation */
+    InsertManyParams: {
+      /**
+       * @description Array of documents to insert
+       * @example [
+       *       {
+       *         "name": "John Doe",
+       *         "email": "john@example.com"
+       *       },
+       *       {
+       *         "name": "Jane Smith",
+       *         "email": "jane@example.com"
+       *       }
+       *     ]
+       */
+      data: {
+        [key: string]: unknown;
+      }[];
+    };
+    UpdateOneParams: (
+      | {
+          /** @description Record ID */
+          id: string;
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        }
+    ) & {
+      /**
+       * @description Update data (JSON Merge Patch format)
+       * @example {
+       *       "status": "inactive",
+       *       "updatedAt": "2024-01-01T00:00:00Z"
+       *     }
+       */
+      data: {
+        [key: string]: unknown;
+      };
+      options?: {
+        /**
+         * @description Create if not exists
+         * @default false
+         */
+        upsert: boolean;
+      };
+    };
+    UpdateManyParams: (
+      | {
+          /** @description Array of record IDs to update */
+          ids: string[];
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        }
+    ) & {
+      /**
+       * @description Update data (JSON Merge Patch format)
+       * @example {
+       *       "status": "inactive",
+       *       "updatedAt": "2024-01-01T00:00:00Z"
+       *     }
+       */
+      data: {
+        [key: string]: unknown;
+      };
+      options?: {
+        /**
+         * @description Create if not exists
+         * @default false
+         */
+        upsert: boolean;
+      };
+    };
+    DeleteOneParams:
+      | {
+          /**
+           * @description Record ID
+           * @example 01KETJHF08KEDW320XX6NP2CZ3
+           */
+          id: string;
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        };
+    DeleteManyParams:
+      | {
+          /**
+           * @description Array of record IDs to delete
+           * @example [
+           *       "01KETJHF08KEDW320XX6NP2CZ3",
+           *       "01KETJHF08KEDW320XX6NP2CZ4"
+           *     ]
+           */
+          ids: string[];
+        }
+      | {
+          filter: components['schemas']['Filter'];
+        };
+    /** @description Find operation result */
+    FindResult: {
+      /** @description List of documents */
+      items: components['schemas']['Document'][];
+      pageInfo: {
+        /** @description Whether next page exists */
+        hasNextPage: boolean;
+        /** @description Whether previous page exists */
+        hasPreviousPage: boolean;
+      };
+      /** @description Next page token (if hasNextPage is true) */
+      nextToken?: string;
+      /** @description Total count (optional, performance impact) */
+      total?: number;
+      /** @description DynamoDB consumed capacity (aggregated) */
+      consumedCapacity?: {
+        /** @description Total read capacity units */
+        totalRCU?: number;
+        /** @description Total write capacity units */
+        totalWCU?: number;
+        /** @description Number of DynamoDB operations */
+        operationCount?: number;
+      };
+    };
+    /** @description findManyReferenceレスポンスデータ */
+    FindManyReferenceResult: {
+      /** @description レコードリスト */
+      items: {
+        [key: string]: unknown;
+      }[];
+      /** @description ページ情報 */
+      pageInfo: {
+        /** @description 次ページが存在するか */
+        hasNextPage: boolean;
+        /** @description 前ページが存在するか */
+        hasPreviousPage: boolean;
+      };
+      /** @description 次ページトークン（存在する場合） */
+      nextToken?: string;
+      /** @description 総件数（オプション） */
+      total?: number;
+    };
+    /**
+     * @description insertOne operation result
+     * @example {
+     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
+     *       "name": "John Doe",
+     *       "email": "john@example.com",
+     *       "status": "active",
+     *       "createdAt": "2024-01-01T00:00:00Z",
+     *       "consumedCapacity": {
+     *         "totalWCU": 1,
+     *         "operationCount": 1
+     *       }
+     *     }
+     */
+    InsertOneResult: {
+      /**
+       * @description Created record ID
+       * @example 01KETJHF08KEDW320XX6NP2CZ3
+       */
+      id: string;
+      /** @description DynamoDB consumed capacity (aggregated) */
+      consumedCapacity?: {
+        /** @description Total read capacity units */
+        totalRCU?: number;
+        /** @description Total write capacity units */
+        totalWCU?: number;
+        /** @description Number of DynamoDB operations */
+        operationCount?: number;
+      };
+    } & {
+      [key: string]: unknown;
+    };
+    /**
+     * @description updateOne operation result
+     * @example {
+     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
+     *       "name": "John Doe",
+     *       "email": "john@example.com",
+     *       "status": "inactive",
+     *       "updatedAt": "2024-01-01T00:00:00Z",
+     *       "consumedCapacity": {
+     *         "totalRCU": 1,
+     *         "totalWCU": 1,
+     *         "operationCount": 1
+     *       }
+     *     }
+     */
+    UpdateOneResult: {
+      /**
+       * @description Updated record ID
+       * @example 01KETJHF08KEDW320XX6NP2CZ3
+       */
+      id: string;
+      /** @description DynamoDB consumed capacity (aggregated) */
+      consumedCapacity?: {
+        /** @description Total read capacity units */
+        totalRCU?: number;
+        /** @description Total write capacity units */
+        totalWCU?: number;
+        /** @description Number of DynamoDB operations */
+        operationCount?: number;
+      };
+    } & {
+      [key: string]: unknown;
+    };
+    /**
+     * @description deleteOne operation result
+     * @example {
+     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
+     *       "consumedCapacity": {
+     *         "totalRCU": 1,
+     *         "totalWCU": 1,
+     *         "operationCount": 1
+     *       }
+     *     }
+     */
+    DeleteOneResult: {
+      /**
+       * @description Deleted record ID
+       * @example 01KETJHF08KEDW320XX6NP2CZ3
+       */
+      id: string;
+      /** @description DynamoDB consumed capacity (aggregated) */
+      consumedCapacity?: {
+        /** @description Total read capacity units */
+        totalRCU?: number;
+        /** @description Total write capacity units */
+        totalWCU?: number;
+        /** @description Number of DynamoDB operations */
+        operationCount?: number;
+      };
+    };
+    /** @description Bulk operation result (insertMany, updateMany, deleteMany) */
+    BulkOperationResult: {
+      /**
+       * @description Number of successful operations
+       * @example 2
+       */
+      count?: number;
+      /**
+       * @description Map of index to successful record IDs
+       * @example {
+       *       "0": "01KETJHF08KEDW320XX6NP2CZ3",
+       *       "2": "01KETJHF08KEDW320XX6NP2CZ4"
+       *     }
+       */
+      successIds?: {
+        [key: string]: string;
+      };
+      /**
+       * @description Map of index to failed record IDs
+       * @example {
+       *       "1": "01KETJHF08KEDW320XX6NP2CZ5"
+       *     }
+       */
+      failedIds?: {
+        [key: string]: string;
+      };
+      /**
+       * @description Map of index to error details
+       * @example {
+       *       "1": {
+       *         "id": "01KETJHF08KEDW320XX6NP2CZ5",
+       *         "code": "VALIDATION_ERROR",
+       *         "message": "Invalid email format"
+       *       }
+       *     }
+       */
+      errors?: {
+        [key: string]: {
+          id?: string;
+          code?: string;
+          message?: string;
+        };
+      };
+      /** @description Successful record data (updateMany returns only updated fields) */
+      items?: {
+        [key: string]: unknown;
+      }[];
+      /** @description DynamoDB consumed capacity (aggregated) */
+      consumedCapacity?: {
+        /** @description Total read capacity units */
+        totalRCU?: number;
+        /** @description Total write capacity units */
+        totalWCU?: number;
+        /** @description Number of DynamoDB operations */
+        operationCount?: number;
+      };
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getVersion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success?: true;
-                        data?: {
-                            /** @example 1.3.34 */
-                            version?: string;
-                            /** Format: date-time */
-                            timestamp?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
+  getVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    executeOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * @description Operation type
-                     * @enum {string}
-                     */
-                    op: "find" | "findOne" | "findMany" | "findManyReference" | "insertOne" | "insertMany" | "updateOne" | "updateMany" | "deleteOne" | "deleteMany";
-                    resource: components["schemas"]["ResourceName"];
-                    /** @description Operation-specific parameters */
-                    params?: Record<string, never>;
-                };
+        content: {
+          'application/json': {
+            /** @enum {boolean} */
+            success?: true;
+            data?: {
+              /** @example 1.3.34 */
+              version?: string;
+              /** Format: date-time */
+              timestamp?: string;
             };
+          };
         };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success?: true;
-                        /** @description Operation result */
-                        data?: Record<string, never>;
-                    };
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
     };
+  };
+  executeOperation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /**
+           * @description Operation type
+           * @enum {string}
+           */
+          op:
+            | 'find'
+            | 'findOne'
+            | 'findMany'
+            | 'findManyReference'
+            | 'insertOne'
+            | 'insertMany'
+            | 'updateOne'
+            | 'updateMany'
+            | 'deleteOne'
+            | 'deleteMany';
+          resource: components['schemas']['ResourceName'];
+          /** @description Operation-specific parameters */
+          params?: Record<string, never>;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            /** @enum {boolean} */
+            success?: true;
+            /** @description Operation result */
+            data?: Record<string, never>;
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
 }

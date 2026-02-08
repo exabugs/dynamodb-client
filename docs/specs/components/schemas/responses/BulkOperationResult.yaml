@@ -5,24 +5,24 @@ properties:
     type: integer
     description: Number of successful operations
     example: 2
-  
+
   successIds:
     type: object
     description: Map of index to successful record IDs
     additionalProperties:
       type: string
     example:
-      "0": "01KETJHF08KEDW320XX6NP2CZ3"
-      "2": "01KETJHF08KEDW320XX6NP2CZ4"
-  
+      '0': '01KETJHF08KEDW320XX6NP2CZ3'
+      '2': '01KETJHF08KEDW320XX6NP2CZ4'
+
   failedIds:
     type: object
     description: Map of index to failed record IDs
     additionalProperties:
       type: string
     example:
-      "1": "01KETJHF08KEDW320XX6NP2CZ5"
-  
+      '1': '01KETJHF08KEDW320XX6NP2CZ5'
+
   errors:
     type: object
     description: Map of index to error details
@@ -36,18 +36,18 @@ properties:
         message:
           type: string
     example:
-      "1":
-        id: "01KETJHF08KEDW320XX6NP2CZ5"
-        code: "VALIDATION_ERROR"
-        message: "Invalid email format"
-  
+      '1':
+        id: '01KETJHF08KEDW320XX6NP2CZ5'
+        code: 'VALIDATION_ERROR'
+        message: 'Invalid email format'
+
   items:
     type: array
     description: Successful record data (updateMany returns only updated fields)
     items:
       type: object
       additionalProperties: true
-  
+
   consumedCapacity:
     type: object
     description: DynamoDB consumed capacity (aggregated)

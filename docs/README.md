@@ -232,10 +232,10 @@ v0.3.x以降、shadow.config.jsonファイルは不要になりました。す�
 
 ```typescript
 // 環境変数（デフォルト値）
-process.env.SHADOW_CREATED_AT_FIELD = 'createdAt';  // 作成日時フィールド名
-process.env.SHADOW_UPDATED_AT_FIELD = 'updatedAt';  // 更新日時フィールド名
-process.env.SHADOW_STRING_MAX_BYTES = '100';        // 文字列の最大バイト数
-process.env.SHADOW_NUMBER_PADDING = '15';           // 数値のパディング桁数
+process.env.SHADOW_CREATED_AT_FIELD = 'createdAt'; // 作成日時フィールド名
+process.env.SHADOW_UPDATED_AT_FIELD = 'updatedAt'; // 更新日時フィールド名
+process.env.SHADOW_STRING_MAX_BYTES = '100'; // 文字列の最大バイト数
+process.env.SHADOW_NUMBER_PADDING = '15'; // 数値のパディング桁数
 ```
 
 シャドウレコードの生成例：

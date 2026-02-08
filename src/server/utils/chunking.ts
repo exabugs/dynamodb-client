@@ -7,10 +7,7 @@
  *
  * 要件: 13.1, 13.2, 13.7, 13.8, 13.9
  */
-import { 
-  createLogger,
-  DYNAMODB_TRANSACT_WRITE_MAX_ITEMS
-} from '../../shared/index.js';
+import { DYNAMODB_TRANSACT_WRITE_MAX_ITEMS, createLogger } from '../../shared/index.js';
 
 const logger = createLogger({ service: 'records-lambda' });
 

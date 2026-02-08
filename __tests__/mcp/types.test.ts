@@ -1,7 +1,8 @@
 /**
  * MCP型定義のテスト
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import type { MCPServerConfig } from '../../src/mcp/types.js';
 
 describe('MCPServerConfig型定義', () => {

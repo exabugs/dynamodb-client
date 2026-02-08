@@ -13,6 +13,7 @@ dynamodb-clientのAPIエンドポイントをOpenAPI 3.1形式で文書化し、
   - バージョン: 最新安定版
 
 - [x] 1.2 ディレクトリ構造の作成
+
   ```
   docs/specs/
   ├── .redocly.yaml

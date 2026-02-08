@@ -1,7 +1,7 @@
 /**
  * MCP環境変数設定のテスト
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 describe('MCP環境変数設定', () => {
   // 元の環境変数を保存

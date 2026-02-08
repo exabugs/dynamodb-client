@@ -2,7 +2,8 @@
  * dynamodb_findOne ツールの統合テスト
  * MCPAdapter経由でfindOneツールを実行し、既存のhandleFindOne操作との統合を確認
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { MCPAdapter } from '../../../src/mcp/adapter.js';
 import type { MCPServerConfig } from '../../../src/mcp/types.js';
 

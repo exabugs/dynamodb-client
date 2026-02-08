@@ -2,7 +2,8 @@
  * dynamodb_insertOne ツールの統合テスト
  * MCPAdapter経由でinsertOneツールを実行し、既存のhandleInsertOne操作との統合を確認
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { MCPAdapter } from '../../../src/mcp/adapter.js';
 import type { MCPServerConfig } from '../../../src/mcp/types.js';
 
@@ -89,7 +90,7 @@ describe('dynamodb_insertOne integration', () => {
 
     it('IDが自動生成される', async () => {
       const generatedId = '01KGXERF74283A3GRVW325EQZD';
-      
+
       // TransactWriteCommandのレスポンスをモック
       mockSend.mockResolvedValueOnce({
         ConsumedCapacity: [{ TableName: 'test-table', CapacityUnits: 1 }],
@@ -128,7 +129,7 @@ describe('dynamodb_insertOne integration', () => {
 
     it('空のdataでもレコードを作成できる', async () => {
       const generatedId = '01KGXER63W6EJAM66TPY8G099R';
-      
+
       // TransactWriteCommandのレスポンスをモック
       mockSend.mockResolvedValueOnce({
         ConsumedCapacity: [{ TableName: 'test-table', CapacityUnits: 1 }],

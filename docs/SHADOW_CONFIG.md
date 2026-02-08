@@ -35,6 +35,7 @@ SK: viewCount#1000000000000123#id#01HQXYZ123456789ABCDEFGH
 **The `id` field does NOT generate a shadow record.** The main record (`SK = id#{ULID}`) is used for id-based sorting.
 
 This design:
+
 - ✅ Reduces redundant shadow records
 - ✅ Improves write performance
 - ✅ Lowers storage costs
@@ -44,12 +45,12 @@ This design:
 
 Configure shadow generation behavior:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable                  | Default     | Description                       |
+| ------------------------- | ----------- | --------------------------------- |
 | `SHADOW_CREATED_AT_FIELD` | `createdAt` | Field name for creation timestamp |
-| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp |
-| `SHADOW_STRING_MAX_BYTES` | `100` | Max bytes for primitive types |
-| `SHADOW_NUMBER_PADDING` | `15` | Padding digits for numbers |
+| `SHADOW_UPDATED_AT_FIELD` | `updatedAt` | Field name for update timestamp   |
+| `SHADOW_STRING_MAX_BYTES` | `100`       | Max bytes for primitive types     |
+| `SHADOW_NUMBER_PADDING`   | `15`        | Padding digits for numbers        |
 
 ## Supported Field Types
 
@@ -160,6 +161,7 @@ The following fields are automatically excluded from shadow generation:
 **Reason**: The main record (`SK = id#{ULID}`) already provides id-based sorting.
 
 **Benefits**:
+
 - Reduces redundant shadow records
 - Improves write performance
 - Lowers storage costs
@@ -283,29 +285,17 @@ const published = await collection
   .toArray();
 
 // High-priority tasks, sorted by due date
-const urgent = await collection
-  .find({ priority: 'high' })
-  .sort({ dueDate: 1 })
-  .toArray();
+const urgent = await collection.find({ priority: 'high' }).sort({ dueDate: 1 }).toArray();
 ```
 
 ### Pagination
 
 ```typescript
 // First page
-const page1 = await collection
-  .find({})
-  .sort({ createdAt: -1 })
-  .limit(10)
-  .toArray();
+const page1 = await collection.find({}).sort({ createdAt: -1 }).limit(10).toArray();
 
 // Second page
-const page2 = await collection
-  .find({})
-  .sort({ createdAt: -1 })
-  .skip(10)
-  .limit(10)
-  .toArray();
+const page2 = await collection.find({}).sort({ createdAt: -1 }).skip(10).limit(10).toArray();
 ```
 
 ## Troubleshooting

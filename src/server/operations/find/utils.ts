@@ -4,8 +4,8 @@
 import { ConfigError } from '../../../shared/errors/index.js';
 import type { NearQuery } from '../../../shared/geohash/types.js';
 import { createLogger } from '../../../shared/index.js';
-import { getShadowConfig } from '../../shadow/index.js';
 import type { ShadowConfig } from '../../shadow/config.js';
+import { getShadowConfig } from '../../shadow/index.js';
 import type { FindParams } from '../../types.js';
 import { parseFilterField } from '../../utils/filter.js';
 import {

@@ -6,11 +6,11 @@
  *
  * 要件: 13.12
  */
-import { 
-  createLogger,
+import {
   LAMBDA_TIMEOUT_MS,
   LARGE_BATCH_WARNING_THRESHOLD,
-  TIMEOUT_RISK_THRESHOLD
+  TIMEOUT_RISK_THRESHOLD,
+  createLogger,
 } from '../../shared/index.js';
 
 const logger = createLogger({ service: 'records-lambda' });

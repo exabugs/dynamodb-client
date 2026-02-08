@@ -110,6 +110,7 @@ git checkout -b feature/your-feature-name
 ```
 
 **ブランチ命名規則:**
+
 - `feature/` - 新機能
 - `fix/` - バグ修正
 - `docs/` - ドキュメント更新
@@ -192,16 +193,16 @@ const product: any = { ... };
 - **言語**: コメントは日本語で記述してください（プロジェクトの方針）
 - **説明**: 何をするかだけでなく、なぜそうするかも説明してください
 
-```typescript
+````typescript
 /**
  * フィルタ条件に一致するドキュメントを検索する
- * 
+ *
  * MongoDB風のクエリAPIを提供し、型安全なフィルタリングを実現します。
- * 
+ *
  * @param filter - フィルタ条件（省略可）
  * @param options - 検索オプション（省略可）
  * @returns FindCursorインスタンス
- * 
+ *
  * @example
  * ```typescript
  * const cursor = collection.find({ status: 'active' });
@@ -211,7 +212,7 @@ const product: any = { ... };
 find(filter?: Filter<TSchema>, options?: FindOptions): FindCursor<TSchema> {
   // 実装...
 }
-```
+````
 
 ### エラーハンドリング
 
@@ -258,7 +259,8 @@ __tests__/
 ### テストの書き方
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { Collection } from '../src/client/Collection';
 
 describe('Collection', () => {
@@ -276,12 +278,14 @@ describe('Collection', () => {
   describe('find()', () => {
     it('フィルタ条件なしで全件検索できる', async () => {
       // Arrange
-      const expectedResults = [/* テストデータ */];
-      
+      const expectedResults = [
+        /* テストデータ */
+      ];
+
       // Act
       const cursor = collection.find();
       const results = await cursor.toArray();
-      
+
       // Assert
       expect(results).toEqual(expectedResults);
     });
@@ -292,9 +296,7 @@ describe('Collection', () => {
 
     it('不正なフィルタでエラーが発生する', async () => {
       // エラーケースのテスト...
-      await expect(collection.find({ invalid: 'filter' }))
-        .rejects
-        .toThrow('Invalid filter');
+      await expect(collection.find({ invalid: 'filter' })).rejects.toThrow('Invalid filter');
     });
   });
 });
@@ -323,7 +325,6 @@ describe('Collection', () => {
 2. **プルリクエストを作成**
 
    GitHubでプルリクエストを作成し、以下の情報を含めてください：
-
    - **タイトル**: 変更内容を簡潔に説明
    - **説明**: 変更の詳細、理由、影響範囲
    - **関連Issue**: `Fixes #123` または `Closes #123`

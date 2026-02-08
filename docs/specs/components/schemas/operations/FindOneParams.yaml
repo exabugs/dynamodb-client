@@ -7,8 +7,8 @@ oneOf:
       id:
         type: string
         description: Record ID
-        example: "01KETJHF08KEDW320XX6NP2CZ3"
-  
+        example: '01KETJHF08KEDW320XX6NP2CZ3'
+
   - type: object
     description: Find by filter
     required:

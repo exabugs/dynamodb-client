@@ -3,7 +3,7 @@
  *
  * DynamoClientの初期化処理
  */
-import { DynamoClient, type Collection } from '../../client/index.iam.js';
+import { type Collection, DynamoClient } from '../../client/index.iam.js';
 
 /**
  * DynamoClient（IAM認証）を作成・初期化する
@@ -34,9 +34,7 @@ export async function createDynamoClientCollection(
 
   console.log(`Client connected: ${client.isConnected()}\n`);
 
-  const collection = client
-    .db()
-    .collection<{ id: string; [key: string]: unknown }>(resource);
+  const collection = client.db().collection<{ id: string; [key: string]: unknown }>(resource);
 
   /**
    * NOTE: テストユーティリティでの型アサーション

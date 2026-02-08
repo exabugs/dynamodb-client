@@ -2,7 +2,7 @@
  * Records Lambda API型定義
  * Lambda Function URL (RPC スタイル) で使用される型定義
  * MongoDB 風の操作インターフェース
- * 
+ *
  * NOTE: OpenAPI仕様から型を生成し、実装で使用しています。
  * generated.tsはOpenAPI仕様から自動生成されます。
  */
