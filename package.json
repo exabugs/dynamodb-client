@@ -7,6 +7,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "dynamodb-mcp": "./bin/dynamodb-mcp.js"
+  },
   "keywords": [
     "dynamodb",
     "single-table",
@@ -32,6 +35,7 @@
   },
   "homepage": "https://github.com/exabugs/dynamodb-client#readme",
   "files": [
+    "bin",
     "dist",
     "terraform",
     "README.md",
@@ -79,6 +83,10 @@
       "import": "./dist/integrations/react-admin/index.js",
       "types": "./dist/integrations/react-admin/index.d.ts"
     },
+    "./mcp": {
+      "import": "./dist/mcp/index.js",
+      "types": "./dist/mcp/index.d.ts"
+    },
     "./terraform": "./terraform/main.tf"
   },
   "peerDependencies": {
@@ -110,6 +118,7 @@
     "@aws-sdk/client-dynamodb": "3.946.0",
     "@aws-sdk/credential-provider-node": "3.946.0",
     "@aws-sdk/lib-dynamodb": "3.946.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@smithy/protocol-http": "5.3.5",
     "@smithy/signature-v4": "5.3.5",
     "@smithy/util-utf8": "4.2.0",
