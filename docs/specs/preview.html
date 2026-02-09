@@ -424,46 +424,28 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                             <span class="sc-gUjXxo sc-kZOrUD cMzMHg hhCpbw"></span
                             ><span class="sc-gUjXxo sc-iLXwom cMzMHg fIGxvH">string</span
                             ><span class="sc-gUjXxo sc-jgrbzk cMzMHg cORIfw">
-                              (<!-- -->ResourceName<!-- -->)
-                            </span>
-                          </div>
-                          <div>
-                            <span class="sc-gUjXxo cMzMHg"> <!-- -->Enum<!-- -->:</span>
-                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj">&quot;users&quot;</span>
-                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
-                              >&quot;venues&quot;</span
-                            >
-                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
-                              >&quot;events&quot;</span
-                            >
-                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
-                              >&quot;participations&quot;</span
-                            >
-                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
-                              >&quot;notifications&quot;</span
+                              (<!-- -->ResourceName<!-- -->) </span
+                            ><span class="sc-gUjXxo sc-ejCLfw cMzMHg hvQkTi"
+                              >^[a-z][a-z0-9_-]*$</span
                             >
                           </div>
                           <div>
                             <div
-                              html="&lt;p&gt;Available resource types in the system.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;users: User accounts and profiles&lt;/li&gt;
-&lt;li&gt;venues: Event venues and locations&lt;/li&gt;
-&lt;li&gt;events: Scheduled events&lt;/li&gt;
-&lt;li&gt;participations: User participation in events&lt;/li&gt;
-&lt;li&gt;notifications: System notifications&lt;/li&gt;
-&lt;/ul&gt;
+                              html="&lt;p&gt;Resource name (collection name) in DynamoDB.&lt;/p&gt;
+&lt;p&gt;Must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.&lt;/p&gt;
+&lt;p&gt;Examples: users, venues, events, participations, notifications, user-profiles, event-logs&lt;/p&gt;
 "
                               class="sc-iKOlBD sc-cCzKKD cslxVo daOcFE"
                             >
-                              <p>Available resource types in the system.</p>
-                              <ul>
-                                <li>users: User accounts and profiles</li>
-                                <li>venues: Event venues and locations</li>
-                                <li>events: Scheduled events</li>
-                                <li>participations: User participation in events</li>
-                                <li>notifications: System notifications</li>
-                              </ul>
+                              <p>Resource name (collection name) in DynamoDB.</p>
+                              <p>
+                                Must start with a lowercase letter and contain only lowercase
+                                letters, numbers, hyphens, and underscores.
+                              </p>
+                              <p>
+                                Examples: users, venues, events, participations, notifications,
+                                user-profiles, event-logs
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1766,9 +1748,9 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                 },
                 ResourceName: {
                   type: 'string',
-                  enum: ['users', 'venues', 'events', 'participations', 'notifications'],
+                  pattern: '^[a-z][a-z0-9_-]*$',
                   description:
-                    'Available resource types in the system.\n\n- users: User accounts and profiles\n- venues: Event venues and locations\n- events: Scheduled events\n- participations: User participation in events\n- notifications: System notifications\n',
+                    'Resource name (collection name) in DynamoDB.\n\nMust start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.\n\nExamples: users, venues, events, participations, notifications, user-profiles, event-logs\n',
                   example: 'users',
                 },
                 Document: {
