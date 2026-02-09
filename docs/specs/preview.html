@@ -422,15 +422,48 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                         <div>
                           <div>
                             <span class="sc-gUjXxo sc-kZOrUD cMzMHg hhCpbw"></span
-                            ><span class="sc-gUjXxo sc-iLXwom cMzMHg fIGxvH">string</span>
+                            ><span class="sc-gUjXxo sc-iLXwom cMzMHg fIGxvH">string</span
+                            ><span class="sc-gUjXxo sc-jgrbzk cMzMHg cORIfw">
+                              (<!-- -->ResourceName<!-- -->)
+                            </span>
+                          </div>
+                          <div>
+                            <span class="sc-gUjXxo cMzMHg"> <!-- -->Enum<!-- -->:</span>
+                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj">&quot;users&quot;</span>
+                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
+                              >&quot;venues&quot;</span
+                            >
+                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
+                              >&quot;events&quot;</span
+                            >
+                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
+                              >&quot;participations&quot;</span
+                            >
+                            <span class="sc-gUjXxo sc-ldgPul cMzMHg cNHQfj"
+                              >&quot;notifications&quot;</span
+                            >
                           </div>
                           <div>
                             <div
-                              html="&lt;p&gt;Resource name (collection name)&lt;/p&gt;
+                              html="&lt;p&gt;Available resource types in the system.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;users: User accounts and profiles&lt;/li&gt;
+&lt;li&gt;venues: Event venues and locations&lt;/li&gt;
+&lt;li&gt;events: Scheduled events&lt;/li&gt;
+&lt;li&gt;participations: User participation in events&lt;/li&gt;
+&lt;li&gt;notifications: System notifications&lt;/li&gt;
+&lt;/ul&gt;
 "
                               class="sc-iKOlBD sc-cCzKKD cslxVo daOcFE"
                             >
-                              <p>Resource name (collection name)</p>
+                              <p>Available resource types in the system.</p>
+                              <ul>
+                                <li>users: User accounts and profiles</li>
+                                <li>venues: Event venues and locations</li>
+                                <li>events: Scheduled events</li>
+                                <li>participations: User participation in events</li>
+                                <li>notifications: System notifications</li>
+                              </ul>
                             </div>
                           </div>
                         </div>
@@ -673,6 +706,15 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                             </div>
                           </div>
                           <div>
+                            <div
+                              html="&lt;p&gt;DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。&lt;/p&gt;
+"
+                              class="sc-iKOlBD sc-cCzKKD cslxVo fFQqWu"
+                            >
+                              <p>
+                                DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。
+                              </p>
+                            </div>
                             <div class="sc-cSxQHq bDQDNm">
                               <div class="sc-gjLKRm GWExV">
                                 <button><div class="sc-jdHJyF cUpQkY">Copy</div></button
@@ -816,7 +858,141 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                                                       >:
                                                       <span class="token string"
                                                         >&quot;eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9&quot;</span
-                                                      >
+                                                      ><span class="token punctuation">,</span>
+                                                    </div>
+                                                  </li>
+                                                  <li>
+                                                    <div class="hoverable collapsed">
+                                                      <span class="property token string"
+                                                        >"description"</span
+                                                      >:
+                                                      <span class="token string"
+                                                        >&quot;ページネーション設定&quot;</span
+                                                      ><span class="token punctuation">,</span>
+                                                    </div>
+                                                  </li>
+                                                  <li>
+                                                    <div class="hoverable collapsed">
+                                                      <span class="property token string"
+                                                        >"properties"</span
+                                                      >:
+                                                      <button
+                                                        class="collapser"
+                                                        aria-label="expand"
+                                                      ></button
+                                                      ><span class="token punctuation">{</span
+                                                      ><span class="ellipsis"></span>
+                                                      <ul class="obj collapsible">
+                                                        <li>
+                                                          <div class="hoverable collapsed">
+                                                            <span class="property token string"
+                                                              >"perPage"</span
+                                                            >:
+                                                            <button
+                                                              class="collapser"
+                                                              aria-label="expand"
+                                                            ></button
+                                                            ><span class="token punctuation">{</span
+                                                            ><span class="ellipsis"></span>
+                                                            <ul class="obj collapsible">
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"type"</span
+                                                                  >:
+                                                                  <span class="token string"
+                                                                    >&quot;number&quot;</span
+                                                                  ><span class="token punctuation"
+                                                                    >,</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"minimum"</span
+                                                                  >:
+                                                                  <span class="token number">1</span
+                                                                  ><span class="token punctuation"
+                                                                    >,</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"maximum"</span
+                                                                  >:
+                                                                  <span class="token number"
+                                                                    >50</span
+                                                                  ><span class="token punctuation"
+                                                                    >,</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"description"</span
+                                                                  >:
+                                                                  <span class="token string"
+                                                                    >&quot;1ページあたりの件数（最大50件）&quot;</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                            </ul>
+                                                            <span class="token punctuation">}</span
+                                                            ><span class="token punctuation"
+                                                              >,</span
+                                                            >
+                                                          </div>
+                                                        </li>
+                                                        <li>
+                                                          <div class="hoverable collapsed">
+                                                            <span class="property token string"
+                                                              >"nextToken"</span
+                                                            >:
+                                                            <button
+                                                              class="collapser"
+                                                              aria-label="expand"
+                                                            ></button
+                                                            ><span class="token punctuation">{</span
+                                                            ><span class="ellipsis"></span>
+                                                            <ul class="obj collapsible">
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"type"</span
+                                                                  >:
+                                                                  <span class="token string"
+                                                                    >&quot;string&quot;</span
+                                                                  ><span class="token punctuation"
+                                                                    >,</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                              <li>
+                                                                <div class="hoverable collapsed">
+                                                                  <span
+                                                                    class="property token string"
+                                                                    >"description"</span
+                                                                  >:
+                                                                  <span class="token string"
+                                                                    >&quot;次ページトークン（前回のレスポンスから取得）&quot;</span
+                                                                  >
+                                                                </div>
+                                                              </li>
+                                                            </ul>
+                                                            <span class="token punctuation">}</span>
+                                                          </div>
+                                                        </li>
+                                                      </ul>
+                                                      <span class="token punctuation">}</span>
                                                     </div>
                                                   </li>
                                                 </ul>
@@ -1032,6 +1208,54 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                       </div>
                     </button>
                   </div>
+                  <div>
+                    <button class="sc-bZTxSr fbbOZt">
+                      <svg
+                        class="sc-eTNem iPQVSx"
+                        version="1.1"
+                        viewBox="0 0 24 24"
+                        x="0"
+                        xmlns="http://www.w3.org/2000/svg"
+                        y="0"
+                        aria-hidden="true"
+                      >
+                        <polygon
+                          points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "
+                        ></polygon></svg
+                      ><strong class="sc-fYitij hWKODy">400<!-- --> </strong>
+                      <div
+                        html="&lt;p&gt;Bad Request&lt;/p&gt;
+"
+                        class="sc-iKOlBD sc-cCzKKD sc-ckdFjQ cslxVo lkEUlo hKuZJA"
+                      >
+                        <p>Bad Request</p>
+                      </div>
+                    </button>
+                  </div>
+                  <div>
+                    <button class="sc-bZTxSr fbbOZt">
+                      <svg
+                        class="sc-eTNem iPQVSx"
+                        version="1.1"
+                        viewBox="0 0 24 24"
+                        x="0"
+                        xmlns="http://www.w3.org/2000/svg"
+                        y="0"
+                        aria-hidden="true"
+                      >
+                        <polygon
+                          points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "
+                        ></polygon></svg
+                      ><strong class="sc-fYitij hWKODy">500<!-- --> </strong>
+                      <div
+                        html="&lt;p&gt;Internal Server Error&lt;/p&gt;
+"
+                        class="sc-iKOlBD sc-cCzKKD sc-ckdFjQ cslxVo lkEUlo hKuZJA"
+                      >
+                        <p>Internal Server Error</p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="sc-jTQDnk sc-gLLvbB gzZFRd bTNKSN">
@@ -1084,6 +1308,28 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                         data-rttab="true"
                       >
                         200
+                      </li>
+                      <li
+                        class="tab-error"
+                        role="tab"
+                        id="tab_R_4sta_1"
+                        aria-selected="false"
+                        aria-disabled="false"
+                        aria-controls="panel_R_4sta_1"
+                        data-rttab="true"
+                      >
+                        400
+                      </li>
+                      <li
+                        class="tab-error"
+                        role="tab"
+                        id="tab_R_4sta_2"
+                        aria-selected="false"
+                        aria-disabled="false"
+                        aria-controls="panel_R_4sta_2"
+                        data-rttab="true"
+                      >
+                        500
                       </li>
                     </ul>
                     <div
@@ -1153,6 +1399,18 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                         </div>
                       </div>
                     </div>
+                    <div
+                      class="react-tabs__tab-panel"
+                      role="tabpanel"
+                      id="panel_R_4sta_1"
+                      aria-labelledby="tab_R_4sta_1"
+                    ></div>
+                    <div
+                      class="react-tabs__tab-panel"
+                      role="tabpanel"
+                      id="panel_R_4sta_2"
+                      aria-labelledby="tab_R_4sta_2"
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -1228,6 +1486,18 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                         },
                       },
                     },
+                    400: {
+                      description: 'Bad Request',
+                      content: {
+                        'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+                      },
+                    },
+                    500: {
+                      description: 'Internal Server Error',
+                      content: {
+                        'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+                      },
+                    },
                   },
                 },
               },
@@ -1262,11 +1532,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                               ],
                               description: 'Operation type',
                             },
-                            resource: {
-                              type: 'string',
-                              description: 'Resource name (collection name)',
-                              example: 'users',
-                            },
+                            resource: { $ref: '#/components/schemas/ResourceName' },
                             params: {
                               type: 'object',
                               description: 'Operation-specific parameters',
@@ -1276,6 +1542,8 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                         examples: {
                           find: {
                             summary: 'Find documents with filter and pagination',
+                            description:
+                              'DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。',
                             value: {
                               op: 'find',
                               resource: 'users',
@@ -1286,12 +1554,26 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                                   perPage: 10,
                                   nextToken:
                                     'eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9',
+                                  description: 'ページネーション設定',
+                                  properties: {
+                                    perPage: {
+                                      type: 'number',
+                                      minimum: 1,
+                                      maximum: 50,
+                                      description: '1ページあたりの件数（最大50件）',
+                                    },
+                                    nextToken: {
+                                      type: 'string',
+                                      description: '次ページトークン（前回のレスポンスから取得）',
+                                    },
+                                  },
                                 },
                               },
                             },
                           },
                           findOne: {
                             summary: 'Find one document by ID',
+                            description: 'DynamoDBから単一レコードを取得します。IDで指定。',
                             value: {
                               op: 'findOne',
                               resource: 'users',
@@ -1300,6 +1582,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           findMany: {
                             summary: 'Find multiple documents by IDs',
+                            description: 'DynamoDBから複数レコードをIDで取得します。',
                             value: {
                               op: 'findMany',
                               resource: 'users',
@@ -1310,6 +1593,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           findManyReference: {
                             summary: 'Find documents by reference field',
+                            description: 'DynamoDBから参照フィールドでレコードを取得します。',
                             value: {
                               op: 'findManyReference',
                               resource: 'participations',
@@ -1322,6 +1606,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           insertOne: {
                             summary: 'Insert one document',
+                            description: 'DynamoDBに単一レコードを作成します。',
                             value: {
                               op: 'insertOne',
                               resource: 'users',
@@ -1336,6 +1621,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           insertMany: {
                             summary: 'Insert multiple documents',
+                            description: 'DynamoDBに複数レコードを作成します。',
                             value: {
                               op: 'insertMany',
                               resource: 'users',
@@ -1349,6 +1635,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           updateOne: {
                             summary: 'Update one document',
+                            description: 'DynamoDBの単一レコードを更新します。',
                             value: {
                               op: 'updateOne',
                               resource: 'users',
@@ -1361,6 +1648,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           updateMany: {
                             summary: 'Update multiple documents',
+                            description: 'DynamoDBの複数レコードを更新します。',
                             value: {
                               op: 'updateMany',
                               resource: 'users',
@@ -1369,6 +1657,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           deleteOne: {
                             summary: 'Delete one document',
+                            description: 'DynamoDBから単一レコードを削除します。',
                             value: {
                               op: 'deleteOne',
                               resource: 'users',
@@ -1377,6 +1666,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                           },
                           deleteMany: {
                             summary: 'Delete multiple documents',
+                            description: 'DynamoDBから複数レコードを削除します。',
                             value: {
                               op: 'deleteMany',
                               resource: 'users',
@@ -1474,6 +1764,13 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                   },
                   required: ['success', 'error'],
                 },
+                ResourceName: {
+                  type: 'string',
+                  enum: ['users', 'venues', 'events', 'participations', 'notifications'],
+                  description:
+                    'Available resource types in the system.\n\n- users: User accounts and profiles\n- venues: Event venues and locations\n- events: Scheduled events\n- participations: User participation in events\n- notifications: System notifications\n',
+                  example: 'users',
+                },
                 Document: {
                   type: 'object',
                   description: 'DynamoDBドキュメント（レコード）',
@@ -1487,7 +1784,6 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     updatedAt: { type: 'string', format: 'date-time', description: '更新日時' },
                   },
                   additionalProperties: true,
-                  required: ['id'],
                 },
                 Collection: {
                   type: 'object',
@@ -1552,14 +1848,105 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                 },
                 Filter: {
                   type: 'object',
-                  description: 'MongoDB-style filter conditions',
+                  description:
+                    'MongoDB形式のフィルター条件。\n\nサポートされる演算子:\n- 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte\n- 配列演算子: $in, $nin\n- 文字列演算子: $regex\n- 地理演算子: $near（プロジェクト固有、簡易形式のみ）\n\n例:\n- 単純な等価: { status: "active" }\n- 比較演算子: { age: { $gte: 18 } }\n- 配列演算子: { status: { $in: ["active", "pending"] } }\n- 複数条件: { status: "active", age: { $gte: 18 } }\n- 地理検索: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }\n',
                   additionalProperties: true,
-                  example: {
-                    status: 'active',
-                    age: { $gte: 18, $lte: 65 },
-                    tags: { $in: ['premium', 'verified'] },
-                    name: { $regex: '^John' },
+                  examples: [
+                    { status: 'active' },
+                    { age: { $gte: 18, $lte: 65 } },
+                    { status: { $in: ['premium', 'verified'] } },
+                    { name: { $regex: '^John' } },
+                    {
+                      location: {
+                        $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 },
+                      },
+                    },
+                  ],
+                },
+                NearOperator: {
+                  type: 'object',
+                  description:
+                    '$near演算子（簡易形式のみサポート）\n\n指定された地点から近い順にドキュメントを検索します。\n\n動作:\n1. シャドウレコード: 地理座標フィールドに対して、GeoHashベースのシャドウレコードが自動生成される\n2. 検索精度: GeoHash精度6（±610m）から開始し、段階的に精度を下げて検索\n3. 9ブロック検索: 中心ブロック + 周囲8ブロックを検索して候補を収集\n4. 距離計算: Haversine公式で正確な距離を計算し、距離順にソート\n5. 結果: 指定された件数（limit）まで、距離の近い順に返す\n\n制約:\n- ページネーション非対応: $near検索ではnextTokenを使用できない\n- 単一フィールド: 1つのクエリで複数の地理座標フィールドを検索できない\n- 他の演算子との併用: $nearと他のフィルター条件を併用できない\n',
+                  required: ['latitude', 'longitude'],
+                  properties: {
+                    latitude: {
+                      type: 'number',
+                      minimum: -90,
+                      maximum: 90,
+                      description: '緯度（-90〜90）',
+                      example: 35.6895,
+                    },
+                    longitude: {
+                      type: 'number',
+                      minimum: -180,
+                      maximum: 180,
+                      description: '経度（-180〜180）',
+                      example: 139.7036,
+                    },
+                    maxDistance: {
+                      type: 'number',
+                      minimum: 0,
+                      description: '最大距離（メートル）。省略時は無制限',
+                      example: 5000,
+                    },
+                    minDistance: {
+                      type: 'number',
+                      minimum: 0,
+                      description: '最小距離（メートル）。省略時は0',
+                      example: 0,
+                    },
                   },
+                  example: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 },
+                },
+                MongoDBOperators: {
+                  type: 'object',
+                  description:
+                    'MongoDB形式の演算子をサポートします。\n\nサポートされる演算子:\n- 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte\n- 配列演算子: $in, $nin\n- 文字列演算子: $regex\n- 地理演算子: $near（簡易形式のみ）\n',
+                  properties: {
+                    $eq: {
+                      description: '等しい（例: { age: { $eq: 25 } } または { age: 25 }）',
+                      oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
+                    },
+                    $ne: {
+                      description: '等しくない（例: { status: { $ne: "deleted" } }）',
+                      oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
+                    },
+                    $gt: { description: 'より大きい（例: { age: { $gt: 18 } }）', type: 'number' },
+                    $gte: { description: '以上（例: { age: { $gte: 18 } }）', type: 'number' },
+                    $lt: { description: 'より小さい（例: { age: { $lt: 65 } }）', type: 'number' },
+                    $lte: { description: '以下（例: { age: { $lte: 65 } }）', type: 'number' },
+                    $in: {
+                      description:
+                        '配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }）',
+                      type: 'array',
+                      items: {
+                        oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
+                      },
+                    },
+                    $nin: {
+                      description:
+                        '配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }）',
+                      type: 'array',
+                      items: {
+                        oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
+                      },
+                    },
+                    $regex: {
+                      description: '正規表現マッチ（例: { name: { $regex: "^John" } }）',
+                      type: 'string',
+                    },
+                    $near: {
+                      description:
+                        '近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }）',
+                      allOf: [{ $ref: '#/components/schemas/NearOperator' }],
+                    },
+                  },
+                  examples: [
+                    { $eq: 25 },
+                    { $gte: 18 },
+                    { $in: ['active', 'pending'] },
+                    { $regex: '^John' },
+                  ],
                 },
                 UpdateOperators: {
                   type: 'object',
@@ -1597,6 +1984,76 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                   },
                 },
+                ApiOperation: {
+                  type: 'string',
+                  enum: [
+                    'find',
+                    'findOne',
+                    'findMany',
+                    'findManyReference',
+                    'insertOne',
+                    'insertMany',
+                    'updateOne',
+                    'updateMany',
+                    'deleteOne',
+                    'deleteMany',
+                  ],
+                  description: 'API操作タイプ（MongoDB風）',
+                },
+                ApiRequest: {
+                  type: 'object',
+                  description: 'API リクエスト（共通）',
+                  required: ['op', 'resource', 'params'],
+                  properties: {
+                    op: { $ref: '#/components/schemas/ApiOperation' },
+                    resource: {
+                      type: 'string',
+                      description: 'リソース名（例："articles", "tasks"）',
+                    },
+                    params: { type: 'object', description: '操作パラメータ' },
+                  },
+                },
+                ApiSuccessResponse: {
+                  type: 'object',
+                  description: 'API 成功レスポンス',
+                  required: ['success', 'data'],
+                  properties: {
+                    success: { type: 'boolean', enum: [true], description: '成功フラグ' },
+                    data: { type: 'object', description: 'レスポンスデータ' },
+                  },
+                },
+                ApiErrorResponse: {
+                  type: 'object',
+                  required: ['success', 'error'],
+                  properties: {
+                    success: {
+                      type: 'boolean',
+                      enum: [false],
+                      description: '成功フラグ（常にfalse）',
+                    },
+                    error: {
+                      type: 'object',
+                      required: ['code', 'message', 'statusCode'],
+                      properties: {
+                        code: { type: 'string', description: 'エラーコード' },
+                        message: { type: 'string', description: 'エラーメッセージ' },
+                        statusCode: { type: 'integer', description: 'HTTPステータスコード' },
+                        details: { description: '追加詳細情報（オプション）' },
+                      },
+                    },
+                  },
+                  description: 'APIエラーレスポンス',
+                },
+                OperationError: {
+                  type: 'object',
+                  required: ['id', 'code', 'message'],
+                  properties: {
+                    id: { type: 'string', description: 'エラーが発生したレコードのID' },
+                    code: { type: 'string', description: 'エラーコード' },
+                    message: { type: 'string', description: 'エラーメッセージ' },
+                  },
+                  description: '操作エラー（部分失敗時の個別エラー情報）',
+                },
                 FindParams: {
                   type: 'object',
                   description: 'Parameters for find operation',
@@ -1604,9 +2061,11 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     filter: { $ref: '#/components/schemas/Filter' },
                     sort: {
                       type: 'object',
+                      description: 'Sort options (if not specified, defaults to updatedAt DESC)',
+                      required: ['field', 'order'],
                       properties: {
                         field: { type: 'string', description: 'Shadow field name to sort by' },
-                        order: { type: 'string', enum: ['ASC', 'DESC'] },
+                        order: { type: 'string', enum: ['ASC', 'DESC'], description: 'Sort order' },
                       },
                     },
                     pagination: {
@@ -1689,16 +2148,26 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     filter: { $ref: '#/components/schemas/Filter' },
                     sort: {
                       type: 'object',
+                      description: 'Sort options (if not specified, defaults to updatedAt DESC)',
+                      required: ['field', 'order'],
                       properties: {
-                        field: { type: 'string' },
-                        order: { type: 'string', enum: ['ASC', 'DESC'] },
+                        field: { type: 'string', description: 'Shadow field name to sort by' },
+                        order: { type: 'string', enum: ['ASC', 'DESC'], description: 'Sort order' },
                       },
                     },
                     pagination: {
                       type: 'object',
                       properties: {
-                        perPage: { type: 'integer', minimum: 1, maximum: 50 },
-                        nextToken: { type: 'string' },
+                        perPage: {
+                          type: 'integer',
+                          minimum: 1,
+                          maximum: 50,
+                          description: 'Items per page (max 50)',
+                        },
+                        nextToken: {
+                          type: 'string',
+                          description: 'Next page token (Base64URL encoded)',
+                        },
                       },
                     },
                   },
@@ -1767,6 +2236,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                               default: false,
                             },
                           },
+                          additionalProperties: false,
                         },
                       },
                     },
@@ -1813,6 +2283,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                               default: false,
                             },
                           },
+                          additionalProperties: false,
                         },
                       },
                     },
@@ -1894,13 +2365,40 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                     consumedCapacity: {
                       type: 'object',
-                      description: 'DynamoDB consumed capacity',
+                      description: 'DynamoDB consumed capacity (aggregated)',
                       properties: {
-                        readCapacityUnits: { type: 'number' },
-                        writeCapacityUnits: { type: 'number' },
+                        totalRCU: { type: 'number', description: 'Total read capacity units' },
+                        totalWCU: { type: 'number', description: 'Total write capacity units' },
+                        operationCount: {
+                          type: 'number',
+                          description: 'Number of DynamoDB operations',
+                        },
                       },
                     },
                   },
+                },
+                FindManyReferenceResult: {
+                  type: 'object',
+                  required: ['items', 'pageInfo'],
+                  properties: {
+                    items: {
+                      type: 'array',
+                      items: { type: 'object', additionalProperties: true },
+                      description: 'レコードリスト',
+                    },
+                    pageInfo: {
+                      type: 'object',
+                      required: ['hasNextPage', 'hasPreviousPage'],
+                      properties: {
+                        hasNextPage: { type: 'boolean', description: '次ページが存在するか' },
+                        hasPreviousPage: { type: 'boolean', description: '前ページが存在するか' },
+                      },
+                      description: 'ページ情報',
+                    },
+                    nextToken: { type: 'string', description: '次ページトークン（存在する場合）' },
+                    total: { type: 'integer', description: '総件数（オプション）' },
+                  },
+                  description: 'findManyReferenceレスポンスデータ',
                 },
                 InsertOneResult: {
                   type: 'object',
@@ -1914,10 +2412,14 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                     consumedCapacity: {
                       type: 'object',
-                      description: 'DynamoDB consumed capacity',
+                      description: 'DynamoDB consumed capacity (aggregated)',
                       properties: {
-                        readCapacityUnits: { type: 'number' },
-                        writeCapacityUnits: { type: 'number' },
+                        totalRCU: { type: 'number', description: 'Total read capacity units' },
+                        totalWCU: { type: 'number', description: 'Total write capacity units' },
+                        operationCount: {
+                          type: 'number',
+                          description: 'Number of DynamoDB operations',
+                        },
                       },
                     },
                   },
@@ -1928,7 +2430,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     email: 'john@example.com',
                     status: 'active',
                     createdAt: '2024-01-01T00:00:00Z',
-                    consumedCapacity: { writeCapacityUnits: 1 },
+                    consumedCapacity: { totalWCU: 1, operationCount: 1 },
                   },
                 },
                 UpdateOneResult: {
@@ -1943,10 +2445,14 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                     consumedCapacity: {
                       type: 'object',
-                      description: 'DynamoDB consumed capacity',
+                      description: 'DynamoDB consumed capacity (aggregated)',
                       properties: {
-                        readCapacityUnits: { type: 'number' },
-                        writeCapacityUnits: { type: 'number' },
+                        totalRCU: { type: 'number', description: 'Total read capacity units' },
+                        totalWCU: { type: 'number', description: 'Total write capacity units' },
+                        operationCount: {
+                          type: 'number',
+                          description: 'Number of DynamoDB operations',
+                        },
                       },
                     },
                   },
@@ -1957,7 +2463,7 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     email: 'john@example.com',
                     status: 'inactive',
                     updatedAt: '2024-01-01T00:00:00Z',
-                    consumedCapacity: { readCapacityUnits: 1, writeCapacityUnits: 1 },
+                    consumedCapacity: { totalRCU: 1, totalWCU: 1, operationCount: 1 },
                   },
                 },
                 DeleteOneResult: {
@@ -1972,22 +2478,25 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                     consumedCapacity: {
                       type: 'object',
-                      description: 'DynamoDB consumed capacity',
+                      description: 'DynamoDB consumed capacity (aggregated)',
                       properties: {
-                        readCapacityUnits: { type: 'number' },
-                        writeCapacityUnits: { type: 'number' },
+                        totalRCU: { type: 'number', description: 'Total read capacity units' },
+                        totalWCU: { type: 'number', description: 'Total write capacity units' },
+                        operationCount: {
+                          type: 'number',
+                          description: 'Number of DynamoDB operations',
+                        },
                       },
                     },
                   },
                   example: {
                     id: '01KETJHF08KEDW320XX6NP2CZ3',
-                    consumedCapacity: { readCapacityUnits: 1, writeCapacityUnits: 1 },
+                    consumedCapacity: { totalRCU: 1, totalWCU: 1, operationCount: 1 },
                   },
                 },
                 BulkOperationResult: {
                   type: 'object',
                   description: 'Bulk operation result (insertMany, updateMany, deleteMany)',
-                  required: ['count', 'successIds', 'failedIds', 'errors'],
                   properties: {
                     count: {
                       type: 'integer',
@@ -2033,10 +2542,14 @@ All operations use POST method with operation type in request body.&lt;/p&gt;
                     },
                     consumedCapacity: {
                       type: 'object',
-                      description: 'DynamoDB consumed capacity',
+                      description: 'DynamoDB consumed capacity (aggregated)',
                       properties: {
-                        readCapacityUnits: { type: 'number' },
-                        writeCapacityUnits: { type: 'number' },
+                        totalRCU: { type: 'number', description: 'Total read capacity units' },
+                        totalWCU: { type: 'number', description: 'Total write capacity units' },
+                        operationCount: {
+                          type: 'number',
+                          description: 'Number of DynamoDB operations',
+                        },
                       },
                     },
                   },

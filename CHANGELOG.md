@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.50] - 2026-02-10
+
+### Changed
+
+- ResourceName enumを削除し、任意のコレクション名を受け付けるように変更
+- パターン制約（`^[a-z][a-z0-9_-]*$`）を追加して形式のみ検証
+
+### Fixed
+
+- dynamodb-clientが汎用ライブラリとして使用できない問題を修正
+
 ## [1.3.49] - 2026-02-09
 
 ### Changed

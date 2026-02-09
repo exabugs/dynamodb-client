@@ -74,17 +74,14 @@ export interface components {
       };
     };
     /**
-     * @description Available resource types in the system.
+     * @description Resource name (collection name) in DynamoDB.
      *
-     *     - users: User accounts and profiles
-     *     - venues: Event venues and locations
-     *     - events: Scheduled events
-     *     - participations: User participation in events
-     *     - notifications: System notifications
+     *     Must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.
+     *
+     *     Examples: users, venues, events, participations, notifications, user-profiles, event-logs
      * @example users
-     * @enum {string}
      */
-    ResourceName: 'users' | 'venues' | 'events' | 'participations' | 'notifications';
+    ResourceName: string;
     /** @description DynamoDBドキュメント（レコード） */
     Document: {
       /**
