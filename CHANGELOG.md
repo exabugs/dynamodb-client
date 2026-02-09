@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.49] - 2026-02-09
+
+### Changed
+
+- `generate-mcp-tools-v2.ts` を `generate-mcp-tools.ts` にリネーム
+- OpenAPI仕様から型定義を自動生成する仕組みを導入
+- `src/__generated__/openapi.ts` を生成するように変更
+- `src/server/types.ts` でOpenAPI生成型を使用
+
+### Fixed
+
+- `Makefile` に `format` ターゲットを追加
+
 ## [1.3.48] - 2026-02-08
 
 ### Fixed
