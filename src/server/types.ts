@@ -9,6 +9,18 @@
 import type { components } from '../__generated__/openapi.js';
 
 // ========================================
+// Client SDK型（OpenAPI生成型を使用）
+// ========================================
+
+/**
+ * MongoDB演算子（$プレフィックス付き - MongoDB互換）
+ * OpenAPI仕様から生成された型を使用
+ */
+export type MongoDBOperators = components['schemas']['MongoDBOperators'];
+// 後方互換性のためのエイリアス
+export type FilterOperators = MongoDBOperators;
+
+// ========================================
 // リクエスト型（OpenAPI生成型を使用）
 // ========================================
 

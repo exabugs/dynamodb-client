@@ -76,6 +76,8 @@ export async function handleInsertOne(
 
   // コスト情報を含めて返却
   return {
+    acknowledged: true,
+    insertedId: createdId,
     id: createdId,
     ...createdRecord,
     consumedCapacity: insertManyResult.consumedCapacity,

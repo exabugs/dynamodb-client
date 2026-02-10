@@ -49,39 +49,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /** @description エラーレスポンス */
-    Error: {
-      /**
-       * @description 常にfalse
-       * @enum {boolean}
-       */
-      success: false;
-      error: {
-        /**
-         * @description エラーコード
-         * @example VALIDATION_ERROR
-         */
-        code: string;
-        /**
-         * @description エラーメッセージ
-         * @example Invalid document ID
-         */
-        message: string;
-        /** @description エラー詳細情報 */
-        details?: {
-          [key: string]: unknown;
-        };
-      };
-    };
-    /**
-     * @description Resource name (collection name) in DynamoDB.
-     *
-     *     Must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.
-     *
-     *     Examples: users, venues, events, participations, notifications, user-profiles, event-logs
-     * @example users
-     */
-    ResourceName: string;
     /** @description DynamoDBドキュメント（レコード） */
     Document: {
       /**
@@ -110,6 +77,15 @@ export interface components {
        */
       name: string;
     };
+    /**
+     * @description Resource name (collection name) in DynamoDB.
+     *
+     *     Must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.
+     *
+     *     Examples: users, venues, events, participations, notifications, user-profiles, event-logs
+     * @example users
+     */
+    ResourceName: string;
     /** @description Query parameters for find operations */
     Query: {
       /**
@@ -153,54 +129,66 @@ export interface components {
       };
     };
     /**
-     * @description MongoDB形式のフィルター条件。
+     * @description フィルタ定義
+     *
+     *     型安全なフィルタ条件を定義します。
+     *     各フィールドに対して直接値を指定するか、MongoDBOperatorsを使用できます。
+     */
+    Filter: {
+      /** @description AND条件 */
+      $and?: components['schemas']['Filter'][];
+      /** @description OR条件 */
+      $or?: components['schemas']['Filter'][];
+    } & {
+      [key: string]: unknown;
+    };
+    /**
+     * @description MongoDB形式の演算子をサポートします。
      *
      *     サポートされる演算子:
      *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
      *     - 配列演算子: $in, $nin
      *     - 文字列演算子: $regex
-     *     - 地理演算子: $near（プロジェクト固有、簡易形式のみ）
-     *
-     *     例:
-     *     - 単純な等価: { status: "active" }
-     *     - 比較演算子: { age: { $gte: 18 } }
-     *     - 配列演算子: { status: { $in: ["active", "pending"] } }
-     *     - 複数条件: { status: "active", age: { $gte: 18 } }
-     *     - 地理検索: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }
+     *     - 地理演算子: $near（簡易形式のみ）
      * @example {
-     *       "status": "active"
+     *       "$eq": 25
      *     }
      * @example {
-     *       "age": {
-     *         "$gte": 18,
-     *         "$lte": 65
-     *       }
+     *       "$gte": 18
      *     }
      * @example {
-     *       "status": {
-     *         "$in": [
-     *           "premium",
-     *           "verified"
-     *         ]
-     *       }
+     *       "$in": [
+     *         "active",
+     *         "pending"
+     *       ]
      *     }
      * @example {
-     *       "name": {
-     *         "$regex": "^John"
-     *       }
-     *     }
-     * @example {
-     *       "location": {
-     *         "$near": {
-     *           "latitude": 35.6895,
-     *           "longitude": 139.7036,
-     *           "maxDistance": 5000
-     *         }
-     *       }
+     *       "$regex": "^John"
      *     }
      */
-    Filter: {
-      [key: string]: unknown;
+    MongoDBOperators: {
+      /** @description 等しい（例: { age: { $eq: 25 } } または { age: 25 }） */
+      $eq?: string | number | boolean;
+      /** @description 等しくない（例: { status: { $ne: "deleted" } }） */
+      $ne?: string | number | boolean;
+      /** @description より大きい（例: { age: { $gt: 18 } }） */
+      $gt?: number;
+      /** @description 以上（例: { age: { $gte: 18 } }） */
+      $gte?: number;
+      /** @description より小さい（例: { age: { $lt: 65 } }） */
+      $lt?: number;
+      /** @description 以下（例: { age: { $lte: 65 } }） */
+      $lte?: number;
+      /** @description 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }） */
+      $in?: (string | number | boolean)[];
+      /** @description 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }） */
+      $nin?: (string | number | boolean)[];
+      /** @description フィールドの存在チェック（例: { email: { $exists: true } }） */
+      $exists?: boolean;
+      /** @description 正規表現マッチ（例: { name: { $regex: "^John" } }） */
+      $regex?: string;
+      /** @description 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }） */
+      $near?: components['schemas']['NearOperator'];
     };
     /**
      * @description $near演算子（簡易形式のみサポート）
@@ -247,99 +235,232 @@ export interface components {
       minDistance?: number;
     };
     /**
-     * @description MongoDB形式の演算子をサポートします。
+     * @description 更新演算子（$プレフィックス付き - MongoDB互換）
      *
-     *     サポートされる演算子:
-     *     - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
-     *     - 配列演算子: $in, $nin
-     *     - 文字列演算子: $regex
-     *     - 地理演算子: $near（簡易形式のみ）
-     * @example {
-     *       "$eq": 25
+     *     MongoDB風の更新演算子を提供します。
+     *     すべての演算子は$プレフィックス付きで使用します（MongoDB互換）。
+     *
+     *     例:
+     *     ```json
+     *     // フィールドを設定
+     *     {
+     *       "$set": { "status": "published", "updatedAt": "2024-01-01T00:00:00Z" }
      *     }
-     * @example {
-     *       "$gte": 18
+     *
+     *     // フィールドを削除
+     *     {
+     *       "$unset": ["description", "tags"]
      *     }
-     * @example {
-     *       "$in": [
-     *         "active",
-     *         "pending"
-     *       ]
+     *
+     *     // 数値をインクリメント
+     *     {
+     *       "$inc": { "stock": -1, "viewCount": 1 }
      *     }
-     * @example {
-     *       "$regex": "^John"
+     *
+     *     // 複数の演算子を組み合わせ
+     *     {
+     *       "$set": { "status": "published" },
+     *       "$inc": { "viewCount": 1 },
+     *       "$unset": ["draft"]
      *     }
+     *     ```
      */
-    MongoDBOperators: {
-      /** @description 等しい（例: { age: { $eq: 25 } } または { age: 25 }） */
-      $eq?: string | number | boolean;
-      /** @description 等しくない（例: { status: { $ne: "deleted" } }） */
-      $ne?: string | number | boolean;
-      /** @description より大きい（例: { age: { $gt: 18 } }） */
-      $gt?: number;
-      /** @description 以上（例: { age: { $gte: 18 } }） */
-      $gte?: number;
-      /** @description より小さい（例: { age: { $lt: 65 } }） */
-      $lt?: number;
-      /** @description 以下（例: { age: { $lte: 65 } }） */
-      $lte?: number;
-      /** @description 配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }） */
-      $in?: (string | number | boolean)[];
-      /** @description 配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }） */
-      $nin?: (string | number | boolean)[];
-      /** @description 正規表現マッチ（例: { name: { $regex: "^John" } }） */
-      $regex?: string;
-      /** @description 近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }） */
-      $near?: components['schemas']['NearOperator'];
-    };
-    /** @description MongoDB-style update operators */
     UpdateOperators: {
-      /**
-       * @description Set field values
-       * @example {
-       *       "status": "inactive",
-       *       "updatedAt": "2024-01-01T00:00:00Z"
-       *     }
-       */
+      /** @description フィールドを設定 */
       $set?: {
         [key: string]: unknown;
       };
-      /**
-       * @description Remove fields
-       * @example {
-       *       "temporaryField": ""
-       *     }
-       */
-      $unset?: {
+      /** @description upsert時のinsert専用フィールド（レコードが存在しない場合のみ適用） */
+      $setOnInsert?: {
         [key: string]: unknown;
       };
-      /**
-       * @description Increment numeric fields
-       * @example {
-       *       "viewCount": 1,
-       *       "score": -5
-       *     }
-       */
+      /** @description フィールドを削除 */
+      $unset?: string[];
+      /** @description 数値をインクリメント（負の値でデクリメント） */
       $inc?: {
         [key: string]: number;
       };
+    };
+    /** @description エラーレスポンス */
+    Error: {
       /**
-       * @description Add items to arrays
-       * @example {
-       *       "tags": "new-tag"
-       *     }
+       * @description 常にfalse
+       * @enum {boolean}
        */
-      $push?: {
-        [key: string]: unknown;
+      success: false;
+      error: {
+        /**
+         * @description エラーコード
+         * @example VALIDATION_ERROR
+         */
+        code: string;
+        /**
+         * @description エラーメッセージ
+         * @example Invalid document ID
+         */
+        message: string;
+        /** @description エラー詳細情報 */
+        details?: {
+          [key: string]: unknown;
+        };
       };
+    };
+    /** @description 検索オプション */
+    FindOptions: {
+      /** @description ソート条件 */
+      sort?: {
+        [key: string]: (1 | -1) | ('asc' | 'desc');
+      };
+      /** @description 取得件数の制限 */
+      limit?: number;
+      /** @description スキップする件数 */
+      skip?: number;
+      /** @description ページネーショントークン（カーソルベースのページネーション用） */
+      nextToken?: string;
+    };
+    /** @description updateOneのオプション */
+    UpdateOneOptions: {
       /**
-       * @description Remove items from arrays
-       * @example {
-       *       "tags": "old-tag"
-       *     }
+       * @description レコードが存在しない場合に新規作成するか
+       * @default false
        */
-      $pull?: {
-        [key: string]: unknown;
+      upsert: boolean;
+    };
+    /** @description updateManyのオプション */
+    UpdateManyOptions: {
+      /**
+       * @description レコードが存在しない場合に新規作成するか
+       * @default false
+       */
+      upsert: boolean;
+    };
+    /** @description DynamoDB消費キャパシティ情報 */
+    ConsumedCapacity: {
+      /** @description 読み込みキャパシティユニット */
+      readCapacityUnits?: number;
+      /** @description 書き込みキャパシティユニット */
+      writeCapacityUnits?: number;
+    };
+    /** @description 挿入結果 */
+    InsertOneResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description 挿入されたドキュメントのID */
+      insertedId: string;
+      /** @description 挿入されたドキュメントのID（insertedIdのエイリアス） */
+      id?: string;
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
+      };
+    };
+    /** @description 複数挿入結果 */
+    InsertManyResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description 挿入されたドキュメントの数 */
+      insertedCount: number;
+      /** @description 挿入されたドキュメントのIDマップ */
+      insertedIds: {
+        [key: string]: string;
+      };
+      /** @description 失敗したドキュメントのIDリスト */
+      failedIds?: string[];
+      /** @description エラー情報 */
+      errors?: {
+        id: string;
+        code: string;
+        message: string;
+      }[];
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
+      };
+    };
+    /** @description 更新結果 */
+    UpdateResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description マッチしたドキュメントの数 */
+      matchedCount: number;
+      /** @description 変更されたドキュメントの数 */
+      modifiedCount: number;
+      /** @description アップサートされたドキュメントのID */
+      upsertedId?: string;
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
+      };
+    };
+    /** @description updateOne操作の結果 */
+    UpdateOneResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description マッチしたドキュメントの数 */
+      matchedCount: number;
+      /** @description 変更されたドキュメントの数 */
+      modifiedCount: number;
+      /** @description アップサートされたドキュメントのID */
+      upsertedId?: string;
+      /** @description 更新されたドキュメントのID */
+      id?: string;
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
+      };
+    };
+    /** @description 削除結果 */
+    DeleteResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description 削除されたドキュメントの数 */
+      deletedCount: number;
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
+      };
+    };
+    /** @description deleteOne操作の結果 */
+    DeleteOneResult: {
+      /** @description 操作が確認されたか */
+      acknowledged: boolean;
+      /** @description 削除されたドキュメントの数 */
+      deletedCount: number;
+      /** @description 削除されたドキュメントのID */
+      id?: string;
+      /** @description DynamoDB消費キャパシティ情報（集約） */
+      consumedCapacity?: {
+        /** @description 合計読み込みキャパシティユニット */
+        totalRCU?: number;
+        /** @description 合計書き込みキャパシティユニット */
+        totalWCU?: number;
+        /** @description DynamoDB操作回数 */
+        operationCount?: number;
       };
     };
     /**
@@ -630,98 +751,6 @@ export interface components {
       nextToken?: string;
       /** @description 総件数（オプション） */
       total?: number;
-    };
-    /**
-     * @description insertOne operation result
-     * @example {
-     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-     *       "name": "John Doe",
-     *       "email": "john@example.com",
-     *       "status": "active",
-     *       "createdAt": "2024-01-01T00:00:00Z",
-     *       "consumedCapacity": {
-     *         "totalWCU": 1,
-     *         "operationCount": 1
-     *       }
-     *     }
-     */
-    InsertOneResult: {
-      /**
-       * @description Created record ID
-       * @example 01KETJHF08KEDW320XX6NP2CZ3
-       */
-      id: string;
-      /** @description DynamoDB consumed capacity (aggregated) */
-      consumedCapacity?: {
-        /** @description Total read capacity units */
-        totalRCU?: number;
-        /** @description Total write capacity units */
-        totalWCU?: number;
-        /** @description Number of DynamoDB operations */
-        operationCount?: number;
-      };
-    } & {
-      [key: string]: unknown;
-    };
-    /**
-     * @description updateOne operation result
-     * @example {
-     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-     *       "name": "John Doe",
-     *       "email": "john@example.com",
-     *       "status": "inactive",
-     *       "updatedAt": "2024-01-01T00:00:00Z",
-     *       "consumedCapacity": {
-     *         "totalRCU": 1,
-     *         "totalWCU": 1,
-     *         "operationCount": 1
-     *       }
-     *     }
-     */
-    UpdateOneResult: {
-      /**
-       * @description Updated record ID
-       * @example 01KETJHF08KEDW320XX6NP2CZ3
-       */
-      id: string;
-      /** @description DynamoDB consumed capacity (aggregated) */
-      consumedCapacity?: {
-        /** @description Total read capacity units */
-        totalRCU?: number;
-        /** @description Total write capacity units */
-        totalWCU?: number;
-        /** @description Number of DynamoDB operations */
-        operationCount?: number;
-      };
-    } & {
-      [key: string]: unknown;
-    };
-    /**
-     * @description deleteOne operation result
-     * @example {
-     *       "id": "01KETJHF08KEDW320XX6NP2CZ3",
-     *       "consumedCapacity": {
-     *         "totalRCU": 1,
-     *         "totalWCU": 1,
-     *         "operationCount": 1
-     *       }
-     *     }
-     */
-    DeleteOneResult: {
-      /**
-       * @description Deleted record ID
-       * @example 01KETJHF08KEDW320XX6NP2CZ3
-       */
-      id: string;
-      /** @description DynamoDB consumed capacity (aggregated) */
-      consumedCapacity?: {
-        /** @description Total read capacity units */
-        totalRCU?: number;
-        /** @description Total write capacity units */
-        totalWCU?: number;
-        /** @description Number of DynamoDB operations */
-        operationCount?: number;
-      };
     };
     /** @description Bulk operation result (insertMany, updateMany, deleteMany) */
     BulkOperationResult: {

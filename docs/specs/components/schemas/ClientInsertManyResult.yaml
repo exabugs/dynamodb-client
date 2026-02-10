@@ -1,0 +1,42 @@
+type: object
+description: |
+  Client SDK用の複数挿入結果（MongoDB互換）
+required:
+  - acknowledged
+  - insertedCount
+  - insertedIds
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+    example: true
+
+  insertedCount:
+    type: integer
+    description: 挿入されたドキュメントの数
+    example: 2
+
+  insertedIds:
+    type: object
+    description: 挿入されたドキュメントのIDマップ（インデックス → ID）
+    additionalProperties:
+      type: string
+    example:
+      '0': '01KETJHF08KEDW320XX6NP2CZ3'
+      '1': '01KETJHF08KEDW320XX6NP2CZ4'
+
+  failedIds:
+    type: array
+    description: 失敗したドキュメントのIDリスト
+    items:
+      type: string
+    example: ['01KETJHF08KEDW320XX6NP2CZ5']
+
+  errors:
+    type: array
+    description: エラー情報
+    items:
+      $ref: './OperationError.yaml'
+
+  consumedCapacity:
+    $ref: './ConsumedCapacity.yaml'

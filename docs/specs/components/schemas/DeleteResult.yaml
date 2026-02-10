@@ -1,0 +1,25 @@
+type: object
+description: 削除結果
+required:
+  - acknowledged
+  - deletedCount
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+  deletedCount:
+    type: number
+    description: 削除されたドキュメントの数
+  consumedCapacity:
+    type: object
+    description: DynamoDB消費キャパシティ情報（集約）
+    properties:
+      totalRCU:
+        type: number
+        description: 合計読み込みキャパシティユニット
+      totalWCU:
+        type: number
+        description: 合計書き込みキャパシティユニット
+      operationCount:
+        type: number
+        description: DynamoDB操作回数

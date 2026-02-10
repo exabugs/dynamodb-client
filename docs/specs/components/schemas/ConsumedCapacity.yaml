@@ -1,0 +1,9 @@
+type: object
+description: DynamoDB消費キャパシティ情報
+properties:
+  readCapacityUnits:
+    type: number
+    description: 読み込みキャパシティユニット
+  writeCapacityUnits:
+    type: number
+    description: 書き込みキャパシティユニット

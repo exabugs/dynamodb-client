@@ -9,6 +9,8 @@ Query:
   $ref: './Query.yaml'
 Filter:
   $ref: './Filter.yaml'
+FilterOperators:
+  $ref: './FilterOperators.yaml'
 MongoDBOperators:
   $ref: './MongoDBOperators.yaml'
 NearOperator:
@@ -17,6 +19,24 @@ UpdateOperators:
   $ref: './UpdateOperators.yaml'
 Error:
   $ref: './Error.yaml'
+
+# Client SDK schemas
+FindOptions:
+  $ref: './FindOptions.yaml'
+UpdateOneOptions:
+  $ref: './UpdateOneOptions.yaml'
+UpdateManyOptions:
+  $ref: './UpdateManyOptions.yaml'
+ConsumedCapacity:
+  $ref: './ConsumedCapacity.yaml'
+InsertOneResult:
+  $ref: './InsertOneResult.yaml'
+InsertManyResult:
+  $ref: './InsertManyResult.yaml'
+UpdateResult:
+  $ref: './UpdateResult.yaml'
+DeleteResult:
+  $ref: './DeleteResult.yaml'
 
 # API schemas
 ApiOperation:
@@ -57,11 +77,5 @@ FindResult:
   $ref: './responses/FindResult.yaml'
 FindManyReferenceResult:
   $ref: './responses/FindManyReferenceResult.yaml'
-InsertOneResult:
-  $ref: './responses/InsertOneResult.yaml'
-UpdateOneResult:
-  $ref: './responses/UpdateOneResult.yaml'
-DeleteOneResult:
-  $ref: './responses/DeleteOneResult.yaml'
 BulkOperationResult:
   $ref: './responses/BulkOperationResult.yaml'

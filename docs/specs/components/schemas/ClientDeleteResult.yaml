@@ -1,0 +1,19 @@
+type: object
+description: |
+  Client SDK用の削除結果（MongoDB互換）
+required:
+  - acknowledged
+  - deletedCount
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+    example: true
+
+  deletedCount:
+    type: integer
+    description: 削除されたドキュメントの数
+    example: 1
+
+  consumedCapacity:
+    $ref: './ConsumedCapacity.yaml'

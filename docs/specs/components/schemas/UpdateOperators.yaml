@@ -1,40 +1,50 @@
 type: object
-description: MongoDB-style update operators
+description: |
+  更新演算子（$プレフィックス付き - MongoDB互換）
+
+  MongoDB風の更新演算子を提供します。
+  すべての演算子は$プレフィックス付きで使用します（MongoDB互換）。
+
+  例:
+  ```json
+  // フィールドを設定
+  {
+    "$set": { "status": "published", "updatedAt": "2024-01-01T00:00:00Z" }
+  }
+
+  // フィールドを削除
+  {
+    "$unset": ["description", "tags"]
+  }
+
+  // 数値をインクリメント
+  {
+    "$inc": { "stock": -1, "viewCount": 1 }
+  }
+
+  // 複数の演算子を組み合わせ
+  {
+    "$set": { "status": "published" },
+    "$inc": { "viewCount": 1 },
+    "$unset": ["draft"]
+  }
+  ```
 properties:
   $set:
     type: object
-    description: Set field values
+    description: フィールドを設定
     additionalProperties: true
-    example:
-      status: 'inactive'
-      updatedAt: '2024-01-01T00:00:00Z'
-
-  $unset:
+  $setOnInsert:
     type: object
-    description: Remove fields
+    description: upsert時のinsert専用フィールド（レコードが存在しない場合のみ適用）
     additionalProperties: true
-    example:
-      temporaryField: ''
-
+  $unset:
+    type: array
+    description: フィールドを削除
+    items:
+      type: string
   $inc:
     type: object
-    description: Increment numeric fields
+    description: 数値をインクリメント（負の値でデクリメント）
     additionalProperties:
       type: number
-    example:
-      viewCount: 1
-      score: -5
-
-  $push:
-    type: object
-    description: Add items to arrays
-    additionalProperties: true
-    example:
-      tags: 'new-tag'
-
-  $pull:
-    type: object
-    description: Remove items from arrays
-    additionalProperties: true
-    example:
-      tags: 'old-tag'

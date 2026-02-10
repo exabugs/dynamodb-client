@@ -1,0 +1,35 @@
+type: object
+description: updateOne操作の結果
+required:
+  - acknowledged
+  - matchedCount
+  - modifiedCount
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+  matchedCount:
+    type: number
+    description: マッチしたドキュメントの数
+  modifiedCount:
+    type: number
+    description: 変更されたドキュメントの数
+  upsertedId:
+    type: string
+    description: アップサートされたドキュメントのID
+  id:
+    type: string
+    description: 更新されたドキュメントのID
+  consumedCapacity:
+    type: object
+    description: DynamoDB消費キャパシティ情報（集約）
+    properties:
+      totalRCU:
+        type: number
+        description: 合計読み込みキャパシティユニット
+      totalWCU:
+        type: number
+        description: 合計書き込みキャパシティユニット
+      operationCount:
+        type: number
+        description: DynamoDB操作回数

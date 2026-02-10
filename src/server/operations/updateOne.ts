@@ -86,6 +86,9 @@ export async function handleUpdateOne(
 
     // コスト情報を含めて返却
     return {
+      acknowledged: true,
+      matchedCount: 1,
+      modifiedCount: 1,
       id: targetId,
       ...updatedItem,
       consumedCapacity: updateManyResult.consumedCapacity,
@@ -139,6 +142,9 @@ export async function handleUpdateOne(
 
     // コスト情報を含めて返却
     return {
+      acknowledged: true,
+      matchedCount: 1,
+      modifiedCount: 1,
       id: updatedId,
       ...updatedItem,
       consumedCapacity: updateManyResult.consumedCapacity,

@@ -48,6 +48,9 @@ properties:
         - type: string
         - type: number
         - type: boolean
+  $exists:
+    description: 'フィールドの存在チェック（例: { email: { $exists: true } }）'
+    type: boolean
   $regex:
     description: '正規表現マッチ（例: { name: { $regex: "^John" } }）'
     type: string

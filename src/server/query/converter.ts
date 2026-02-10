@@ -193,7 +193,7 @@ export function convertFilterToDynamo<T = Record<string, unknown>>(
       for (const [op, opValue] of Object.entries(value)) {
         if (opValue === undefined) continue;
 
-        const operator = mapOperatorToDynamo(op as keyof FilterOperators<Record<string, unknown>>);
+        const operator = mapOperatorToDynamo(op as keyof FilterOperators);
         conditions.push({
           field: key,
           operator,
@@ -223,7 +223,7 @@ export function convertFilterToDynamo<T = Record<string, unknown>>(
  * @param value - チェック対象の値
  * @returns FilterOperatorsオブジェクトの場合true
  */
-function isFilterOperators(value: unknown): value is FilterOperators<Record<string, unknown>> {
+function isFilterOperators(value: unknown): value is FilterOperators {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -252,9 +252,7 @@ function isFilterOperators(value: unknown): value is FilterOperators<Record<stri
  * @param operator - MongoDB風の演算子（$プレフィックス付き）
  * @returns DynamoDB演算子
  */
-function mapOperatorToDynamo(
-  operator: keyof FilterOperators<Record<string, unknown>>
-): DynamoComparisonOperator {
+function mapOperatorToDynamo(operator: keyof FilterOperators): DynamoComparisonOperator {
   switch (operator) {
     case '$eq':
       return 'eq';

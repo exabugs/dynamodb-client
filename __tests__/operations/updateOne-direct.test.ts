@@ -58,8 +58,11 @@ describe('updateOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が { id, ...更新したフィールドのみ } であることを確認
-      expect(result).toEqual({
+      // 結果が { acknowledged, matchedCount, modifiedCount, id, ...更新したフィールドのみ } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
         id: testId,
         title: '更新後のタイトル',
         status: 'published',
@@ -99,8 +102,11 @@ describe('updateOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が { id, ...$setのフィールドのみ } であることを確認
-      expect(result).toEqual({
+      // 結果が { acknowledged, matchedCount, modifiedCount, id, ...$setのフィールドのみ } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
         id: testId,
         title: '更新後のタイトル',
       });
@@ -168,8 +174,11 @@ describe('updateOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が { id, ...更新したフィールドのみ } であることを確認
-      expect(result).toEqual({
+      // 結果が { acknowledged, matchedCount, modifiedCount, id, ...更新したフィールドのみ } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
         id: 'article-002',
         status: 'published',
       });

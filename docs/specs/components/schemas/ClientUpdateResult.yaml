@@ -1,0 +1,30 @@
+type: object
+description: |
+  Client SDK用の更新結果（MongoDB互換）
+required:
+  - acknowledged
+  - matchedCount
+  - modifiedCount
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+    example: true
+
+  matchedCount:
+    type: integer
+    description: マッチしたドキュメントの数
+    example: 1
+
+  modifiedCount:
+    type: integer
+    description: 変更されたドキュメントの数
+    example: 1
+
+  upsertedId:
+    type: string
+    description: アップサートされたドキュメントのID（存在する場合）
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
+
+  consumedCapacity:
+    $ref: './ConsumedCapacity.yaml'

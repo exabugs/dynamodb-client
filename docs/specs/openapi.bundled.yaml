@@ -1,0 +1,1331 @@
+openapi: 3.1.0
+info:
+  title: DynamoDB Client API
+  version: 1.3.34
+  description: |
+    MongoDB-like API for DynamoDB with shadow record support for efficient querying.
+
+    This API provides a familiar MongoDB-style interface for interacting with DynamoDB,
+    supporting 10 operations compatible with react-admin.
+
+    **Supported Operations:**
+    - find: Query documents with filters
+    - findOne: Get a single document
+    - findMany: Get multiple documents by IDs
+    - findManyReference: Get documents by reference field
+    - insertOne: Create a single document
+    - insertMany: Create multiple documents
+    - updateOne: Update a single document
+    - updateMany: Update multiple documents
+    - deleteOne: Delete a single document
+    - deleteMany: Delete multiple documents
+  contact:
+    name: DynamoDB Client Support
+    url: https://github.com/exabugs/dynamodb-client
+  license:
+    name: MIT
+    url: https://github.com/exabugs/dynamodb-client/blob/main/LICENSE
+servers:
+  - url: '{apiUrl}'
+    description: DynamoDB Client API (Lambda Function URL)
+    variables:
+      apiUrl:
+        default: https://your-lambda-url.lambda-url.us-east-1.on.aws
+        description: Lambda Function URL
+security:
+  - IAMAuth: []
+  - BearerAuth: []
+tags:
+  - name: Operations
+    description: MongoDB-style CRUD operations
+  - name: System
+    description: System endpoints
+paths:
+  /version:
+    get:
+      tags:
+        - System
+      summary: Get API version
+      description: Returns the current API version and timestamp (no authentication required)
+      operationId: getVersion
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        example: 1.3.34
+                      timestamp:
+                        type: string
+                        format: date-time
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /:
+    post:
+      tags:
+        - Operations
+      summary: Execute MongoDB-style operation
+      description: |
+        Execute one of the 10 supported MongoDB-style operations.
+        All operations use POST method with operation type in request body.
+      operationId: executeOperation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - op
+                - resource
+              properties:
+                op:
+                  type: string
+                  enum:
+                    - find
+                    - findOne
+                    - findMany
+                    - findManyReference
+                    - insertOne
+                    - insertMany
+                    - updateOne
+                    - updateMany
+                    - deleteOne
+                    - deleteMany
+                  description: Operation type
+                resource:
+                  $ref: '#/components/schemas/ResourceName'
+                params:
+                  type: object
+                  description: Operation-specific parameters
+            examples:
+              find:
+                summary: Find documents with filter and pagination
+                description: DynamoDBからレコードを検索します。フィルター、ソート、ページネーションをサポート。
+                value:
+                  op: find
+                  resource: users
+                  params:
+                    filter:
+                      status: active
+                      age:
+                        $gte: 18
+                    sort:
+                      field: createdAt
+                      order: DESC
+                    pagination:
+                      perPage: 10
+                      nextToken: eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9
+                      description: ページネーション設定
+                      properties:
+                        perPage:
+                          type: number
+                          minimum: 1
+                          maximum: 50
+                          description: 1ページあたりの件数（最大50件）
+                        nextToken:
+                          type: string
+                          description: 次ページトークン（前回のレスポンスから取得）
+              findOne:
+                summary: Find one document by ID
+                description: DynamoDBから単一レコードを取得します。IDで指定。
+                value:
+                  op: findOne
+                  resource: users
+                  params:
+                    id: 01KETJHF08KEDW320XX6NP2CZ3
+              findMany:
+                summary: Find multiple documents by IDs
+                description: DynamoDBから複数レコードをIDで取得します。
+                value:
+                  op: findMany
+                  resource: users
+                  params:
+                    ids:
+                      - 01KETJHF08KEDW320XX6NP2CZ3
+                      - 01KETJHF08KEDW320XX6NP2CZ4
+              findManyReference:
+                summary: Find documents by reference field
+                description: DynamoDBから参照フィールドでレコードを取得します。
+                value:
+                  op: findManyReference
+                  resource: participations
+                  params:
+                    target: userId
+                    id: 01KETJHF08KEDW320XX6NP2CZ3
+                    filter:
+                      status: confirmed
+              insertOne:
+                summary: Insert one document
+                description: DynamoDBに単一レコードを作成します。
+                value:
+                  op: insertOne
+                  resource: users
+                  params:
+                    data:
+                      name: John Doe
+                      email: john@example.com
+                      status: active
+              insertMany:
+                summary: Insert multiple documents
+                description: DynamoDBに複数レコードを作成します。
+                value:
+                  op: insertMany
+                  resource: users
+                  params:
+                    data:
+                      - name: John Doe
+                        email: john@example.com
+                      - name: Jane Smith
+                        email: jane@example.com
+              updateOne:
+                summary: Update one document
+                description: DynamoDBの単一レコードを更新します。
+                value:
+                  op: updateOne
+                  resource: users
+                  params:
+                    id: 01KETJHF08KEDW320XX6NP2CZ3
+                    data:
+                      status: inactive
+                      updatedAt: '2024-01-01T00:00:00Z'
+                    options:
+                      upsert: false
+              updateMany:
+                summary: Update multiple documents
+                description: DynamoDBの複数レコードを更新します。
+                value:
+                  op: updateMany
+                  resource: users
+                  params:
+                    filter:
+                      status: pending
+                    data:
+                      status: active
+              deleteOne:
+                summary: Delete one document
+                description: DynamoDBから単一レコードを削除します。
+                value:
+                  op: deleteOne
+                  resource: users
+                  params:
+                    id: 01KETJHF08KEDW320XX6NP2CZ3
+              deleteMany:
+                summary: Delete multiple documents
+                description: DynamoDBから複数レコードを削除します。
+                value:
+                  op: deleteMany
+                  resource: users
+                  params:
+                    filter:
+                      status: inactive
+                      lastActiveAt:
+                        $lt: '2023-01-01T00:00:00Z'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    description: Operation result
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    IAMAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: AWS IAM authentication using Signature Version 4
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Records Lambda (BFF)
+  schemas:
+    Document:
+      type: object
+      description: DynamoDBドキュメント（レコード）
+      properties:
+        id:
+          type: string
+          description: ドキュメントID（ULID形式）
+          example: 01KETJHF08KEDW320XX6NP2CZ3
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+      additionalProperties: true
+    Collection:
+      type: object
+      description: Collection (resource) name
+      properties:
+        name:
+          type: string
+          description: Resource name (e.g., "users", "venues", "participations")
+          example: users
+      required:
+        - name
+    ResourceName:
+      type: string
+      pattern: ^[a-z][a-z0-9_-]*$
+      description: |
+        Resource name (collection name) in DynamoDB.
+
+        Must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, and underscores.
+
+        Examples: users, venues, events, participations, notifications, user-profiles, event-logs
+      example: users
+    Query:
+      type: object
+      description: Query parameters for find operations
+      properties:
+        filter:
+          type: object
+          description: Filter conditions (MongoDB-style)
+          additionalProperties: true
+          example:
+            status: active
+            age:
+              $gte: 18
+        sort:
+          type: object
+          description: Sort conditions
+          properties:
+            field:
+              type: string
+              description: Field name to sort by (shadow field name)
+              example: createdAt
+            order:
+              type: string
+              enum:
+                - ASC
+                - DESC
+              description: Sort order
+              example: DESC
+        pagination:
+          type: object
+          description: Pagination parameters (DynamoDB cursor-based)
+          properties:
+            perPage:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: Items per page (max 50)
+              example: 10
+            nextToken:
+              type: string
+              description: Next page token (Base64URL encoded, from previous response)
+              example: eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9
+    Filter:
+      type: object
+      description: |
+        フィルタ定義
+
+        型安全なフィルタ条件を定義します。
+        各フィールドに対して直接値を指定するか、MongoDBOperatorsを使用できます。
+      properties:
+        $and:
+          type: array
+          description: AND条件
+          items:
+            $ref: '#/components/schemas/Filter'
+        $or:
+          type: array
+          description: OR条件
+          items:
+            $ref: '#/components/schemas/Filter'
+      additionalProperties: true
+    MongoDBOperators:
+      type: object
+      description: |
+        MongoDB形式の演算子をサポートします。
+
+        サポートされる演算子:
+        - 比較演算子: $eq, $ne, $gt, $gte, $lt, $lte
+        - 配列演算子: $in, $nin
+        - 文字列演算子: $regex
+        - 地理演算子: $near（簡易形式のみ）
+      properties:
+        $eq:
+          description: '等しい（例: { age: { $eq: 25 } } または { age: 25 }）'
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+        $ne:
+          description: '等しくない（例: { status: { $ne: "deleted" } }）'
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+        $gt:
+          description: 'より大きい（例: { age: { $gt: 18 } }）'
+          type: number
+        $gte:
+          description: '以上（例: { age: { $gte: 18 } }）'
+          type: number
+        $lt:
+          description: 'より小さい（例: { age: { $lt: 65 } }）'
+          type: number
+        $lte:
+          description: '以下（例: { age: { $lte: 65 } }）'
+          type: number
+        $in:
+          description: '配列内のいずれかに一致（例: { status: { $in: ["active", "pending"] } }）'
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        $nin:
+          description: '配列内のいずれにも一致しない（例: { status: { $nin: ["deleted", "archived"] } }）'
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        $exists:
+          description: 'フィールドの存在チェック（例: { email: { $exists: true } }）'
+          type: boolean
+        $regex:
+          description: '正規表現マッチ（例: { name: { $regex: "^John" } }）'
+          type: string
+        $near:
+          description: '近隣検索（簡易形式のみ、例: { location: { $near: { latitude: 35.6895, longitude: 139.7036, maxDistance: 5000 } } }）'
+          allOf:
+            - $ref: '#/components/schemas/NearOperator'
+      examples:
+        - $eq: 25
+        - $gte: 18
+        - $in:
+            - active
+            - pending
+        - $regex: ^John
+    NearOperator:
+      type: object
+      description: |
+        $near演算子（簡易形式のみサポート）
+
+        指定された地点から近い順にドキュメントを検索します。
+
+        動作:
+        1. シャドウレコード: 地理座標フィールドに対して、GeoHashベースのシャドウレコードが自動生成される
+        2. 検索精度: GeoHash精度6（±610m）から開始し、段階的に精度を下げて検索
+        3. 9ブロック検索: 中心ブロック + 周囲8ブロックを検索して候補を収集
+        4. 距離計算: Haversine公式で正確な距離を計算し、距離順にソート
+        5. 結果: 指定された件数（limit）まで、距離の近い順に返す
+
+        制約:
+        - ページネーション非対応: $near検索ではnextTokenを使用できない
+        - 単一フィールド: 1つのクエリで複数の地理座標フィールドを検索できない
+        - 他の演算子との併用: $nearと他のフィルター条件を併用できない
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: 緯度（-90〜90）
+          example: 35.6895
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          description: 経度（-180〜180）
+          example: 139.7036
+        maxDistance:
+          type: number
+          minimum: 0
+          description: 最大距離（メートル）。省略時は無制限
+          example: 5000
+        minDistance:
+          type: number
+          minimum: 0
+          description: 最小距離（メートル）。省略時は0
+          example: 0
+      example:
+        latitude: 35.6895
+        longitude: 139.7036
+        maxDistance: 5000
+    UpdateOperators:
+      type: object
+      description: |
+        更新演算子（$プレフィックス付き - MongoDB互換）
+
+        MongoDB風の更新演算子を提供します。
+        すべての演算子は$プレフィックス付きで使用します（MongoDB互換）。
+
+        例:
+        ```json
+        // フィールドを設定
+        {
+          "$set": { "status": "published", "updatedAt": "2024-01-01T00:00:00Z" }
+        }
+
+        // フィールドを削除
+        {
+          "$unset": ["description", "tags"]
+        }
+
+        // 数値をインクリメント
+        {
+          "$inc": { "stock": -1, "viewCount": 1 }
+        }
+
+        // 複数の演算子を組み合わせ
+        {
+          "$set": { "status": "published" },
+          "$inc": { "viewCount": 1 },
+          "$unset": ["draft"]
+        }
+        ```
+      properties:
+        $set:
+          type: object
+          description: フィールドを設定
+          additionalProperties: true
+        $setOnInsert:
+          type: object
+          description: upsert時のinsert専用フィールド（レコードが存在しない場合のみ適用）
+          additionalProperties: true
+        $unset:
+          type: array
+          description: フィールドを削除
+          items:
+            type: string
+        $inc:
+          type: object
+          description: 数値をインクリメント（負の値でデクリメント）
+          additionalProperties:
+            type: number
+    Error:
+      type: object
+      description: エラーレスポンス
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+          description: 常にfalse
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: エラーコード
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              description: エラーメッセージ
+              example: Invalid document ID
+            details:
+              type: object
+              description: エラー詳細情報
+              additionalProperties: true
+          required:
+            - code
+            - message
+      required:
+        - success
+        - error
+    FindOptions:
+      type: object
+      description: 検索オプション
+      properties:
+        sort:
+          type: object
+          description: ソート条件
+          additionalProperties:
+            oneOf:
+              - type: number
+                enum:
+                  - 1
+                  - -1
+              - type: string
+                enum:
+                  - asc
+                  - desc
+        limit:
+          type: number
+          description: 取得件数の制限
+          minimum: 1
+        skip:
+          type: number
+          description: スキップする件数
+          minimum: 0
+        nextToken:
+          type: string
+          description: ページネーショントークン（カーソルベースのページネーション用）
+    UpdateOneOptions:
+      type: object
+      description: updateOneのオプション
+      properties:
+        upsert:
+          type: boolean
+          description: レコードが存在しない場合に新規作成するか
+          default: false
+    UpdateManyOptions:
+      type: object
+      description: updateManyのオプション
+      properties:
+        upsert:
+          type: boolean
+          description: レコードが存在しない場合に新規作成するか
+          default: false
+    ConsumedCapacity:
+      type: object
+      description: DynamoDB消費キャパシティ情報
+      properties:
+        readCapacityUnits:
+          type: number
+          description: 読み込みキャパシティユニット
+        writeCapacityUnits:
+          type: number
+          description: 書き込みキャパシティユニット
+    InsertOneResult:
+      type: object
+      description: 挿入結果
+      required:
+        - acknowledged
+        - insertedId
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        insertedId:
+          type: string
+          description: 挿入されたドキュメントのID
+        id:
+          type: string
+          description: 挿入されたドキュメントのID（insertedIdのエイリアス）
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    InsertManyResult:
+      type: object
+      description: 複数挿入結果
+      required:
+        - acknowledged
+        - insertedCount
+        - insertedIds
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        insertedCount:
+          type: number
+          description: 挿入されたドキュメントの数
+        insertedIds:
+          type: object
+          description: 挿入されたドキュメントのIDマップ
+          additionalProperties:
+            type: string
+        failedIds:
+          type: array
+          description: 失敗したドキュメントのIDリスト
+          items:
+            type: string
+        errors:
+          type: array
+          description: エラー情報
+          items:
+            type: object
+            required:
+              - id
+              - code
+              - message
+            properties:
+              id:
+                type: string
+              code:
+                type: string
+              message:
+                type: string
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    UpdateResult:
+      type: object
+      description: 更新結果
+      required:
+        - acknowledged
+        - matchedCount
+        - modifiedCount
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        matchedCount:
+          type: number
+          description: マッチしたドキュメントの数
+        modifiedCount:
+          type: number
+          description: 変更されたドキュメントの数
+        upsertedId:
+          type: string
+          description: アップサートされたドキュメントのID
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    UpdateOneResult:
+      type: object
+      description: updateOne操作の結果
+      required:
+        - acknowledged
+        - matchedCount
+        - modifiedCount
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        matchedCount:
+          type: number
+          description: マッチしたドキュメントの数
+        modifiedCount:
+          type: number
+          description: 変更されたドキュメントの数
+        upsertedId:
+          type: string
+          description: アップサートされたドキュメントのID
+        id:
+          type: string
+          description: 更新されたドキュメントのID
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    DeleteResult:
+      type: object
+      description: 削除結果
+      required:
+        - acknowledged
+        - deletedCount
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        deletedCount:
+          type: number
+          description: 削除されたドキュメントの数
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    DeleteOneResult:
+      type: object
+      description: deleteOne操作の結果
+      required:
+        - acknowledged
+        - deletedCount
+      properties:
+        acknowledged:
+          type: boolean
+          description: 操作が確認されたか
+        deletedCount:
+          type: number
+          description: 削除されたドキュメントの数
+        id:
+          type: string
+          description: 削除されたドキュメントのID
+        consumedCapacity:
+          type: object
+          description: DynamoDB消費キャパシティ情報（集約）
+          properties:
+            totalRCU:
+              type: number
+              description: 合計読み込みキャパシティユニット
+            totalWCU:
+              type: number
+              description: 合計書き込みキャパシティユニット
+            operationCount:
+              type: number
+              description: DynamoDB操作回数
+    ApiOperation:
+      type: string
+      enum:
+        - find
+        - findOne
+        - findMany
+        - findManyReference
+        - insertOne
+        - insertMany
+        - updateOne
+        - updateMany
+        - deleteOne
+        - deleteMany
+      description: API操作タイプ（MongoDB風）
+    ApiRequest:
+      type: object
+      description: API リクエスト（共通）
+      required:
+        - op
+        - resource
+        - params
+      properties:
+        op:
+          $ref: '#/components/schemas/ApiOperation'
+        resource:
+          type: string
+          description: リソース名（例："articles", "tasks"）
+        params:
+          type: object
+          description: 操作パラメータ
+    ApiSuccessResponse:
+      type: object
+      description: API 成功レスポンス
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+          description: 成功フラグ
+        data:
+          type: object
+          description: レスポンスデータ
+    ApiErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+          description: 成功フラグ（常にfalse）
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - statusCode
+          properties:
+            code:
+              type: string
+              description: エラーコード
+            message:
+              type: string
+              description: エラーメッセージ
+            statusCode:
+              type: integer
+              description: HTTPステータスコード
+            details:
+              description: 追加詳細情報（オプション）
+      description: APIエラーレスポンス
+    OperationError:
+      type: object
+      required:
+        - id
+        - code
+        - message
+      properties:
+        id:
+          type: string
+          description: エラーが発生したレコードのID
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 操作エラー（部分失敗時の個別エラー情報）
+    FindParams:
+      type: object
+      description: Parameters for find operation
+      properties:
+        filter:
+          $ref: '#/components/schemas/Filter'
+        sort:
+          type: object
+          description: Sort options (if not specified, defaults to updatedAt DESC)
+          required:
+            - field
+            - order
+          properties:
+            field:
+              type: string
+              description: Shadow field name to sort by
+            order:
+              type: string
+              enum:
+                - ASC
+                - DESC
+              description: Sort order
+        pagination:
+          type: object
+          properties:
+            perPage:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: Items per page (max 50)
+            nextToken:
+              type: string
+              description: Next page token (Base64URL encoded)
+    FindOneParams:
+      oneOf:
+        - type: object
+          description: Find by ID
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Record ID
+              example: 01KETJHF08KEDW320XX6NP2CZ3
+        - type: object
+          description: Find by filter
+          required:
+            - filter
+          properties:
+            filter:
+              $ref: '#/components/schemas/Filter'
+    FindManyParams:
+      oneOf:
+        - type: object
+          description: Find by IDs
+          required:
+            - ids
+          properties:
+            ids:
+              type: array
+              description: Array of record IDs
+              items:
+                type: string
+              example:
+                - 01KETJHF08KEDW320XX6NP2CZ3
+                - 01KETJHF08KEDW320XX6NP2CZ4
+        - type: object
+          description: Find by filter
+          required:
+            - filter
+          properties:
+            filter:
+              $ref: '#/components/schemas/Filter'
+    FindManyReferenceParams:
+      type: object
+      description: Parameters for findManyReference operation
+      required:
+        - target
+        - id
+      properties:
+        target:
+          type: string
+          description: Reference field name
+          example: userId
+        id:
+          type: string
+          description: Reference target ID
+          example: 01KETJHF08KEDW320XX6NP2CZ3
+        filter:
+          $ref: '#/components/schemas/Filter'
+        sort:
+          type: object
+          description: Sort options (if not specified, defaults to updatedAt DESC)
+          required:
+            - field
+            - order
+          properties:
+            field:
+              type: string
+              description: Shadow field name to sort by
+            order:
+              type: string
+              enum:
+                - ASC
+                - DESC
+              description: Sort order
+        pagination:
+          type: object
+          properties:
+            perPage:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: Items per page (max 50)
+            nextToken:
+              type: string
+              description: Next page token (Base64URL encoded)
+    InsertOneParams:
+      type: object
+      description: Parameters for insertOne operation
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          description: Document data to insert
+          additionalProperties: true
+          example:
+            name: John Doe
+            email: john@example.com
+            status: active
+    InsertManyParams:
+      type: object
+      description: Parameters for insertMany operation
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: Array of documents to insert
+          items:
+            type: object
+            additionalProperties: true
+          example:
+            - name: John Doe
+              email: john@example.com
+            - name: Jane Smith
+              email: jane@example.com
+    UpdateOneParams:
+      allOf:
+        - oneOf:
+            - type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: string
+                  description: Record ID
+            - type: object
+              required:
+                - filter
+              properties:
+                filter:
+                  $ref: '#/components/schemas/Filter'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: object
+              description: Update data (JSON Merge Patch format)
+              additionalProperties: true
+              example:
+                status: inactive
+                updatedAt: '2024-01-01T00:00:00Z'
+            options:
+              type: object
+              properties:
+                upsert:
+                  type: boolean
+                  description: Create if not exists
+                  default: false
+              additionalProperties: false
+    UpdateManyParams:
+      allOf:
+        - oneOf:
+            - type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of record IDs to update
+            - type: object
+              required:
+                - filter
+              properties:
+                filter:
+                  $ref: '#/components/schemas/Filter'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: object
+              description: Update data (JSON Merge Patch format)
+              additionalProperties: true
+              example:
+                status: inactive
+                updatedAt: '2024-01-01T00:00:00Z'
+            options:
+              type: object
+              properties:
+                upsert:
+                  type: boolean
+                  description: Create if not exists
+                  default: false
+              additionalProperties: false
+    DeleteOneParams:
+      oneOf:
+        - type: object
+          description: Delete by ID
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Record ID
+              example: 01KETJHF08KEDW320XX6NP2CZ3
+        - type: object
+          description: Delete by filter
+          required:
+            - filter
+          properties:
+            filter:
+              $ref: '#/components/schemas/Filter'
+    DeleteManyParams:
+      oneOf:
+        - type: object
+          description: Delete by IDs
+          required:
+            - ids
+          properties:
+            ids:
+              type: array
+              description: Array of record IDs to delete
+              items:
+                type: string
+              example:
+                - 01KETJHF08KEDW320XX6NP2CZ3
+                - 01KETJHF08KEDW320XX6NP2CZ4
+        - type: object
+          description: Delete by filter
+          required:
+            - filter
+          properties:
+            filter:
+              $ref: '#/components/schemas/Filter'
+    FindResult:
+      type: object
+      description: Find operation result
+      required:
+        - items
+        - pageInfo
+      properties:
+        items:
+          type: array
+          description: List of documents
+          items:
+            $ref: '#/components/schemas/Document'
+        pageInfo:
+          type: object
+          required:
+            - hasNextPage
+            - hasPreviousPage
+          properties:
+            hasNextPage:
+              type: boolean
+              description: Whether next page exists
+            hasPreviousPage:
+              type: boolean
+              description: Whether previous page exists
+        nextToken:
+          type: string
+          description: Next page token (if hasNextPage is true)
+        total:
+          type: integer
+          description: Total count (optional, performance impact)
+        consumedCapacity:
+          type: object
+          description: DynamoDB consumed capacity (aggregated)
+          properties:
+            totalRCU:
+              type: number
+              description: Total read capacity units
+            totalWCU:
+              type: number
+              description: Total write capacity units
+            operationCount:
+              type: number
+              description: Number of DynamoDB operations
+    FindManyReferenceResult:
+      type: object
+      required:
+        - items
+        - pageInfo
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: レコードリスト
+        pageInfo:
+          type: object
+          required:
+            - hasNextPage
+            - hasPreviousPage
+          properties:
+            hasNextPage:
+              type: boolean
+              description: 次ページが存在するか
+            hasPreviousPage:
+              type: boolean
+              description: 前ページが存在するか
+          description: ページ情報
+        nextToken:
+          type: string
+          description: 次ページトークン（存在する場合）
+        total:
+          type: integer
+          description: 総件数（オプション）
+      description: findManyReferenceレスポンスデータ
+    BulkOperationResult:
+      type: object
+      description: Bulk operation result (insertMany, updateMany, deleteMany)
+      properties:
+        count:
+          type: integer
+          description: Number of successful operations
+          example: 2
+        successIds:
+          type: object
+          description: Map of index to successful record IDs
+          additionalProperties:
+            type: string
+          example:
+            '0': 01KETJHF08KEDW320XX6NP2CZ3
+            '2': 01KETJHF08KEDW320XX6NP2CZ4
+        failedIds:
+          type: object
+          description: Map of index to failed record IDs
+          additionalProperties:
+            type: string
+          example:
+            '1': 01KETJHF08KEDW320XX6NP2CZ5
+        errors:
+          type: object
+          description: Map of index to error details
+          additionalProperties:
+            type: object
+            properties:
+              id:
+                type: string
+              code:
+                type: string
+              message:
+                type: string
+          example:
+            '1':
+              id: 01KETJHF08KEDW320XX6NP2CZ5
+              code: VALIDATION_ERROR
+              message: Invalid email format
+        items:
+          type: array
+          description: Successful record data (updateMany returns only updated fields)
+          items:
+            type: object
+            additionalProperties: true
+        consumedCapacity:
+          type: object
+          description: DynamoDB consumed capacity (aggregated)
+          properties:
+            totalRCU:
+              type: number
+              description: Total read capacity units
+            totalWCU:
+              type: number
+              description: Total write capacity units
+            operationCount:
+              type: number
+              description: Number of DynamoDB operations

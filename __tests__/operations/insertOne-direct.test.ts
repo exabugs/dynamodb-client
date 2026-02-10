@@ -75,8 +75,14 @@ describe('insertOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が作成されたレコードオブジェクトであることを確認
-      expect(result).toEqual(mockFindOneResponse);
+      // 結果が { acknowledged, insertedId, id, ...createdRecord, consumedCapacity } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        insertedId: 'article-001',
+        id: 'article-001',
+        title: 'テスト記事',
+        content: 'テスト内容',
+      });
     });
   });
 

@@ -68,6 +68,8 @@ export async function handleDeleteOne(
 
     // 既存のインターフェースを維持: { id } を返す
     return {
+      acknowledged: true,
+      deletedCount: 1,
       id: targetId,
       consumedCapacity: deleteManyResult.consumedCapacity,
     };
@@ -113,6 +115,8 @@ export async function handleDeleteOne(
 
     // 既存のインターフェースを維持: { id } を返す
     return {
+      acknowledged: true,
+      deletedCount: 1,
       id: deletedId,
       consumedCapacity: deleteManyResult.consumedCapacity,
     };

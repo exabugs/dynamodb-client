@@ -296,7 +296,89 @@ components:
       description: JWT token from Records Lambda (BFF)
 
   schemas:
-    $ref: './components/schemas/_index.yaml'
+    # Base schemas
+    Document:
+      $ref: './components/schemas/Document.yaml'
+    Collection:
+      $ref: './components/schemas/Collection.yaml'
+    ResourceName:
+      $ref: './components/schemas/ResourceName.yaml'
+    Query:
+      $ref: './components/schemas/Query.yaml'
+    Filter:
+      $ref: './components/schemas/Filter.yaml'
+    MongoDBOperators:
+      $ref: './components/schemas/MongoDBOperators.yaml'
+    NearOperator:
+      $ref: './components/schemas/NearOperator.yaml'
+    UpdateOperators:
+      $ref: './components/schemas/UpdateOperators.yaml'
+    Error:
+      $ref: './components/schemas/Error.yaml'
+
+    # Client SDK schemas
+    FindOptions:
+      $ref: './components/schemas/FindOptions.yaml'
+    UpdateOneOptions:
+      $ref: './components/schemas/UpdateOneOptions.yaml'
+    UpdateManyOptions:
+      $ref: './components/schemas/UpdateManyOptions.yaml'
+    ConsumedCapacity:
+      $ref: './components/schemas/ConsumedCapacity.yaml'
+    InsertOneResult:
+      $ref: './components/schemas/InsertOneResult.yaml'
+    InsertManyResult:
+      $ref: './components/schemas/InsertManyResult.yaml'
+    UpdateResult:
+      $ref: './components/schemas/UpdateResult.yaml'
+    UpdateOneResult:
+      $ref: './components/schemas/UpdateOneResult.yaml'
+    DeleteResult:
+      $ref: './components/schemas/DeleteResult.yaml'
+    DeleteOneResult:
+      $ref: './components/schemas/DeleteOneResult.yaml'
+
+    # API schemas
+    ApiOperation:
+      $ref: './components/schemas/ApiOperation.yaml'
+    ApiRequest:
+      $ref: './components/schemas/ApiRequest.yaml'
+    ApiSuccessResponse:
+      $ref: './components/schemas/ApiSuccessResponse.yaml'
+    ApiErrorResponse:
+      $ref: './components/schemas/ApiErrorResponse.yaml'
+    OperationError:
+      $ref: './components/schemas/OperationError.yaml'
+
+    # Operation parameters
+    FindParams:
+      $ref: './components/schemas/operations/FindParams.yaml'
+    FindOneParams:
+      $ref: './components/schemas/operations/FindOneParams.yaml'
+    FindManyParams:
+      $ref: './components/schemas/operations/FindManyParams.yaml'
+    FindManyReferenceParams:
+      $ref: './components/schemas/operations/FindManyReferenceParams.yaml'
+    InsertOneParams:
+      $ref: './components/schemas/operations/InsertOneParams.yaml'
+    InsertManyParams:
+      $ref: './components/schemas/operations/InsertManyParams.yaml'
+    UpdateOneParams:
+      $ref: './components/schemas/operations/UpdateOneParams.yaml'
+    UpdateManyParams:
+      $ref: './components/schemas/operations/UpdateManyParams.yaml'
+    DeleteOneParams:
+      $ref: './components/schemas/operations/DeleteOneParams.yaml'
+    DeleteManyParams:
+      $ref: './components/schemas/operations/DeleteManyParams.yaml'
+
+    # Response schemas
+    FindResult:
+      $ref: './components/schemas/responses/FindResult.yaml'
+    FindManyReferenceResult:
+      $ref: './components/schemas/responses/FindManyReferenceResult.yaml'
+    BulkOperationResult:
+      $ref: './components/schemas/responses/BulkOperationResult.yaml'
 
 security:
   - IAMAuth: []

@@ -1,0 +1,7 @@
+type: object
+description: updateManyのオプション
+properties:
+  upsert:
+    type: boolean
+    description: レコードが存在しない場合に新規作成するか
+    default: false

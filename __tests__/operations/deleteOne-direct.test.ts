@@ -50,8 +50,12 @@ describe('deleteOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が { id } 形式であることを確認
-      expect(result).toEqual({ id: testId });
+      // 結果が { acknowledged, deletedCount, id, consumedCapacity } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        deletedCount: 1,
+        id: testId,
+      });
     });
 
     it('削除が失敗した場合はErrorをスローする', async () => {
@@ -104,8 +108,12 @@ describe('deleteOne - 直接テスト', () => {
         requestId
       );
 
-      // 結果が { id } 形式であることを確認
-      expect(result).toEqual({ id: 'article-002' });
+      // 結果が { acknowledged, deletedCount, id, consumedCapacity } であることを確認
+      expect(result).toMatchObject({
+        acknowledged: true,
+        deletedCount: 1,
+        id: 'article-002',
+      });
     });
   });
 });

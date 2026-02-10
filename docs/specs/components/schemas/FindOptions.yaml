@@ -1,0 +1,23 @@
+type: object
+description: 検索オプション
+properties:
+  sort:
+    type: object
+    description: ソート条件
+    additionalProperties:
+      oneOf:
+        - type: number
+          enum: [1, -1]
+        - type: string
+          enum: ['asc', 'desc']
+  limit:
+    type: number
+    description: 取得件数の制限
+    minimum: 1
+  skip:
+    type: number
+    description: スキップする件数
+    minimum: 0
+  nextToken:
+    type: string
+    description: ページネーショントークン（カーソルベースのページネーション用）

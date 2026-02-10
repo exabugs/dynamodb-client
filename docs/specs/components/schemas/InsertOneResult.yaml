@@ -1,0 +1,28 @@
+type: object
+description: 挿入結果
+required:
+  - acknowledged
+  - insertedId
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+  insertedId:
+    type: string
+    description: 挿入されたドキュメントのID
+  id:
+    type: string
+    description: 挿入されたドキュメントのID（insertedIdのエイリアス）
+  consumedCapacity:
+    type: object
+    description: DynamoDB消費キャパシティ情報（集約）
+    properties:
+      totalRCU:
+        type: number
+        description: 合計読み込みキャパシティユニット
+      totalWCU:
+        type: number
+        description: 合計書き込みキャパシティユニット
+      operationCount:
+        type: number
+        description: DynamoDB操作回数

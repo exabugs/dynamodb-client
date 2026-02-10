@@ -1,0 +1,52 @@
+type: object
+description: 複数挿入結果
+required:
+  - acknowledged
+  - insertedCount
+  - insertedIds
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+  insertedCount:
+    type: number
+    description: 挿入されたドキュメントの数
+  insertedIds:
+    type: object
+    description: 挿入されたドキュメントのIDマップ
+    additionalProperties:
+      type: string
+  failedIds:
+    type: array
+    description: 失敗したドキュメントのIDリスト
+    items:
+      type: string
+  errors:
+    type: array
+    description: エラー情報
+    items:
+      type: object
+      required:
+        - id
+        - code
+        - message
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+  consumedCapacity:
+    type: object
+    description: DynamoDB消費キャパシティ情報（集約）
+    properties:
+      totalRCU:
+        type: number
+        description: 合計読み込みキャパシティユニット
+      totalWCU:
+        type: number
+        description: 合計書き込みキャパシティユニット
+      operationCount:
+        type: number
+        description: DynamoDB操作回数

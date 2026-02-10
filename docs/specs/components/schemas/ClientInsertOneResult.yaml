@@ -1,0 +1,19 @@
+type: object
+description: |
+  Client SDK用の挿入結果（MongoDB互換）
+required:
+  - acknowledged
+  - insertedId
+properties:
+  acknowledged:
+    type: boolean
+    description: 操作が確認されたか
+    example: true
+
+  insertedId:
+    type: string
+    description: 挿入されたドキュメントのID
+    example: '01KETJHF08KEDW320XX6NP2CZ3'
+
+  consumedCapacity:
+    $ref: './ConsumedCapacity.yaml'
