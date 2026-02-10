@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.51] - 2026-02-10
+
+### Changed
+
+- FilterOperatorsをMongoDBOperatorsにリネーム（MongoDB互換性を明確化）
+- Filter.yamlの$and/$orを再帰的参照に修正
+- 各操作の結果型をOpenAPI仕様に追加（InsertOneResult, UpdateOneResult, DeleteOneResult等）
+- openapi.bundled.yamlを生成し、型生成のソースとして使用
+- package.jsonのgenerate-typesスクリプトをbundled.yamlから生成するように変更
+
+### Added
+
+- src/server/types.tsに後方互換性のためのFilterOperatorsエイリアスを追加
+
 ## [1.3.50] - 2026-02-10
 
 ### Changed
