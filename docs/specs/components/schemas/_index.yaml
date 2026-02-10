@@ -12,7 +12,7 @@ Filter:
 FilterOperators:
   $ref: './FilterOperators.yaml'
 MongoDBOperators:
-  $ref: './MongoDBOperators.yaml'
+  $ref: './FilterOperators.yaml'
 NearOperator:
   $ref: './NearOperator.yaml'
 UpdateOperators:

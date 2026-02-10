@@ -307,8 +307,8 @@ components:
       $ref: './components/schemas/Query.yaml'
     Filter:
       $ref: './components/schemas/Filter.yaml'
-    MongoDBOperators:
-      $ref: './components/schemas/MongoDBOperators.yaml'
+    FilterOperators:
+      $ref: './components/schemas/FilterOperators.yaml'
     NearOperator:
       $ref: './components/schemas/NearOperator.yaml'
     UpdateOperators:

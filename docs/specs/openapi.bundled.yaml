@@ -373,7 +373,7 @@ components:
         フィルタ定義
 
         型安全なフィルタ条件を定義します。
-        各フィールドに対して直接値を指定するか、MongoDBOperatorsを使用できます。
+        各フィールドに対して直接値を指定するか、FilterOperatorsを使用できます。
       properties:
         $and:
           type: array
@@ -386,7 +386,7 @@ components:
           items:
             $ref: '#/components/schemas/Filter'
       additionalProperties: true
-    MongoDBOperators:
+    FilterOperators:
       type: object
       description: |
         MongoDB形式の演算子をサポートします。

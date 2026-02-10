@@ -8,12 +8,10 @@ import type { components } from '../../__generated__/openapi.js';
 
 // Client SDK types を re-export
 export type Filter<T> = components['schemas']['Filter'] & {
-  [P in keyof T]?: T[P] | components['schemas']['MongoDBOperators'];
+  [P in keyof T]?: T[P] | components['schemas']['FilterOperators'];
 };
 
-export type MongoDBOperators = components['schemas']['MongoDBOperators'];
-// 後方互換性のためのエイリアス
-export type FilterOperators = MongoDBOperators;
+export type FilterOperators = components['schemas']['FilterOperators'];
 export type UpdateOperators<T> = components['schemas']['UpdateOperators'] & {
   $set?: Partial<T>;
   $setOnInsert?: Partial<T>;

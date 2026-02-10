@@ -132,7 +132,7 @@ export interface components {
      * @description フィルタ定義
      *
      *     型安全なフィルタ条件を定義します。
-     *     各フィールドに対して直接値を指定するか、MongoDBOperatorsを使用できます。
+     *     各フィールドに対して直接値を指定するか、FilterOperatorsを使用できます。
      */
     Filter: {
       /** @description AND条件 */
@@ -166,7 +166,7 @@ export interface components {
      *       "$regex": "^John"
      *     }
      */
-    MongoDBOperators: {
+    FilterOperators: {
       /** @description 等しい（例: { age: { $eq: 25 } } または { age: 25 }） */
       $eq?: string | number | boolean;
       /** @description 等しくない（例: { status: { $ne: "deleted" } }） */

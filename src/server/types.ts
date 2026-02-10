@@ -13,12 +13,10 @@ import type { components } from '../__generated__/openapi.js';
 // ========================================
 
 /**
- * MongoDB演算子（$プレフィックス付き - MongoDB互換）
+ * フィルタ演算子（$プレフィックス付き）
  * OpenAPI仕様から生成された型を使用
  */
-export type MongoDBOperators = components['schemas']['MongoDBOperators'];
-// 後方互換性のためのエイリアス
-export type FilterOperators = MongoDBOperators;
+export type FilterOperators = components['schemas']['FilterOperators'];
 
 // ========================================
 // リクエスト型（OpenAPI生成型を使用）
