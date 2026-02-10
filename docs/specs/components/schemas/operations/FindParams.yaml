@@ -2,7 +2,7 @@ type: object
 description: Parameters for find operation
 properties:
   filter:
-    $ref: '../Filter.yaml'
+    $ref: '../operators/Filter.yaml'
   sort:
     type: object
     description: Sort options (if not specified, defaults to updatedAt DESC)

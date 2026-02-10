@@ -367,6 +367,36 @@ components:
               type: string
               description: Next page token (Base64URL encoded, from previous response)
               example: eyJQSyI6InVzZXJzIiwiU0siOiJpZCMwMUtFVEpIRjA4S0VEVzMyMFhYNk5QMkNaMyJ9
+    Error:
+      type: object
+      description: エラーレスポンス
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+          description: 常にfalse
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: エラーコード
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              description: エラーメッセージ
+              example: Invalid document ID
+            details:
+              type: object
+              description: エラー詳細情報
+              additionalProperties: true
+          required:
+            - code
+            - message
+      required:
+        - success
+        - error
     Filter:
       type: object
       description: |
@@ -553,36 +583,6 @@ components:
           description: 数値をインクリメント（負の値でデクリメント）
           additionalProperties:
             type: number
-    Error:
-      type: object
-      description: エラーレスポンス
-      properties:
-        success:
-          type: boolean
-          enum:
-            - false
-          description: 常にfalse
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              description: エラーコード
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              description: エラーメッセージ
-              example: Invalid document ID
-            details:
-              type: object
-              description: エラー詳細情報
-              additionalProperties: true
-          required:
-            - code
-            - message
-      required:
-        - success
-        - error
     FindOptions:
       type: object
       description: 検索オプション

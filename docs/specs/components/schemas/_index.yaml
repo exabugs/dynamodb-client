@@ -1,54 +1,58 @@
 # Base schemas
 Document:
-  $ref: './Document.yaml'
+  $ref: './base/Document.yaml'
 Collection:
-  $ref: './Collection.yaml'
+  $ref: './base/Collection.yaml'
 ResourceName:
-  $ref: './ResourceName.yaml'
+  $ref: './base/ResourceName.yaml'
 Query:
-  $ref: './Query.yaml'
-Filter:
-  $ref: './Filter.yaml'
-FilterOperators:
-  $ref: './FilterOperators.yaml'
-MongoDBOperators:
-  $ref: './FilterOperators.yaml'
-NearOperator:
-  $ref: './NearOperator.yaml'
-UpdateOperators:
-  $ref: './UpdateOperators.yaml'
+  $ref: './base/Query.yaml'
 Error:
-  $ref: './Error.yaml'
+  $ref: './base/Error.yaml'
 
-# Client SDK schemas
+# Operators
+Filter:
+  $ref: './operators/Filter.yaml'
+FilterOperators:
+  $ref: './operators/FilterOperators.yaml'
+MongoDBOperators:
+  $ref: './operators/FilterOperators.yaml'
+NearOperator:
+  $ref: './operators/NearOperator.yaml'
+UpdateOperators:
+  $ref: './operators/UpdateOperators.yaml'
+
+# Options
 FindOptions:
-  $ref: './FindOptions.yaml'
+  $ref: './options/FindOptions.yaml'
 UpdateOneOptions:
-  $ref: './UpdateOneOptions.yaml'
+  $ref: './options/UpdateOneOptions.yaml'
 UpdateManyOptions:
-  $ref: './UpdateManyOptions.yaml'
+  $ref: './options/UpdateManyOptions.yaml'
+
+# Results
 ConsumedCapacity:
-  $ref: './ConsumedCapacity.yaml'
+  $ref: './results/ConsumedCapacity.yaml'
 InsertOneResult:
-  $ref: './InsertOneResult.yaml'
+  $ref: './results/InsertOneResult.yaml'
 InsertManyResult:
-  $ref: './InsertManyResult.yaml'
+  $ref: './results/InsertManyResult.yaml'
 UpdateResult:
-  $ref: './UpdateResult.yaml'
+  $ref: './results/UpdateResult.yaml'
 DeleteResult:
-  $ref: './DeleteResult.yaml'
+  $ref: './results/DeleteResult.yaml'
 
 # API schemas
 ApiOperation:
-  $ref: './ApiOperation.yaml'
+  $ref: './api/ApiOperation.yaml'
 ApiRequest:
-  $ref: './ApiRequest.yaml'
+  $ref: './api/ApiRequest.yaml'
 ApiSuccessResponse:
-  $ref: './ApiSuccessResponse.yaml'
+  $ref: './api/ApiSuccessResponse.yaml'
 ApiErrorResponse:
-  $ref: './ApiErrorResponse.yaml'
+  $ref: './api/ApiErrorResponse.yaml'
 OperationError:
-  $ref: './OperationError.yaml'
+  $ref: './api/OperationError.yaml'
 
 # Operation parameters
 FindParams:

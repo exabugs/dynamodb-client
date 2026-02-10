@@ -15,7 +15,7 @@ properties:
     example: '01KETJHF08KEDW320XX6NP2CZ3'
 
   filter:
-    $ref: '../Filter.yaml'
+    $ref: '../operators/Filter.yaml'
 
   sort:
     type: object

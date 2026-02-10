@@ -298,57 +298,61 @@ components:
   schemas:
     # Base schemas
     Document:
-      $ref: './components/schemas/Document.yaml'
+      $ref: './components/schemas/base/Document.yaml'
     Collection:
-      $ref: './components/schemas/Collection.yaml'
+      $ref: './components/schemas/base/Collection.yaml'
     ResourceName:
-      $ref: './components/schemas/ResourceName.yaml'
+      $ref: './components/schemas/base/ResourceName.yaml'
     Query:
-      $ref: './components/schemas/Query.yaml'
-    Filter:
-      $ref: './components/schemas/Filter.yaml'
-    FilterOperators:
-      $ref: './components/schemas/FilterOperators.yaml'
-    NearOperator:
-      $ref: './components/schemas/NearOperator.yaml'
-    UpdateOperators:
-      $ref: './components/schemas/UpdateOperators.yaml'
+      $ref: './components/schemas/base/Query.yaml'
     Error:
-      $ref: './components/schemas/Error.yaml'
+      $ref: './components/schemas/base/Error.yaml'
 
-    # Client SDK schemas
+    # Operators
+    Filter:
+      $ref: './components/schemas/operators/Filter.yaml'
+    FilterOperators:
+      $ref: './components/schemas/operators/FilterOperators.yaml'
+    NearOperator:
+      $ref: './components/schemas/operators/NearOperator.yaml'
+    UpdateOperators:
+      $ref: './components/schemas/operators/UpdateOperators.yaml'
+
+    # Options
     FindOptions:
-      $ref: './components/schemas/FindOptions.yaml'
+      $ref: './components/schemas/options/FindOptions.yaml'
     UpdateOneOptions:
-      $ref: './components/schemas/UpdateOneOptions.yaml'
+      $ref: './components/schemas/options/UpdateOneOptions.yaml'
     UpdateManyOptions:
-      $ref: './components/schemas/UpdateManyOptions.yaml'
+      $ref: './components/schemas/options/UpdateManyOptions.yaml'
+
+    # Results
     ConsumedCapacity:
-      $ref: './components/schemas/ConsumedCapacity.yaml'
+      $ref: './components/schemas/results/ConsumedCapacity.yaml'
     InsertOneResult:
-      $ref: './components/schemas/InsertOneResult.yaml'
+      $ref: './components/schemas/results/InsertOneResult.yaml'
     InsertManyResult:
-      $ref: './components/schemas/InsertManyResult.yaml'
+      $ref: './components/schemas/results/InsertManyResult.yaml'
     UpdateResult:
-      $ref: './components/schemas/UpdateResult.yaml'
+      $ref: './components/schemas/results/UpdateResult.yaml'
     UpdateOneResult:
-      $ref: './components/schemas/UpdateOneResult.yaml'
+      $ref: './components/schemas/results/UpdateOneResult.yaml'
     DeleteResult:
-      $ref: './components/schemas/DeleteResult.yaml'
+      $ref: './components/schemas/results/DeleteResult.yaml'
     DeleteOneResult:
-      $ref: './components/schemas/DeleteOneResult.yaml'
+      $ref: './components/schemas/results/DeleteOneResult.yaml'
 
     # API schemas
     ApiOperation:
-      $ref: './components/schemas/ApiOperation.yaml'
+      $ref: './components/schemas/api/ApiOperation.yaml'
     ApiRequest:
-      $ref: './components/schemas/ApiRequest.yaml'
+      $ref: './components/schemas/api/ApiRequest.yaml'
     ApiSuccessResponse:
-      $ref: './components/schemas/ApiSuccessResponse.yaml'
+      $ref: './components/schemas/api/ApiSuccessResponse.yaml'
     ApiErrorResponse:
-      $ref: './components/schemas/ApiErrorResponse.yaml'
+      $ref: './components/schemas/api/ApiErrorResponse.yaml'
     OperationError:
-      $ref: './components/schemas/OperationError.yaml'
+      $ref: './components/schemas/api/OperationError.yaml'
 
     # Operation parameters
     FindParams:

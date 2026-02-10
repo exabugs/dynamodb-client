@@ -12,7 +12,7 @@ allOf:
           - filter
         properties:
           filter:
-            $ref: '../Filter.yaml'
+            $ref: '../operators/Filter.yaml'
 
   - type: object
     required:
