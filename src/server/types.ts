@@ -4,9 +4,31 @@
  * MongoDB 風の操作インターフェース
  *
  * NOTE: OpenAPI仕様から型を生成し、実装で使用しています。
- * generated.tsはOpenAPI仕様から自動生成されます。
  */
-import type { components } from '../__generated__/openapi.js';
+import type {
+  ApiErrorResponse,
+  ApiOperation,
+  ApiRequest as GeneratedApiRequest,
+  ApiSuccessResponse as GeneratedApiSuccessResponse,
+  BulkOperationResult,
+  DeleteManyParams,
+  DeleteOneParams,
+  DeleteOneResult,
+  FilterOperators,
+  FindManyParams,
+  FindManyReferenceParams,
+  FindManyReferenceResult,
+  FindOneParams,
+  FindParams,
+  FindResult,
+  InsertManyParams,
+  InsertOneParams,
+  InsertOneResult,
+  OperationError,
+  UpdateManyParams,
+  UpdateOneParams,
+  UpdateOneResult,
+} from '../__generated__/models/index.js';
 
 // ========================================
 // Client SDK型（OpenAPI生成型を使用）
@@ -14,9 +36,8 @@ import type { components } from '../__generated__/openapi.js';
 
 /**
  * フィルタ演算子（$プレフィックス付き）
- * OpenAPI仕様から生成された型を使用
  */
-export type FilterOperators = components['schemas']['FilterOperators'];
+export type { FilterOperators };
 
 // ========================================
 // リクエスト型（OpenAPI生成型を使用）
@@ -24,89 +45,75 @@ export type FilterOperators = components['schemas']['FilterOperators'];
 
 /**
  * API操作タイプ（MongoDB 風）
- * OpenAPI仕様から生成された型を使用
  */
-export type ApiOperation = components['schemas']['ApiOperation'];
+export type { ApiOperation };
 
 /**
  * API リクエスト（共通）
- * OpenAPI仕様から生成された型を使用
  */
-export type ApiRequest<T = unknown> = Omit<components['schemas']['ApiRequest'], 'params'> & {
+export type ApiRequest<T = unknown> = Omit<GeneratedApiRequest, 'params'> & {
   params: T;
 };
 
 /**
  * find パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindParams = components['schemas']['FindParams'];
+export type { FindParams };
 
 /**
  * findOne パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindOneParams = components['schemas']['FindOneParams'];
+export type { FindOneParams };
 
 /**
  * findMany パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindManyParams = components['schemas']['FindManyParams'];
+export type { FindManyParams };
 
 /**
  * findManyReference パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindManyReferenceParams = components['schemas']['FindManyReferenceParams'];
+export type { FindManyReferenceParams };
 
 /**
  * insertOne パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type InsertOneParams = components['schemas']['InsertOneParams'];
+export type { InsertOneParams };
 
 /**
  * 単一レコード特定（IDまたはフィルター）
- * OpenAPI仕様から生成された型を使用
  */
 export type SingleRecordSelector = FindOneParams;
 
 /**
  * 複数レコード特定（IDリストまたはフィルター）
- * OpenAPI仕様から生成された型を使用
  */
 export type MultipleRecordsSelector = FindManyParams;
 
 /**
  * updateOne パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type UpdateOneParams = components['schemas']['UpdateOneParams'];
+export type { UpdateOneParams };
 
 /**
  * updateMany パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type UpdateManyParams = components['schemas']['UpdateManyParams'];
+export type { UpdateManyParams };
 
 /**
  * deleteOne パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type DeleteOneParams = components['schemas']['DeleteOneParams'];
+export type { DeleteOneParams };
 
 /**
  * deleteMany パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type DeleteManyParams = components['schemas']['DeleteManyParams'];
+export type { DeleteManyParams };
 
 /**
  * insertMany パラメータ
- * OpenAPI仕様から生成された型を使用
  */
-export type InsertManyParams = components['schemas']['InsertManyParams'];
+export type { InsertManyParams };
 
 // ========================================
 // レスポンス型
@@ -114,17 +121,15 @@ export type InsertManyParams = components['schemas']['InsertManyParams'];
 
 /**
  * API 成功レスポンス
- * OpenAPI仕様から生成された型を使用
  */
-export type ApiSuccessResponse<T> = Omit<components['schemas']['ApiSuccessResponse'], 'data'> & {
+export type ApiSuccessResponse<T> = Omit<GeneratedApiSuccessResponse, 'data'> & {
   data: T;
 };
 
 /**
  * API エラーレスポンス
- * OpenAPI仕様から生成された型を使用
  */
-export type ApiErrorResponse = components['schemas']['ApiErrorResponse'];
+export type { ApiErrorResponse };
 
 /**
  * API レスポンス（共通）
@@ -137,9 +142,8 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /**
  * find レスポンスデータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindResult = components['schemas']['FindResult'];
+export type { FindResult };
 
 /**
  * findOne レスポンスデータ
@@ -153,32 +157,27 @@ export type FindManyResult = Record<string, unknown>[];
 
 /**
  * findManyReference レスポンスデータ
- * OpenAPI仕様から生成された型を使用
  */
-export type FindManyReferenceResult = components['schemas']['FindManyReferenceResult'];
+export type { FindManyReferenceResult };
 
 /**
  * insertOne レスポンスデータ
- * OpenAPI仕様から生成された型を使用
  */
-export type InsertOneResult = components['schemas']['InsertOneResult'];
+export type { InsertOneResult };
 
 /**
  * updateOne レスポンスデータ
- * OpenAPI仕様から生成された型を使用
  */
-export type UpdateOneResult = components['schemas']['UpdateOneResult'];
+export type { UpdateOneResult };
 
 /**
  * 操作エラー
  * 部分失敗時の個別エラー情報
- * OpenAPI仕様から生成された型を使用
  */
-export type OperationError = components['schemas']['OperationError'];
+export type { OperationError };
 
 /**
  * バルク操作の統一レスポンス形式（Records Lambda内部形式）
- * OpenAPI仕様から生成された型を使用
  *
  * Records Lambdaは統一された内部形式でレスポンスを返却します。
  * この形式は情報を保持し、Collection.tsでMongoDB互換形式に変換されます。
@@ -187,7 +186,7 @@ export type OperationError = components['schemas']['OperationError'];
  * - updateMany は更新したフィールドのみを返却する
  * - read権限なしでupdate権限のみの場合の情報漏洩を防止
  */
-export type BulkOperationResult = components['schemas']['BulkOperationResult'];
+export type { BulkOperationResult };
 
 /**
  * updateMany レスポンスデータ（Records Lambda内部形式）
@@ -196,9 +195,8 @@ export type UpdateManyResult = BulkOperationResult;
 
 /**
  * deleteOne レスポンスデータ
- * OpenAPI仕様から生成された型を使用
  */
-export type DeleteOneResult = components['schemas']['DeleteOneResult'];
+export type { DeleteOneResult };
 
 /**
  * deleteMany レスポンスデータ（Records Lambda内部形式）

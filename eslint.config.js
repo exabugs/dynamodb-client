@@ -81,6 +81,7 @@ export default [
       'dist/**',
       'build/**',
       '.kiro/**',
+      'src/__generated__/**',
       '*.config.js',
       '*.config.ts',
       'examples/**',

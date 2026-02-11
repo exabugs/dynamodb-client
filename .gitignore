@@ -8,6 +8,10 @@ build/
 *.zip
 *.tsbuildinfo
 
+# orval generated (API client - not needed, only models/ is used)
+src/__generated__/operations/
+src/__generated__/system/
+
 # Lambda bundles (CJS)
 functions/**/dist/*.cjs
 

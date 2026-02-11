@@ -3,13 +3,11 @@ description: 検索オプション
 properties:
   sort:
     type: object
-    description: ソート条件
+    description: ソート条件（値は 1, -1, 'asc', 'desc' のいずれか）
     additionalProperties:
       oneOf:
         - type: number
-          enum: [1, -1]
         - type: string
-          enum: ['asc', 'desc']
   limit:
     type: number
     description: 取得件数の制限

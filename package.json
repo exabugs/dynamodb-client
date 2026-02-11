@@ -113,7 +113,7 @@
     "test:unit": "vitest run --exclude='**/*integration*.test.ts'",
     "analyze-functions": "node scripts/find-large-functions.js",
     "generate-mcp-tools": "tsx scripts/generate-mcp-tools.ts",
-    "generate-types": "openapi-typescript docs/specs/openapi.bundled.yaml -o src/__generated__/openapi.ts && prettier --write src/__generated__/openapi.ts",
+    "generate-types": "orval",
     "prepublishOnly": "npm run build && npm run test:unit"
   },
   "dependencies": {
@@ -143,7 +143,7 @@
     "esbuild": "^0.27.1",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
-    "openapi-typescript": "^7.10.1",
+    "orval": "^8.2.0",
     "prettier": "^3.0.0",
     "react-admin": "^5.0.0",
     "tsx": "^4.21.0",

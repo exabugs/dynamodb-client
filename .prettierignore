@@ -2,6 +2,7 @@ node_modules
 dist
 build
 .kiro
+**/__generated__/
 *.min.js
 *.min.css
 pnpm-lock.yaml
