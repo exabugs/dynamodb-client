@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.54] - 2026-03-01
+
+### Fixed
+
+- `Collection.insertOne` のパラメータ形式を `{ document }` から `{ data }` に修正（サーバー側 `parameterConverter` との不一致を解消）
+- `Collection.insertMany` のパラメータ形式を `{ documents }` から `{ data }` に修正
+
 ## [1.3.51] - 2026-02-10
 
 ### Changed

@@ -169,7 +169,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
   }
 
   async insertOne(document: InputBase & Omit<TSchema, 'id'>): Promise<InsertOneResult> {
-    const response = await this.request('insertOne', { document });
+    const response = await this.request('insertOne', { data: document });
     const result = response as { insertedId: string; consumedCapacity?: AggregatedCost };
     return {
       acknowledged: true,
@@ -179,7 +179,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
   }
 
   async insertMany(documents: (InputBase & Omit<TSchema, 'id'>)[]): Promise<InsertManyResult> {
-    const response = await this.request('insertMany', { documents });
+    const response = await this.request('insertMany', { data: documents });
     // Records Lambdaは統一形式 { count, successIds, failedIds, errors, consumedCapacity } を返す
     // MongoDB互換形式に変換
     const result = response as {
