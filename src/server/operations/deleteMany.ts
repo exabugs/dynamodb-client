@@ -148,7 +148,8 @@ export async function handleDeleteMany(
   for (const item of existingItems) {
     const existingData = item.data as Record<string, unknown>;
     const id = existingData.id as string;
-    const shadowKeys = (existingData.__shadowKeys as string[]) || [];
+    // 新構造（トップレベル）→ 旧構造（data内）の順でフォールバック
+    const shadowKeys = ((item.__shadowKeys ?? existingData.__shadowKeys) as string[]) ?? [];
 
     existingIds.add(id);
 

@@ -180,9 +180,9 @@ export async function handleInsertMany(
           Item: {
             PK: resource,
             SK: record.mainSK,
+            __shadowKeys: record.shadowKeys,
             data: {
               ...record.fullRecordData,
-              __shadowKeys: record.shadowKeys,
             },
           },
         },

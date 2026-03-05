@@ -323,7 +323,8 @@ export async function handleUpdateMany(
     try {
       const existingData = item.data as Record<string, unknown>;
       const id = existingData.id as string;
-      const oldShadowKeys = (existingData.__shadowKeys as string[]) || [];
+      // 新構造（トップレベル）→ 旧構造（data内）の順でフォールバック
+      const oldShadowKeys = ((item.__shadowKeys ?? existingData.__shadowKeys) as string[]) ?? [];
 
       // UpdateOperators形式の場合、$set のみを抽出（$setOnInsert は無視）
       const actualPatchData = patchData.$set
@@ -475,9 +476,9 @@ export async function handleUpdateMany(
           Item: {
             PK: resource,
             SK: record.mainSK,
+            __shadowKeys: record.newShadowKeys,
             data: {
               ...record.updatedData,
-              __shadowKeys: record.newShadowKeys,
             },
           },
         },
