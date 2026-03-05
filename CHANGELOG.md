@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.55] - 2026-03-05
+
+### Changed
+
+- DynamoDB物理スキーマの改善: `__shadowKeys` を `data` 内部からトップレベル属性へ移動
+- 旧構造レコードとの後方互換性を維持（フォールバック読み込み対応）
+
 ## [1.3.54] - 2026-03-01
 
 ### Fixed
