@@ -6,7 +6,7 @@
  */
 import { BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 
-import { ErrorCode, createLogger } from '../../shared/index.js';
+import { ErrorCode, createLogger, ulid } from '../../shared/index.js';
 import { generateShadowRecords, getShadowConfig } from '../shadow/index.js';
 import { calculateShadowDiff, generateMainRecordSK } from '../shadow/index.js';
 import type { OperationError, UpdateManyParams, UpdateManyResult } from '../types.js';
@@ -203,8 +203,7 @@ export async function handleUpdateMany(
       if (upsert) {
         // upsert: true の場合、新規レコードを作成
         // 新しいIDを生成
-        const { randomUUID } = await import('crypto');
-        const newId = randomUUID();
+        const newId = ulid();
         ids = [newId];
 
         logger.info('Creating new record with filter (upsert: true)', {
