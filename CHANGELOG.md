@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-03-14
+
+### Fixed
+
+- `$starts` フィルターを DynamoDB `KeyConditionExpression` の `begins_with` に最適化（ソートフィールドと一致する場合）
+  - 変更前: `begins_with(SK, '{field}#')` → 全件取得後メモリフィルタ
+  - 変更後: `begins_with(SK, '{field}#{prefix}')` → プレフィックス一致で DynamoDB レベルで絞り込み
+
 ## [1.3.55] - 2026-03-05
 
 ### Changed

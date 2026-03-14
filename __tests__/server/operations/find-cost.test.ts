@@ -113,10 +113,8 @@ describe('find operation cost tracking', () => {
           pagination: { perPage: 10, nextToken: undefined },
           parsedFilters: [
             {
-              field: 'id',
-              operator: '$eq',
+              parsed: { field: 'id', operator: '$eq', type: 'string' },
               value: 'venue-1',
-              parsed: { field: 'id', operator: '$eq' },
             },
           ],
         },
@@ -156,10 +154,8 @@ describe('find operation cost tracking', () => {
           pagination: { perPage: 10, nextToken: undefined },
           parsedFilters: [
             {
-              field: 'id',
-              operator: '$eq',
+              parsed: { field: 'id', operator: '$eq', type: 'string' },
               value: 'venue-1',
-              parsed: { field: 'id', operator: '$eq' },
             },
           ],
         },
@@ -378,6 +374,54 @@ describe('find operation cost tracking', () => {
         operationCount: 3, // Query 1回 + BatchGet配列 2要素
       });
     });
+
+    it('$startsフィルターがDynamoDB begins_with クエリに最適化される', async () => {
+      // シャドウレコードのQueryレスポンス（typeDate プレフィックスで絞り込んだ結果）
+      mockSend.mockResolvedValueOnce({
+        Items: [
+          { PK: 'venueStats', SK: 'typeDate#day:2026-03-14:0000000001#id#stat-1' },
+        ],
+        ConsumedCapacity: { ReadCapacityUnits: 1.0, WriteCapacityUnits: 0 },
+      });
+
+      // 本体レコードのBatchGetレスポンス
+      mockSend.mockResolvedValueOnce({
+        Responses: {
+          'test-table': [
+            {
+              PK: 'venueStats',
+              SK: 'id#stat-1',
+              data: { id: 'stat-1', typeDate: 'day:2026-03-14:0000000001', total: 1 },
+            },
+          ],
+        },
+        ConsumedCapacity: [{ TableName: 'test-table', ReadCapacityUnits: 0.5, WriteCapacityUnits: 0 }],
+      });
+
+      const { executeShadowQuery } =
+        await import('../../../src/server/operations/find/shadowQuery.js');
+
+      await executeShadowQuery(
+        'venueStats',
+        {
+          sort: { field: 'typeDate', order: 'DESC' },
+          pagination: { perPage: 10, nextToken: undefined },
+          parsedFilters: [
+            {
+              parsed: { field: 'typeDate', operator: '$starts', type: 'string' },
+              value: 'day:2026-03-14:',
+            },
+          ],
+        },
+        'test-request-id'
+      );
+
+      // DynamoDB QueryCommand に正確なプレフィックスが渡されることを検証
+      const queryParams = mockSend.mock.calls[0][0];
+      expect(queryParams.KeyConditionExpression).toBe('PK = :pk AND begins_with(SK, :skValue)');
+      // 'typeDate#' ではなく 'typeDate#day:2026-03-14:' で絞り込む
+      expect(queryParams.ExpressionAttributeValues[':skValue']).toBe('typeDate#day:2026-03-14:');
+    });
   });
 
   describe('エッジケース', () => {
@@ -434,10 +478,8 @@ describe('find operation cost tracking', () => {
           pagination: { perPage: 10, nextToken: undefined },
           parsedFilters: [
             {
-              field: 'id',
-              operator: '$eq',
+              parsed: { field: 'id', operator: '$eq', type: 'string' },
               value: 'venue-1',
-              parsed: { field: 'id', operator: '$eq' },
             },
           ],
         },

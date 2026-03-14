@@ -286,6 +286,17 @@ function buildKeyCondition(
           ':skValue': `${skValue}#id#~`,
         },
       };
+    case '$starts':
+      // プレフィックスマッチ: begins_with(SK, '{sortField}#{prefix}')
+      // 例: typeDate: { $starts: 'day:2026-03-14:' }
+      //   → begins_with(SK, 'typeDate#day:2026-03-14:')
+      return {
+        keyConditionExpression: 'PK = :pk AND begins_with(SK, :skValue)',
+        expressionAttributeValues: {
+          ...expressionAttributeValues,
+          ':skValue': skValue,
+        },
+      };
     default:
       // 未対応の演算子の場合はプレフィックスマッチにフォールバック
       return {
