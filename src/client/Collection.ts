@@ -159,7 +159,7 @@ export class Collection<TSchema extends ResultBase = ResultBase, TAuthOptions = 
   }
 
   async findMany(ids: string[]): Promise<TSchema[]> {
-    const response = await this.request('findMany', { filter: { id: { in: ids } } });
+    const response = await this.request('findMany', { filter: { id: { $in: ids } } });
     // Records Lambdaは配列を直接返す
     if (Array.isArray(response)) {
       return response as TSchema[];
