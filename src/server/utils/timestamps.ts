@@ -49,9 +49,9 @@ export function addCreateTimestamps(data: Record<string, unknown>): Record<strin
   const now = new Date().toISOString();
 
   return {
-    ...data,
     [timestampFields.createdAt]: now,
     [timestampFields.updatedAt]: now,
+    ...data,
   };
 }
 
@@ -72,7 +72,7 @@ export function addUpdateTimestamp(data: Record<string, unknown>): Record<string
   const now = new Date().toISOString();
 
   return {
-    ...data,
     [timestampFields.updatedAt]: now,
+    ...data,
   };
 }
