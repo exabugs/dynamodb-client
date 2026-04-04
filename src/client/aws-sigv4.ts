@@ -58,8 +58,5 @@ export async function signRequest(
     }
   }
 
-  // デバッグ: 署名済みヘッダーをログ出力
-  console.log('AWS SigV4 signed headers:', Object.keys(headers));
-
   return headers;
 }
