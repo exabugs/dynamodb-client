@@ -43,7 +43,7 @@ export async function executeShadowQuery(
   // Filter-first 戦略: $eq フィルタがある場合はそのシャドウインデックスで先に絞り込む
   // cardinality が指定されている場合は最も選択性の高いフィルタを優先
   // 指定がない場合は最初の $eq フィルタ（ソートフィールド以外）を使用
-  const filterFirstCandidate = selectFilterFirstCandidate(parsedFilters, sort.field, normalizedParams.schema);
+  const filterFirstCandidate = selectFilterFirstCandidate(parsedFilters, sort.field, normalizedParams.schema, perPage);
 
   const isFilterFirst = filterFirstCandidate !== undefined;
 
@@ -162,18 +162,23 @@ export async function executeShadowQuery(
 /**
  * filter-first で使うフィルタ候補を選択する
  *
- * cardinality が指定されている場合: 最も選択性の高い（cardinality が大きい）$eq フィルタを優先
- * cardinality がない場合: ソートフィールドと異なる最初の $eq フィルタ
- * cardinality が指定されているが 0 のフィールドは filter-first 対象外（選択性なし）
+ * 閾値: cardinality >= perPage のフィールドのみ filter-first 対象
+ *   「シャドウクエリ 1回で返る件数より選択性が高い場合だけ filter-first」
+ *   例: perPage=50, prefecture=47 → 47 < 50 → 対象外
+ *       perPage=25, prefecture=47 → 47 >= 25 → filter-first 有利
+ *
+ * cardinality 未指定の場合: 閾値チェックなしで最初の $eq フィルタを使用
  *
  * @param parsedFilters - 解析済みフィルタ
  * @param sortField - ソートフィールド（これと一致するフィルタは最適化済みのため除外）
  * @param schema - リソーススキーマ（カーディナリティヒント）
+ * @param perPage - ページサイズ（閾値として使用）
  */
 function selectFilterFirstCandidate(
   parsedFilters: ParsedFilter[],
   sortField: string,
-  schema: NormalizedFindParams['schema']
+  schema: NormalizedFindParams['schema'],
+  perPage: number
 ): ParsedFilter | undefined {
   const eqFilters = parsedFilters.filter(
     (f) => f.parsed.operator === '$eq' && f.parsed.field !== sortField
@@ -183,15 +188,16 @@ function selectFilterFirstCandidate(
 
   const cardinality = schema?.cardinality;
   if (!cardinality) {
-    // ヒントなし: 最初の候補をそのまま使用
+    // ヒントなし: 閾値チェックなしで最初の候補を使用
     return eqFilters[0];
   }
 
-  // cardinality でスコアリング: 未定義は 0 扱い（filter-first しない）
+  // cardinality >= perPage のフィールドのみ filter-first 対象
+  // 最も cardinality の高いフィールドを優先
   const scored = eqFilters
     .map((f) => ({ f, score: cardinality[f.parsed.field] ?? 0 }))
-    .filter(({ score }) => score > 0) // cardinality=0 または未定義は除外
-    .sort((a, b) => b.score - a.score); // 高いほど選択性が高い → 優先
+    .filter(({ score }) => score >= perPage)
+    .sort((a, b) => b.score - a.score);
 
   return scored[0]?.f;
 }
