@@ -18,6 +18,14 @@ interface NextTokenPayload {
 }
 
 /**
+ * filter-first 用オフセットベース nextToken のペイロード構造
+ */
+interface OffsetTokenPayload {
+  /** filter-first オフセット識別子 */
+  offset: number;
+}
+
+/**
  * DynamoDB LastEvaluatedKey を Base64URL エンコードされた nextToken に変換する
  *
  * @param pk - パーティションキー
@@ -35,6 +43,34 @@ export function encodeNextToken(pk: string, sk: string): string {
   const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
   return base64url;
+}
+
+/**
+ * filter-first 用オフセットベース nextToken をエンコードする
+ */
+export function encodeOffsetToken(offset: number): string {
+  const payload: OffsetTokenPayload = { offset };
+  const json = JSON.stringify(payload);
+  const base64 = Buffer.from(json, 'utf-8').toString('base64');
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * filter-first 用 nextToken をデコードし、オフセット値を返す
+ * 通常の cursor トークン（PK/SK形式）の場合は null を返す
+ */
+export function decodeOffsetToken(token: string): number | null {
+  try {
+    let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) base64 += '=';
+    const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+    if (typeof payload.offset === 'number' && !payload.PK) {
+      return payload.offset;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**

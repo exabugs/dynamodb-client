@@ -14,7 +14,12 @@ import {
   getDBClient,
   getTableName,
 } from '../../utils/dynamodb.js';
-import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
+import {
+  decodeNextToken,
+  decodeOffsetToken,
+  encodeNextToken,
+  encodeOffsetToken,
+} from '../../utils/pagination.js';
 import type { FindResult, NormalizedFindParams, OptimizableFilter, ParsedFilter } from './types.js';
 import { findOptimizableFilter, matchesAllFilters } from './utils.js';
 
@@ -47,31 +52,32 @@ export async function executeShadowQuery(
 
   const isFilterFirst = filterFirstCandidate !== undefined;
 
-  // クエリに使うフィールド・フィルタを決定
-  const querySort = isFilterFirst
-    ? { field: filterFirstCandidate.parsed.field, order: 'ASC' as const }
-    : sort;
-  const optimizableFilter = isFilterFirst
-    ? filterFirstCandidate
-    : findOptimizableFilter(sort.field, parsedFilters);
-  // filter-first で使ったフィルタはキー条件で処理済みのため除外
-  const remainingFilters = isFilterFirst
-    ? parsedFilters.filter((f) => f !== filterFirstCandidate)
-    : parsedFilters;
+  // filter-first 戦略: フィルタシャドウで全件取得 → メモリソート → オフセットスライス
+  if (isFilterFirst) {
+    return executeFilterFirstQuery(
+      resource,
+      normalizedParams,
+      filterFirstCandidate,
+      costTracker,
+      requestId
+    );
+  }
+
+  // 通常戦略: ソートシャドウでページネーション取得
+  const optimizableFilter = findOptimizableFilter(sort.field, parsedFilters);
 
   logger.debug('Executing shadow query', {
     requestId,
     resource,
     sortField: sort.field,
-    isFilterFirst,
-    queryField: querySort.field,
+    isFilterFirst: false,
     hasFilters: parsedFilters.length > 0,
   });
 
   // シャドウクエリを実行
   const shadowRecords = await executeShadowRecordQuery(
     resource,
-    querySort,
+    sort,
     perPage,
     nextToken,
     optimizableFilter,
@@ -116,13 +122,8 @@ export async function executeShadowQuery(
     .filter((record): record is Record<string, unknown> => record !== undefined);
 
   // 残りのフィルター条件を適用（メモリ内フィルタリング）
-  if (remainingFilters.length > 0) {
-    items = items.filter((record) => matchesAllFilters(record, remainingFilters));
-  }
-
-  // filter-first の場合: 指定されたソートフィールドでメモリソート
-  if (isFilterFirst) {
-    items = sortInMemory(items, sort);
+  if (parsedFilters.length > 0) {
+    items = items.filter((record) => matchesAllFilters(record, parsedFilters));
   }
 
   // ページネーション情報を生成
@@ -142,7 +143,7 @@ export async function executeShadowQuery(
     requestId,
     resource,
     sortField: sort.field,
-    isFilterFirst,
+    isFilterFirst: false,
     shadowCount: shadowRecords.Items?.length || 0,
     mainCount: items.length,
     hasNextPage,
@@ -154,6 +155,111 @@ export async function executeShadowQuery(
       hasNextPage,
       hasPreviousPage: !!nextToken,
     },
+    ...(nextTokenValue && { nextToken: nextTokenValue }),
+    consumedCapacity: costTracker.getAggregated(),
+  };
+}
+
+/**
+ * filter-first クエリを実行する
+ *
+ * フィルタシャドウインデックスで全件取得 → メモリソート → オフセットスライス
+ * ページネーションはオフセットベース（nextToken に offset を埋め込む）
+ */
+async function executeFilterFirstQuery(
+  resource: string,
+  normalizedParams: NormalizedFindParams,
+  filterCandidate: ParsedFilter,
+  costTracker: CostTracker,
+  requestId: string
+): Promise<FindResult> {
+  const { sort, pagination, parsedFilters } = normalizedParams;
+  const { perPage, nextToken } = pagination;
+
+  // nextToken からオフセットを復元（filter-first 用オフセットトークン）
+  const offset = nextToken ? (decodeOffsetToken(nextToken) ?? 0) : 0;
+
+  const filterSort = { field: filterCandidate.parsed.field, order: 'ASC' as const };
+  const remainingFilters = parsedFilters.filter((f) => f !== filterCandidate);
+
+  logger.debug('Executing filter-first query', {
+    requestId,
+    resource,
+    filterField: filterCandidate.parsed.field,
+    sortField: sort.field,
+    offset,
+  });
+
+  // フィルタシャドウインデックスから全件取得（Limit なし・全ページループ）
+  const allShadowItems: Record<string, unknown>[] = [];
+  let lastKey: Record<string, string> | undefined;
+  do {
+    const result = await executeShadowRecordQuery(
+      resource,
+      filterSort,
+      1000, // 大きめの Limit でループ回数を最小化
+      lastKey
+        ? encodeNextToken(lastKey.PK as string, lastKey.SK as string)
+        : undefined,
+      filterCandidate as OptimizableFilter,
+      costTracker,
+      requestId
+    );
+    allShadowItems.push(...(result.Items || []));
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+
+  // ID 抽出（重複除去）
+  const allIds = Array.from(new Set(extractRecordIds(allShadowItems)));
+
+  if (allIds.length === 0) {
+    return {
+      items: [],
+      pageInfo: { hasNextPage: false, hasPreviousPage: offset > 0 },
+      consumedCapacity: costTracker.getAggregated(),
+    };
+  }
+
+  // 本体レコードを一括取得
+  const mainRecords = await fetchMainRecords(resource, allIds, costTracker, requestId);
+  const recordMap = new Map(
+    mainRecords.map((item) => {
+      const data = item.data as Record<string, unknown>;
+      return [data.id as string, extractCleanRecord(item)];
+    })
+  );
+
+  // ID 順に並べ、残りフィルタ適用
+  let items = allIds
+    .map((id) => recordMap.get(id))
+    .filter((r): r is Record<string, unknown> => r !== undefined);
+
+  if (remainingFilters.length > 0) {
+    items = items.filter((r) => matchesAllFilters(r, remainingFilters));
+  }
+
+  // ソートフィールドでメモリソート（全件）
+  items = sortInMemory(items, sort);
+
+  // オフセットでスライス
+  const page = items.slice(offset, offset + perPage);
+  const hasNextPage = offset + perPage < items.length;
+  const nextTokenValue = hasNextPage ? encodeOffsetToken(offset + perPage) : undefined;
+
+  logger.info('Filter-first query succeeded', {
+    requestId,
+    resource,
+    filterField: filterCandidate.parsed.field,
+    sortField: sort.field,
+    totalMatched: items.length,
+    offset,
+    returned: page.length,
+    hasNextPage,
+  });
+
+  return {
+    items: page,
+    pageInfo: { hasNextPage, hasPreviousPage: offset > 0 },
     ...(nextTokenValue && { nextToken: nextTokenValue }),
     consumedCapacity: costTracker.getAggregated(),
   };
