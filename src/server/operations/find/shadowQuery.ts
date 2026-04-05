@@ -162,10 +162,9 @@ export async function executeShadowQuery(
 /**
  * filter-first で使うフィルタ候補を選択する
  *
- * 閾値: cardinality >= perPage のフィールドのみ filter-first 対象
- *   「シャドウクエリ 1回で返る件数より選択性が高い場合だけ filter-first」
- *   例: perPage=50, prefecture=47 → 47 < 50 → 対象外
- *       perPage=25, prefecture=47 → 47 >= 25 → filter-first 有利
+ * 閾値: cardinality > perPage/2 のフィールドのみ filter-first 対象
+ *   例: perPage=50, prefecture=47 → 47 > 25 → filter-first 有利
+ *       perPage=50, status=3      →  3 > 25 → 対象外（sort-first の方が効率的）
  *
  * cardinality 未指定の場合: 閾値チェックなしで最初の $eq フィルタを使用
  *
@@ -192,11 +191,13 @@ function selectFilterFirstCandidate(
     return eqFilters[0];
   }
 
-  // cardinality >= perPage のフィールドのみ filter-first 対象
-  // 最も cardinality の高いフィールドを優先
+  // cardinality > 0 のフィールドを対象に、最も高いものを優先
+  // 閾値は perPage の半分: sort-first より filter-first が有利になる目安
+  // （全レコード数 / cardinality < perPage/2 → filter-first が効率的）
+  const threshold = perPage / 2;
   const scored = eqFilters
     .map((f) => ({ f, score: cardinality[f.parsed.field] ?? 0 }))
-    .filter(({ score }) => score >= perPage)
+    .filter(({ score }) => score > threshold)
     .sort((a, b) => b.score - a.score);
 
   return scored[0]?.f;
