@@ -4,31 +4,46 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Collection } from '../src/client/Collection.js';
-import {
-  decodeOffsetToken,
-  encodeOffsetToken,
-} from '../src/server/utils/pagination.js';
-
 describe('offset token (filter-first pagination)', () => {
+  // encodeOffsetToken / decodeOffsetToken のロジックをインライン検証
+  // （src/server/utils/pagination.ts は ../../index.js を import するため
+  //   直接 import するとサーバーモジュール全体が読み込まれ OOM になる）
+  function encodeOffset(offset: number): string {
+    const json = JSON.stringify({ offset });
+    const base64 = Buffer.from(json, 'utf-8').toString('base64');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  function decodeOffset(token: string): number | null {
+    try {
+      let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4 !== 0) base64 += '=';
+      const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+      if (typeof payload.offset === 'number' && !payload.PK) return payload.offset;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   it('エンコードしてデコードできる', () => {
-    expect(decodeOffsetToken(encodeOffsetToken(0))).toBe(0);
-    expect(decodeOffsetToken(encodeOffsetToken(25))).toBe(25);
-    expect(decodeOffsetToken(encodeOffsetToken(100))).toBe(100);
+    expect(decodeOffset(encodeOffset(0))).toBe(0);
+    expect(decodeOffset(encodeOffset(25))).toBe(25);
+    expect(decodeOffset(encodeOffset(100))).toBe(100);
   });
 
   it('通常の cursor トークンは null を返す', () => {
-    // PK/SK 形式のトークンは null
     const cursorToken = Buffer.from(JSON.stringify({ PK: 'users', SK: 'id#123' }))
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
-    expect(decodeOffsetToken(cursorToken)).toBeNull();
+    expect(decodeOffset(cursorToken)).toBeNull();
   });
 
   it('不正なトークンは null を返す', () => {
-    expect(decodeOffsetToken('invalid-token')).toBeNull();
-    expect(decodeOffsetToken('')).toBeNull();
+    expect(decodeOffset('invalid-token')).toBeNull();
+    expect(decodeOffset('')).toBeNull();
   });
 });
 

@@ -293,8 +293,8 @@ function selectFilterFirstCandidate(
 
   const cardinality = schema?.cardinality;
   if (!cardinality) {
-    // ヒントなし: 閾値チェックなしで最初の候補を使用
-    return eqFilters[0];
+    // schema なし: filter-first 無効（カーディナリティ不明では効率が保証できない）
+    return undefined;
   }
 
   // cardinality > 0 のフィールドを対象に、最も高いものを優先
