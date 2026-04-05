@@ -14,6 +14,7 @@ export default defineConfig({
         'dist/**',
         '**/*.config.ts',
         '**/types.ts',
+        '**/schema.ts', // type-only files
         '**/__tests__/**',
         '**/index.ts', // re-export only files
         'src/scripts/**', // CLIスクリプト（実行時のみ使用）
