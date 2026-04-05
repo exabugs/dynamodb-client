@@ -566,42 +566,48 @@ async function fetchMainRecords(
   // 重複を除去
   const uniqueRecordIds = Array.from(new Set(recordIds));
 
-  // 本体レコードをBatchGetItemで取得
-  const batchGetResult = await executeDynamoDBOperation(
-    () =>
-      dbClient.send(
-        new BatchGetCommand({
-          RequestItems: {
-            [tableName]: {
-              Keys: uniqueRecordIds.map((id) => ({
-                PK: resource,
-                SK: `id#${id}`,
-              })),
-              ConsistentRead: true,
+  // DynamoDB BatchGetItem は最大100件/リクエスト
+  const BATCH_SIZE = 100;
+  const allRecords: Record<string, unknown>[] = [];
+
+  for (let i = 0; i < uniqueRecordIds.length; i += BATCH_SIZE) {
+    const chunk = uniqueRecordIds.slice(i, i + BATCH_SIZE);
+
+    const batchGetResult = await executeDynamoDBOperation(
+      () =>
+        dbClient.send(
+          new BatchGetCommand({
+            RequestItems: {
+              [tableName]: {
+                Keys: chunk.map((id) => ({
+                  PK: resource,
+                  SK: `id#${id}`,
+                })),
+                ConsistentRead: true,
+              },
             },
-          },
-          ReturnConsumedCapacity: 'TOTAL',
-        })
-      ),
-    'BatchGetItem'
-  );
+            ReturnConsumedCapacity: 'TOTAL',
+          })
+        ),
+      'BatchGetItem'
+    );
 
-  // コスト情報を収集
-  if (batchGetResult.ConsumedCapacity) {
-    // BatchGetCommandは配列でConsumedCapacityを返す
-    for (const capacity of batchGetResult.ConsumedCapacity) {
-      costTracker.add(capacity);
+    // コスト情報を収集
+    if (batchGetResult.ConsumedCapacity) {
+      for (const capacity of batchGetResult.ConsumedCapacity) {
+        costTracker.add(capacity);
+      }
     }
-  }
 
-  const mainRecords = batchGetResult.Responses?.[tableName] || [];
+    allRecords.push(...(batchGetResult.Responses?.[tableName] || []));
+  }
 
   logger.debug('Main records fetched', {
     requestId,
     resource,
     requestedCount: uniqueRecordIds.length,
-    fetchedCount: mainRecords.length,
+    fetchedCount: allRecords.length,
   });
 
-  return mainRecords;
+  return allRecords;
 }
