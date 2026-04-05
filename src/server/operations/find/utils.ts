@@ -4,6 +4,7 @@
 import { ConfigError } from '../../../shared/errors/index.js';
 import type { NearQuery } from '../../../shared/geohash/types.js';
 import { createLogger } from '../../../shared/index.js';
+import type { ResourceSchema } from '../../../shared/types/schema.js';
 import type { ShadowConfig } from '../../shadow/config.js';
 import { getShadowConfig } from '../../shadow/index.js';
 import type { FindParams } from '../../types.js';
@@ -39,7 +40,7 @@ export function initializeFindConfig() {
 export function normalizeFindParams(
   config: ShadowConfig,
   resource: string,
-  params: FindParams
+  params: FindParams & { schema?: ResourceSchema }
 ): NormalizedFindParams {
   // ソート条件を正規化
   const sort = originalNormalizeSort(config, resource, params.sort);
@@ -54,6 +55,7 @@ export function normalizeFindParams(
     sort,
     pagination,
     parsedFilters,
+    schema: params.schema,
   };
 }
 

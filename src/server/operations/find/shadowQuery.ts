@@ -15,7 +15,7 @@ import {
   getTableName,
 } from '../../utils/dynamodb.js';
 import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
-import type { FindResult, NormalizedFindParams, OptimizableFilter } from './types.js';
+import type { FindResult, NormalizedFindParams, OptimizableFilter, ParsedFilter } from './types.js';
 import { findOptimizableFilter, matchesAllFilters } from './utils.js';
 
 const logger = createLogger({
@@ -41,10 +41,9 @@ export async function executeShadowQuery(
   const costTracker = new CostTracker();
 
   // Filter-first 戦略: $eq フィルタがある場合はそのシャドウインデックスで先に絞り込む
-  // ソートフィールドとフィルタフィールドが一致しない場合に有効
-  const filterFirstCandidate = parsedFilters.find(
-    (f) => f.parsed.operator === '$eq' && f.parsed.field !== sort.field
-  );
+  // cardinality が指定されている場合は最も選択性の高いフィルタを優先
+  // 指定がない場合は最初の $eq フィルタ（ソートフィールド以外）を使用
+  const filterFirstCandidate = selectFilterFirstCandidate(parsedFilters, sort.field, normalizedParams.schema);
 
   const isFilterFirst = filterFirstCandidate !== undefined;
 
@@ -158,6 +157,43 @@ export async function executeShadowQuery(
     ...(nextTokenValue && { nextToken: nextTokenValue }),
     consumedCapacity: costTracker.getAggregated(),
   };
+}
+
+/**
+ * filter-first で使うフィルタ候補を選択する
+ *
+ * cardinality が指定されている場合: 最も選択性の高い（cardinality が大きい）$eq フィルタを優先
+ * cardinality がない場合: ソートフィールドと異なる最初の $eq フィルタ
+ * cardinality が指定されているが 0 のフィールドは filter-first 対象外（選択性なし）
+ *
+ * @param parsedFilters - 解析済みフィルタ
+ * @param sortField - ソートフィールド（これと一致するフィルタは最適化済みのため除外）
+ * @param schema - リソーススキーマ（カーディナリティヒント）
+ */
+function selectFilterFirstCandidate(
+  parsedFilters: ParsedFilter[],
+  sortField: string,
+  schema: NormalizedFindParams['schema']
+): ParsedFilter | undefined {
+  const eqFilters = parsedFilters.filter(
+    (f) => f.parsed.operator === '$eq' && f.parsed.field !== sortField
+  );
+
+  if (eqFilters.length === 0) return undefined;
+
+  const cardinality = schema?.cardinality;
+  if (!cardinality) {
+    // ヒントなし: 最初の候補をそのまま使用
+    return eqFilters[0];
+  }
+
+  // cardinality でスコアリング: 未定義は 0 扱い（filter-first しない）
+  const scored = eqFilters
+    .map((f) => ({ f, score: cardinality[f.parsed.field] ?? 0 }))
+    .filter(({ score }) => score > 0) // cardinality=0 または未定義は除外
+    .sort((a, b) => b.score - a.score); // 高いほど選択性が高い → 優先
+
+  return scored[0]?.f;
 }
 
 /**

@@ -1,6 +1,7 @@
 /**
  * react-admin統合の型定義
  */
+import type { ResourceSchema, SchemaConfig } from '../../shared/types/schema.js';
 
 /**
  * トークンプロバイダーインターフェース
@@ -29,6 +30,8 @@ export interface TokenProvider {
   getToken(): Promise<string>;
 }
 
+export type { ResourceSchema, SchemaConfig };
+
 /**
  * DataProviderオプション
  */
@@ -47,6 +50,23 @@ export interface DataProviderOptions {
 
   /** デフォルトのソート順（オプション、デフォルト: 'ASC'） */
   defaultSortOrder?: 'ASC' | 'DESC';
+
+  /**
+   * リソーススキーマ（クエリプランナーへのヒント）
+   *
+   * フィールドのカーディナリティを指定することで、フィルタ検索時の
+   * シャドウインデックス選択を最適化できます。
+   *
+   * @example
+   * ```typescript
+   * schema: {
+   *   venues: {
+   *     cardinality: { prefecture: 47, status: 3 }
+   *   }
+   * }
+   * ```
+   */
+  schema?: SchemaConfig;
 }
 
 /**

@@ -1,6 +1,7 @@
 /**
  * Find操作の型定義
  */
+import type { ResourceSchema } from '../../../shared/types/schema.js';
 import type { FindParams, FindResult } from '../../types.js';
 import type { ParsedFilterField } from '../../utils/filter.js';
 
@@ -33,6 +34,8 @@ export interface NormalizedFindParams {
     nextToken?: string;
   };
   parsedFilters: ParsedFilter[];
+  /** クエリプランナーへのヒント */
+  schema?: ResourceSchema;
 }
 
 /**

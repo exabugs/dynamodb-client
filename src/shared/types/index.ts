@@ -7,7 +7,7 @@ import type {
   DeleteResult as GeneratedDeleteResult,
   Filter as GeneratedFilter,
   FilterOperators,
-  FindOptions,
+  FindOptions as GeneratedFindOptions,
   InsertManyResult as GeneratedInsertManyResult,
   InsertOneResult as GeneratedInsertOneResult,
   UpdateManyOptions,
@@ -15,6 +15,7 @@ import type {
   UpdateOperators as GeneratedUpdateOperators,
   UpdateResult as GeneratedUpdateResult,
 } from '../../__generated__/models/index.js';
+import type { ResourceSchema } from './schema.js';
 
 // Client SDK types を re-export
 export type Filter<T> = GeneratedFilter & {
@@ -29,7 +30,13 @@ export type UpdateOperators<T> = GeneratedUpdateOperators & {
   $inc?: Partial<Record<keyof T, number>>;
 };
 
-export type { FindOptions, UpdateOneOptions, UpdateManyOptions };
+/** FindOptions にスキーマヒントを追加拡張 */
+export type FindOptions = GeneratedFindOptions & {
+  /** クエリプランナーへのヒント（フィールドのカーディナリティ） */
+  schema?: ResourceSchema;
+};
+export type { UpdateOneOptions, UpdateManyOptions };
+export type { ResourceSchema, SchemaConfig } from './schema.js';
 export type InsertOneResult = GeneratedInsertOneResult;
 export type InsertManyResult = GeneratedInsertManyResult;
 export type UpdateResult = GeneratedUpdateResult;

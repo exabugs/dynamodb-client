@@ -211,6 +211,7 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
     defaultPerPage = 25,
     defaultSortField = 'id',
     defaultSortOrder = 'ASC',
+    schema,
   } = options;
 
   /**
@@ -269,7 +270,8 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         const cursor = collection.find(convertFilter(filter), {
           sort: convertSort(field, order),
           limit: perPage,
-          nextToken, // nextTokenを渡す
+          nextToken,
+          schema: schema?.[resource], // リソーススキーマをクエリプランナーに渡す
         });
 
         const items = await cursor.toArray();

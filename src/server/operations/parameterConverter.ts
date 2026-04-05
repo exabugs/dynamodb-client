@@ -3,6 +3,7 @@
  *
  * MongoDB風のパラメータを内部形式に変換する共通ロジック
  */
+import type { ResourceSchema } from '../../shared/types/schema.js';
 import type {
   DeleteManyParams,
   DeleteOneParams,
@@ -24,6 +25,7 @@ interface MongoFindParams {
     sort?: Record<string, 'asc' | 'desc' | 1 | -1>;
     limit?: number;
     nextToken?: string;
+    schema?: ResourceSchema;
   };
 }
 
@@ -71,11 +73,11 @@ interface MongoDocumentsParams {
  * @param mongoParams - MongoDB風のfindパラメータ
  * @returns 内部形式のfindパラメータ
  */
-export function convertFindParams(mongoParams: MongoFindParams): FindParams {
+export function convertFindParams(mongoParams: MongoFindParams): FindParams & { schema?: ResourceSchema } {
   const { filter = {}, options = {} } = mongoParams;
-  const { sort, limit, nextToken } = options;
+  const { sort, limit, nextToken, schema } = options;
 
-  const internalParams: FindParams = {
+  const internalParams: FindParams & { schema?: ResourceSchema } = {
     filter,
     ...(sort &&
       Object.keys(sort).length > 0 && {
@@ -90,6 +92,7 @@ export function convertFindParams(mongoParams: MongoFindParams): FindParams {
         ...(nextToken && { nextToken }),
       },
     }),
+    ...(schema && { schema }),
   };
 
   return internalParams;
