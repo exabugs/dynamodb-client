@@ -40,20 +40,39 @@ export async function executeShadowQuery(
   const { perPage, nextToken } = pagination;
   const costTracker = new CostTracker();
 
+  // Filter-first 戦略: $eq フィルタがある場合はそのシャドウインデックスで先に絞り込む
+  // ソートフィールドとフィルタフィールドが一致しない場合に有効
+  const filterFirstCandidate = parsedFilters.find(
+    (f) => f.parsed.operator === '$eq' && f.parsed.field !== sort.field
+  );
+
+  const isFilterFirst = filterFirstCandidate !== undefined;
+
+  // クエリに使うフィールド・フィルタを決定
+  const querySort = isFilterFirst
+    ? { field: filterFirstCandidate.parsed.field, order: 'ASC' as const }
+    : sort;
+  const optimizableFilter = isFilterFirst
+    ? filterFirstCandidate
+    : findOptimizableFilter(sort.field, parsedFilters);
+  // filter-first で使ったフィルタはキー条件で処理済みのため除外
+  const remainingFilters = isFilterFirst
+    ? parsedFilters.filter((f) => f !== filterFirstCandidate)
+    : parsedFilters;
+
   logger.debug('Executing shadow query', {
     requestId,
     resource,
     sortField: sort.field,
+    isFilterFirst,
+    queryField: querySort.field,
     hasFilters: parsedFilters.length > 0,
   });
-
-  // Query最適化: ソートフィールドと一致するフィルター条件を検出
-  const optimizableFilter = findOptimizableFilter(sort.field, parsedFilters);
 
   // シャドウクエリを実行
   const shadowRecords = await executeShadowRecordQuery(
     resource,
-    sort,
+    querySort,
     perPage,
     nextToken,
     optimizableFilter,
@@ -78,7 +97,7 @@ export async function executeShadowQuery(
   // 本体レコードを取得
   const mainRecords = await fetchMainRecords(resource, recordIds, costTracker, requestId);
 
-  // IDでマッピングを作成（順序を保持するため）
+  // IDでマッピングを作成
   const recordMap = new Map(
     mainRecords.map((item) => {
       const data = item.data as Record<string, unknown>;
@@ -90,18 +109,21 @@ export async function executeShadowQuery(
   const seenIds = new Set<string>();
   let items = recordIds
     .filter((id) => {
-      if (seenIds.has(id)) {
-        return false; // 既に処理済みのIDはスキップ
-      }
+      if (seenIds.has(id)) return false;
       seenIds.add(id);
       return true;
     })
     .map((id) => recordMap.get(id))
     .filter((record): record is Record<string, unknown> => record !== undefined);
 
-  // フィルター条件を適用（メモリ内フィルタリング）
-  if (parsedFilters.length > 0) {
-    items = items.filter((record) => matchesAllFilters(record, parsedFilters));
+  // 残りのフィルター条件を適用（メモリ内フィルタリング）
+  if (remainingFilters.length > 0) {
+    items = items.filter((record) => matchesAllFilters(record, remainingFilters));
+  }
+
+  // filter-first の場合: 指定されたソートフィールドでメモリソート
+  if (isFilterFirst) {
+    items = sortInMemory(items, sort);
   }
 
   // ページネーション情報を生成
@@ -121,6 +143,7 @@ export async function executeShadowQuery(
     requestId,
     resource,
     sortField: sort.field,
+    isFilterFirst,
     shadowCount: shadowRecords.Items?.length || 0,
     mainCount: items.length,
     hasNextPage,
@@ -135,6 +158,33 @@ export async function executeShadowQuery(
     ...(nextTokenValue && { nextToken: nextTokenValue }),
     consumedCapacity: costTracker.getAggregated(),
   };
+}
+
+/**
+ * レコードをメモリ内でソートする（filter-first 後のソート用）
+ *
+ * @param items - ソート対象レコード
+ * @param sort - ソート条件
+ * @returns ソート済みレコード
+ */
+function sortInMemory(
+  items: Record<string, unknown>[],
+  sort: { field: string; order: 'ASC' | 'DESC' }
+): Record<string, unknown>[] {
+  const { field, order } = sort;
+  const direction = order === 'ASC' ? 1 : -1;
+
+  return [...items].sort((a, b) => {
+    const aVal = a[field];
+    const bVal = b[field];
+
+    if (aVal === undefined || aVal === null) return direction;
+    if (bVal === undefined || bVal === null) return -direction;
+
+    if (aVal < bVal) return -direction;
+    if (aVal > bVal) return direction;
+    return 0;
+  });
 }
 
 /**
