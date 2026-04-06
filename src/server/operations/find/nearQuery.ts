@@ -1,7 +1,7 @@
 /**
  * $near演算子を使用した近隣検索の実装
  */
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchGetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 import { DEFAULT_GEOHASH_CONFIG, type NearQuery } from '../../../shared/geohash/index.js';
 import { createLogger } from '../../../shared/index.js';
@@ -111,37 +111,42 @@ export async function executeNearQuery(
       ids: mainRecordIds,
     });
 
-    // 本体レコードを取得
-    // PK: venues, SK: id#<venue-id>
-    const mainRecords = await Promise.all(
-      mainRecordIds.map(async (id) => {
-        const result = await executeDynamoDBOperation(
-          () =>
-            dbClient.send(
-              new QueryCommand({
-                TableName: tableName,
-                KeyConditionExpression: 'PK = :pk AND SK = :sk',
-                ExpressionAttributeValues: {
-                  ':pk': resource, // venues
-                  ':sk': `id#${id}`,
+    // 本体レコードを BatchGetItem で一括取得（N+1 Query を回避）
+    // DynamoDB BatchGetItem は最大100件/リクエスト
+    const BATCH_SIZE = 100;
+    const validRecords: Record<string, unknown>[] = [];
+
+    for (let i = 0; i < mainRecordIds.length; i += BATCH_SIZE) {
+      const chunk = mainRecordIds.slice(i, i + BATCH_SIZE);
+
+      const batchGetResult = await executeDynamoDBOperation(
+        () =>
+          dbClient.send(
+            new BatchGetCommand({
+              RequestItems: {
+                [tableName]: {
+                  Keys: chunk.map((id) => ({
+                    PK: resource,
+                    SK: `id#${id}`,
+                  })),
+                  ConsistentRead: false,
                 },
-                ConsistentRead: true,
-                ReturnConsumedCapacity: 'TOTAL',
-              })
-            ),
-          'Query'
-        );
+              },
+              ReturnConsumedCapacity: 'TOTAL',
+            })
+          ),
+        'BatchGetItem'
+      );
 
-        // コスト情報を収集
-        costTracker.add(result.ConsumedCapacity);
+      // コスト情報を収集
+      if (batchGetResult.ConsumedCapacity) {
+        for (const capacity of batchGetResult.ConsumedCapacity) {
+          costTracker.add(capacity);
+        }
+      }
 
-        return result.Items?.[0];
-      })
-    );
-
-    const validRecords = mainRecords.filter(
-      (item): item is Record<string, unknown> => item !== undefined
-    );
+      validRecords.push(...(batchGetResult.Responses?.[tableName] || []));
+    }
 
     logger.debug('Main records retrieved', {
       requestId,

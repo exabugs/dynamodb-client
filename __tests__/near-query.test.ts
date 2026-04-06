@@ -272,7 +272,7 @@ describe('executeNearQuery', () => {
       });
 
       let callCount = 0;
-      // DynamoDB Query（シャドウレコード検索）のモック
+      // DynamoDB Query（シャドウレコード検索）+ BatchGetItem（本体レコード取得）のモック
       vi.mocked(executeDynamoDBOperation).mockImplementation(async (fn: any) => {
         callCount++;
         if (callCount === 1) {
@@ -281,19 +281,22 @@ describe('executeNearQuery', () => {
             Items: [{ PK: 'venues', SK: 'location_geohash#xn76ur#id#venue-001' }],
           };
         } else {
-          // 2回目以降: 本体レコード取得
+          // 2回目: BatchGetItem で本体レコードを一括取得
           return {
-            Items: [
-              {
-                PK: 'venues',
-                SK: 'id#venue-001',
-                data: {
-                  id: 'venue-001',
-                  name: '東京タワー',
-                  location: { latitude: 35.6586, longitude: 139.7454 },
+            Responses: {
+              'test-table': [
+                {
+                  PK: 'venues',
+                  SK: 'id#venue-001',
+                  data: {
+                    id: 'venue-001',
+                    name: '東京タワー',
+                    location: { latitude: 35.6586, longitude: 139.7454 },
+                  },
                 },
-              },
-            ],
+              ],
+            },
+            ConsumedCapacity: [],
           };
         }
       });
@@ -337,20 +340,31 @@ describe('executeNearQuery', () => {
             ],
           };
         } else {
-          // 2回目以降: 本体レコード取得
-          const id = callCount === 2 ? 'venue-001' : 'venue-002';
+          // 2回目: BatchGetItem で本体レコードを一括取得
           return {
-            Items: [
-              {
-                PK: 'venues',
-                SK: `id#${id}`,
-                data: {
-                  id,
-                  name: `Venue ${id}`,
-                  location: { latitude: 35.6812, longitude: 139.7671 },
+            Responses: {
+              'test-table': [
+                {
+                  PK: 'venues',
+                  SK: 'id#venue-001',
+                  data: {
+                    id: 'venue-001',
+                    name: 'Venue venue-001',
+                    location: { latitude: 35.6812, longitude: 139.7671 },
+                  },
                 },
-              },
-            ],
+                {
+                  PK: 'venues',
+                  SK: 'id#venue-002',
+                  data: {
+                    id: 'venue-002',
+                    name: 'Venue venue-002',
+                    location: { latitude: 35.6812, longitude: 139.7671 },
+                  },
+                },
+              ],
+            },
+            ConsumedCapacity: [],
           };
         }
       });
@@ -420,24 +434,24 @@ describe('executeNearQuery', () => {
               { PK: 'venues', SK: 'location_geohash#xn76ur#id#venue-deleted' },
             ],
           };
-        } else if (callCount === 2) {
-          // 2回目: venue-001の本体レコード取得
-          return {
-            Items: [
-              {
-                PK: 'venues',
-                SK: 'id#venue-001',
-                data: {
-                  id: 'venue-001',
-                  name: '東京タワー',
-                  location: { latitude: 35.6586, longitude: 139.7454 },
-                },
-              },
-            ],
-          };
         } else {
-          // 3回目: venue-deletedの本体レコード取得（削除済み）
-          return { Items: [] };
+          // 2回目: BatchGetItem で本体レコードを一括取得（venue-deletedは返らない）
+          return {
+            Responses: {
+              'test-table': [
+                {
+                  PK: 'venues',
+                  SK: 'id#venue-001',
+                  data: {
+                    id: 'venue-001',
+                    name: '東京タワー',
+                    location: { latitude: 35.6586, longitude: 139.7454 },
+                  },
+                },
+              ],
+            },
+            ConsumedCapacity: [],
+          };
         }
       });
 
@@ -833,23 +847,26 @@ describe('executeNearQuery', () => {
           return {
             Items: [
               { PK: 'venues', SK: 'location_geohash#xn76ur#id#venue-valid' },
-              { PK: 'venues', SK: 'invalid-sk-format' }, // 無効なSK形式
+              { PK: 'venues', SK: 'invalid-sk-format' }, // 無効なSK形式（#id#がないためスキップ）
             ],
           };
         } else {
-          // 本体レコード取得（venue-validのみ）
+          // 2回目: BatchGetItem で本体レコードを一括取得（venue-validのみ）
           return {
-            Items: [
-              {
-                PK: 'venues',
-                SK: 'id#venue-valid',
-                data: {
-                  id: 'venue-valid',
-                  name: 'Valid Venue',
-                  location: { latitude: 35.6812, longitude: 139.7671 },
+            Responses: {
+              'test-table': [
+                {
+                  PK: 'venues',
+                  SK: 'id#venue-valid',
+                  data: {
+                    id: 'venue-valid',
+                    name: 'Valid Venue',
+                    location: { latitude: 35.6812, longitude: 139.7671 },
+                  },
                 },
-              },
-            ],
+              ],
+            },
+            ConsumedCapacity: [],
           };
         }
       });
