@@ -51,6 +51,11 @@ export async function executeIdQuery(
     return await executeSpecificIdQuery(resource, String(idFilter.value), requestId);
   }
 
+  // $in フィルターがある場合は各IDを個別取得（ページネーションで欠落しないように）
+  if (idFilter && idFilter.parsed.operator === '$in' && Array.isArray(idFilter.value)) {
+    return await executeInQuery(resource, idFilter.value.map(String), sort, requestId);
+  }
+
   // 全レコード取得の場合の処理
   return await executeAllRecordsQuery(resource, sort, perPage, nextToken, parsedFilters, requestId);
 }
@@ -100,6 +105,71 @@ async function executeSpecificIdQuery(
     resource,
     targetId,
     count: items.length,
+  });
+
+  return {
+    items,
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    consumedCapacity: costTracker.getAggregated(),
+  };
+}
+
+/**
+ * 複数IDのレコードを個別取得する（$in クエリ用）
+ *
+ * ページネーションで欠落しないよう、各IDを個別にQueryで取得する。
+ */
+async function executeInQuery(
+  resource: string,
+  targetIds: string[],
+  sort: { field: string; order: 'ASC' | 'DESC' },
+  requestId: string
+): Promise<FindResult> {
+  const dbClient = getDBClient();
+  const tableName = getTableName();
+  const costTracker = new CostTracker();
+
+  const results = await Promise.all(
+    targetIds.map((id) =>
+      executeDynamoDBOperation(
+        () =>
+          dbClient.send(
+            new QueryCommand({
+              TableName: tableName,
+              KeyConditionExpression: 'PK = :pk AND SK = :sk',
+              ExpressionAttributeValues: {
+                ':pk': resource,
+                ':sk': `id#${id}`,
+              },
+              ConsistentRead: true,
+              ReturnConsumedCapacity: 'TOTAL',
+            })
+          ),
+        'Query'
+      ).then((result) => {
+        costTracker.add(result.ConsumedCapacity);
+        return result.Items || [];
+      })
+    )
+  );
+
+  let items = results.flat().map((item) => extractCleanRecord(item));
+
+  // ソート適用
+  items.sort((a, b) => {
+    const aVal = String(a.id ?? '');
+    const bVal = String(b.id ?? '');
+    return sort.order === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+  });
+
+  logger.info('ID $in query succeeded', {
+    requestId,
+    resource,
+    requestedCount: targetIds.length,
+    foundCount: items.length,
   });
 
   return {
