@@ -41,7 +41,7 @@ export async function signRequest(
   const signer = new SignatureV4({
     service: 'lambda',
     region,
-    credentials: defaultProvider(),
+    credentials: defaultProvider({ profile: process.env.AWS_PROFILE }),
     sha256: Sha256,
   });
 

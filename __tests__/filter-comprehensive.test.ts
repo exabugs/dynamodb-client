@@ -219,9 +219,27 @@ describe('filter.ts - 包括的テスト', () => {
         expect(matchesFilter(record, parsed, 'inactive')).toBe(false);
       });
 
-      test('$in演算子はfalseを返す（未実装）', () => {
+      test('$in演算子: 配列に含まれる場合trueを返す', () => {
         const record = { status: 'active' };
         const parsed: ParsedFilterField = { field: 'status', operator: '$in', type: 'string' };
+        expect(matchesFilter(record, parsed, ['active', 'pending'])).toBe(true);
+      });
+
+      test('$in演算子: 配列に含まれない場合falseを返す', () => {
+        const record = { status: 'inactive' };
+        const parsed: ParsedFilterField = { field: 'status', operator: '$in', type: 'string' };
+        expect(matchesFilter(record, parsed, ['active', 'pending'])).toBe(false);
+      });
+
+      test('$nin演算子: 配列に含まれない場合trueを返す', () => {
+        const record = { status: 'inactive' };
+        const parsed: ParsedFilterField = { field: 'status', operator: '$nin', type: 'string' };
+        expect(matchesFilter(record, parsed, ['active', 'pending'])).toBe(true);
+      });
+
+      test('$nin演算子: 配列に含まれる場合falseを返す', () => {
+        const record = { status: 'active' };
+        const parsed: ParsedFilterField = { field: 'status', operator: '$nin', type: 'string' };
         expect(matchesFilter(record, parsed, ['active', 'pending'])).toBe(false);
       });
 
