@@ -339,6 +339,12 @@ export function matchesFilter(
       return typedFieldValue > typedFilterValue;
     case '$gte':
       return typedFieldValue >= typedFilterValue;
+    case '$in':
+      // value は配列のため convertType を使わず直接比較
+      return Array.isArray(value) && value.map(String).includes(String(fieldValue));
+    case '$nin':
+      // value は配列のため convertType を使わず直接比較
+      return Array.isArray(value) && !value.map(String).includes(String(fieldValue));
     case '$starts':
       return String(typedFieldValue).startsWith(String(typedFilterValue));
     case '$ends':
