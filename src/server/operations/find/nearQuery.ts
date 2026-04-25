@@ -170,13 +170,22 @@ export async function executeNearQuery(
     return cleanRecords;
   };
 
+  // nearQueryにminPrecisionが指定されている場合はConfigをオーバーライド
+  const minPrecisionOverride =
+    'minPrecision' in nearQuery ? nearQuery.minPrecision :
+    '$minPrecision' in nearQuery ? nearQuery.$minPrecision :
+    undefined;
+  const config = minPrecisionOverride !== undefined
+    ? { ...DEFAULT_GEOHASH_CONFIG, minPrecision: minPrecisionOverride }
+    : DEFAULT_GEOHASH_CONFIG;
+
   // 9ブロック検索を実行
   const result = await executeNearSearch(
     nearQuery,
     fieldName,
     limit,
     searchFunction,
-    DEFAULT_GEOHASH_CONFIG
+    config
   );
 
   // searchFunctionが既にクリーンなレコード（data属性から抽出済み）を返しているので、

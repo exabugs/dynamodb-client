@@ -20,6 +20,7 @@ export interface NearQueryGeoJSON {
   };
   $maxDistance?: number; // メートル（オプション）
   $minDistance?: number; // メートル（オプション）
+  $minPrecision?: number; // GeoHash最小精度（オプション、デフォルト: DEFAULT_GEOHASH_CONFIG.minPrecision）
 }
 
 /**
@@ -30,6 +31,7 @@ export interface NearQuerySimple {
   longitude: number;
   maxDistance?: number; // メートル（オプション）
   minDistance?: number; // メートル（オプション）
+  minPrecision?: number; // GeoHash最小精度（オプション、デフォルト: DEFAULT_GEOHASH_CONFIG.minPrecision）
 }
 
 /**
