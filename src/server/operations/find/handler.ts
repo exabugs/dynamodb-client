@@ -75,8 +75,12 @@ export async function handleFind(
     filterCount: normalizedParams.parsedFilters.length,
   });
 
-  // sort.field='id'の場合は本体レコードを直接クエリする（最適化）
-  if (normalizedParams.sort.field === 'id') {
+  // sort.field='id'の場合、または id: { $in: [...] } フィルターがある場合は
+  // 本体レコードを直接クエリする（最適化 + Shadow クエリの perPage 切り捨て回避）
+  const hasIdInFilter = normalizedParams.parsedFilters.some(
+    (f) => f.parsed.field === 'id' && f.parsed.operator === '$in'
+  );
+  if (normalizedParams.sort.field === 'id' || hasIdInFilter) {
     return executeIdQuery(resource, normalizedParams, requestId);
   }
 
