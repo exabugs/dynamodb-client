@@ -422,9 +422,9 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         }> = [];
 
         for (const [key, value] of Object.entries(cleanData)) {
-          // __manyToMany_{through}_{sourceKey}_{targetKey} 形式のフィールドを検出
-          if (key.startsWith('__manyToMany_')) {
-            const parts = key.replace('__manyToMany_', '').split('_');
+          // __manyToMany:{through}:{sourceKey}:{targetKey} 形式のフィールドを検出
+          if (key.startsWith('__manyToMany:')) {
+            const parts = key.replace('__manyToMany:', '').split(':');
             if (parts.length === 3) {
               const [through, sourceKey, targetKey] = parts;
               manyToManyFields.push({
@@ -519,9 +519,9 @@ export function createDataProvider(options: DataProviderOptions): DataProvider {
         }> = [];
 
         for (const [key, value] of Object.entries(cleanData)) {
-          // __manyToMany_{through}_{sourceKey}_{targetKey} 形式のフィールドを検出
-          if (key.startsWith('__manyToMany_')) {
-            const parts = key.replace('__manyToMany_', '').split('_');
+          // __manyToMany:{through}:{sourceKey}:{targetKey} 形式のフィールドを検出
+          if (key.startsWith('__manyToMany:')) {
+            const parts = key.replace('__manyToMany:', '').split(':');
             if (parts.length === 3) {
               const [through, sourceKey, targetKey] = parts;
               manyToManyFields.push({
