@@ -321,4 +321,71 @@ export class FindCursor<
     }
     return this.consumedCapacity;
   }
+
+  /**
+   * 全ページを自動的に辿り、条件に一致するすべてのドキュメントを取得
+   *
+   * `toArray()` は1ページ分（デフォルト50件、最大50件）しか返さず、
+   * `nextToken` を辿るかどうかは呼び出し側の責任です。
+   * `toArrayAll()` は内部で `nextToken` が無くなるまでページを取得し続け、
+   * 全件をまとめて返します。
+   *
+   * このメソッドの前に呼ばれた `limit()`/`skip()` は無視されます
+   * （全件取得とページ制限は意味が競合するため）。`sort()` は各ページに適用されます。
+   *
+   * Lambda タイムアウト・無限ループに対する安全弁として、既定で最大200ページ
+   * （1ページ50件 × 200 = 1万件）まで取得したら打ち切り、コンソールに警告を出力します。
+   * 通常のデータ量では到達しないはずですが、到達した場合はそれまでに集めた分を返します
+   * （タイムアウトによるエラーより安全なため）。
+   *
+   * @param options - ページサイズ・最大ページ数を上書きするオプション
+   * @returns 条件に一致するすべてのドキュメントの配列
+   *
+   * @example
+   * ```typescript
+   * // limit を指定せず、条件に一致する全件を取得
+   * const allActive = await products.find({ status: 'active' }).toArrayAll();
+   * ```
+   */
+  async toArrayAll(options?: { pageSize?: number; maxPages?: number }): Promise<TSchema[]> {
+    const pageSize = options?.pageSize ?? 50;
+    const maxPages = options?.maxPages ?? 200;
+
+    const all: TSchema[] = [];
+    let nextToken: string | undefined = this.options.nextToken;
+    let page = 0;
+
+    for (;;) {
+      const cursor = new FindCursor<TSchema, TAuthOptions>(
+        this.endpoint,
+        this.collectionName,
+        this.filter,
+        { sort: this.options.sort, limit: pageSize, nextToken },
+        this.authToken,
+        this.authOptions,
+        this.clientOptions,
+        this.getAuthHeaders
+      );
+
+      const items = await cursor.toArray();
+      all.push(...items);
+
+      const pageInfo = await cursor.getPageInfo();
+      nextToken = pageInfo.nextToken;
+      page++;
+
+      if (!nextToken) {
+        break;
+      }
+
+      if (page >= maxPages) {
+        console.warn(
+          `FindCursor.toArrayAll: reached maxPages=${maxPages} (${all.length} items) for collection="${this.collectionName}". Stopping pagination.`
+        );
+        break;
+      }
+    }
+
+    return all;
+  }
 }

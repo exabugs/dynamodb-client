@@ -55,8 +55,7 @@ export async function repairAllRecords<TAuthOptions = unknown>(
 async function fetchAllRecords<TAuthOptions = unknown>(
   collection: Collection<{ id: string; [key: string]: unknown }, TAuthOptions>
 ): Promise<Array<{ id: string; [key: string]: unknown }>> {
-  const cursor = collection.find({});
-  return await cursor.toArray();
+  return await collection.find({}).toArrayAll();
 }
 
 /**

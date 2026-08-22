@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-23
+
+### Added
+
+- `FindCursor.toArrayAll()` を追加。`nextToken` を内部で自動的に辿り、条件に一致する全件を取得する
+  - `toArray()` は引き続き1ページ分（デフォルト・最大50件）のみを返す（後方互換）
+  - 大量データに対する安全弁として、既定で最大200ページ（1万件）まで取得したら打ち切り警告を出力
+  - 背景: `toArray()` を1回呼ぶだけでは51件目以降が静かに切り捨てられるため、呼び出し側が手動で
+    `nextToken` をループする必要があった。この誤用パターンが複数の利用側アプリで繰り返し発生していた
+  - `src/scripts/operations/bulkRecordRepair.ts` の `fetchAllRecords()` もこの新APIに置き換え
+
 ## [1.4.2] - 2026-03-14
 
 ### Fixed

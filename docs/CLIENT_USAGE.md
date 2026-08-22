@@ -100,18 +100,26 @@ const articles = db.collection<Article>('articles');
 ### レコードの検索
 
 ```typescript
-// 単純な検索
-const allArticles = await articles.find({}).toArray();
-
-// フィルター付き検索
+// フィルター付き検索（1ページ分、デフォルト・最大50件）
 const publishedArticles = await articles.find({ status: 'published' }).toArray();
 
 // ソート付き検索
 const sortedArticles = await articles.find({}).sort({ createdAt: 'desc' }).toArray();
 
-// ページネーション
+// ページネーション（1ページ分を明示的に取得）
 const pagedArticles = await articles.find({}).sort({ createdAt: 'desc' }).limit(10).toArray();
+
+// 条件に一致する全件を取得（nextTokenを内部で自動的に辿る）
+const allArticles = await articles.find({}).toArrayAll();
 ```
+
+> **`toArray()` と `toArrayAll()` の違い**
+>
+> - `toArray()` は **1ページ分**（デフォルト・最大50件）のみを返します。51件目以降が存在する場合、
+>   `getPageInfo()` で `nextToken` を取得して手動でループしない限り取りこぼします。
+> - `toArrayAll()` は `nextToken` が無くなるまで内部で自動的にページを辿り、条件に一致する **全件** を返します。
+>   「limit を指定せず、該当する全レコードが欲しい」場合は必ずこちらを使ってください。
+>   Lambda タイムアウトに対する安全弁として、既定で最大200ページ（1万件）まで取得したら打ち切ります。
 
 ### レコードの作成
 

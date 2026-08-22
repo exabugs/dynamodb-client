@@ -293,4 +293,119 @@ describe('Pagination with nextToken', () => {
       expect(requestBody.params.options.limit).toBe(2);
     });
   });
+
+  describe('toArrayAll', () => {
+    function mockPage(
+      items: Article[],
+      nextToken: string | undefined,
+      hasNextPage: boolean
+    ): void {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            items,
+            pageInfo: { hasNextPage, hasPreviousPage: false },
+            ...(nextToken && { nextToken }),
+          },
+        }),
+      });
+    }
+
+    it('nextTokenを自動で辿ってすべてのページを結合して返す', async () => {
+      mockPage(
+        [
+          { id: '1', title: 'Article 1', status: 'published' },
+          { id: '2', title: 'Article 2', status: 'published' },
+        ],
+        'page-2-token',
+        true
+      );
+      mockPage(
+        [
+          { id: '3', title: 'Article 3', status: 'published' },
+          { id: '4', title: 'Article 4', status: 'published' },
+        ],
+        'page-3-token',
+        true
+      );
+      mockPage([{ id: '5', title: 'Article 5', status: 'published' }], undefined, false);
+
+      const items = await collection.find({ status: 'published' }).toArrayAll();
+
+      expect(items.map((i) => i.id)).toEqual(['1', '2', '3', '4', '5']);
+      expect(global.fetch).toHaveBeenCalledTimes(3);
+
+      // 2回目のリクエストに1回目のnextTokenが渡されていること
+      const secondCall = (global.fetch as any).mock.calls[1];
+      const secondBody = JSON.parse(secondCall[1].body);
+      expect(secondBody.params.options.nextToken).toBe('page-2-token');
+    });
+
+    it('1ページのみで完結する場合は1回だけリクエストする', async () => {
+      mockPage([{ id: '1', title: 'Article 1', status: 'published' }], undefined, false);
+
+      const items = await collection.find({ status: 'published' }).toArrayAll();
+
+      expect(items).toHaveLength(1);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('該当0件の場合は空配列を返す', async () => {
+      mockPage([], undefined, false);
+
+      const items = await collection.find({ status: 'archived' }).toArrayAll();
+
+      expect(items).toEqual([]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('sort条件は各ページのリクエストに引き継がれる', async () => {
+      mockPage(
+        [{ id: '1', title: 'Article 1', status: 'published', createdAt: '2024-01-01' }],
+        'page-2-token',
+        true
+      );
+      mockPage(
+        [{ id: '2', title: 'Article 2', status: 'published', createdAt: '2024-01-02' }],
+        undefined,
+        false
+      );
+
+      await collection.find({ status: 'published' }).sort({ createdAt: -1 }).toArrayAll();
+
+      const firstBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      const secondBody = JSON.parse((global.fetch as any).mock.calls[1][1].body);
+      expect(firstBody.params.options.sort).toEqual({ createdAt: -1 });
+      expect(secondBody.params.options.sort).toEqual({ createdAt: -1 });
+    });
+
+    it('maxPagesに達したら打ち切り、それまでの結果を返す', async () => {
+      mockPage([{ id: '1', title: 'Article 1', status: 'published' }], 'token-2', true);
+      mockPage([{ id: '2', title: 'Article 2', status: 'published' }], 'token-3', true);
+      mockPage([{ id: '3', title: 'Article 3', status: 'published' }], 'token-4', true);
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const items = await collection
+        .find({ status: 'published' })
+        .toArrayAll({ maxPages: 2 });
+
+      expect(items.map((i) => i.id)).toEqual(['1', '2']);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('maxPages=2'));
+
+      warnSpy.mockRestore();
+    });
+
+    it('pageSizeを指定した場合、各ページのlimitに反映される', async () => {
+      mockPage([{ id: '1', title: 'Article 1', status: 'published' }], undefined, false);
+
+      await collection.find({ status: 'published' }).toArrayAll({ pageSize: 5 });
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.params.options.limit).toBe(5);
+    });
+  });
 });
