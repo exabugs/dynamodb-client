@@ -1,5 +1,32 @@
 # TODO
 
+## `findOne` がレコード未存在時に `null` ではなく例外を投げる（クライアントの型契約違反）
+
+### 背景（findOne例外）
+
+`src/client/Collection.ts` の `findOne(filter): Promise<TSchema | null>` は型シグネチャ上
+「見つからなければ `null`」を約束しているが、実際にはサーバー側の `findOne` 操作
+（`src/server/operations/findOne.ts`）がレコード未存在時に `ItemNotFoundError` を**例外として**
+投げる（`throw new ItemNotFoundError(...)`）。クライアント側 `Collection.findOne()` はこの
+HTTPエラーをそのまま素通しするため、`null` を返す分岐（空オブジェクトチェック）は実質
+到達しないコードになっている。
+
+2026-08-23、asanowaの `AuthorizedRepository.read()`/`.delete()`（`packages/{app}/types` 側、
+dynamodb-client利用側のラッパー）がこの前提の違いにより「レコードが無ければ `NotFoundError`」
+という設計が機能せず、500エラーを引き起こす実バグを発生させた
+（`functions/records-asanowa/src/services/personal-note.ts` の upsert ロジック）。
+利用側は `list({ id })` で空配列判定する回避策で対処済みだが、根本原因はここ（dynamodb-client）。
+
+### 対策 TODO（findOne例外）
+
+- [ ] `Collection.findOne()` がサーバーの `ItemNotFoundError`（404相当）を catch し、
+  型シグネチャ通り `null` を返すよう修正する
+- [ ] もしくは意図的に「例外を投げる」設計を維持するなら、型シグネチャを
+  `Promise<TSchema>`（nullを含めない）に修正し、JSDocで例外契約を明記する
+  （現状は「nullを返す」という型と「例外を投げる」という実装が矛盾している）
+- [ ] `findMany`/`find` 系操作は空配列を返す（例外を投げない）のに対し、`findOne` だけ
+  例外を投げる非対称性がそもそも直感に反する。API設計として統一を検討する
+
 ## 検索パターンの体系化（API設計の見直し）
 
 ### 背景（検索パターン）
