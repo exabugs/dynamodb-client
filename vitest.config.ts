@@ -34,5 +34,14 @@ export default defineConfig({
     },
     include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
+    // CI(ubuntu-latest, 7GB RAM)でテストスイート全体を並列実行すると
+    // ワーカーごとにヒープを消費しOOM(JavaScript heap out of memory)で
+    // 落ちるようになったため、単一プロセスに集約してメモリ使用を抑える
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
 });
