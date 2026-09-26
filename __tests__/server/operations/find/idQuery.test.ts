@@ -32,6 +32,8 @@ vi.mock('../../../../src/server/utils/pagination.js', () => ({
     SK: 'id#venue-1',
   })),
   encodeNextToken: vi.fn((pk, sk) => `${pk}:${sk}`),
+  decodeOffsetToken: vi.fn((token) => parseInt(token.replace('offset:', ''), 10)),
+  encodeOffsetToken: vi.fn((offset) => `offset:${offset}`),
 }));
 
 vi.mock('../../../../src/server/operations/find/utils.js', () => ({
@@ -40,6 +42,9 @@ vi.mock('../../../../src/server/operations/find/utils.js', () => ({
     return filters.every((f: any) => {
       const value = record[f.parsed.field];
       if (f.parsed.operator === '$eq') return value === f.value;
+      if (f.parsed.operator === '$contains') {
+        return typeof value === 'string' && value.includes(f.value);
+      }
       return true;
     });
   }),
@@ -322,6 +327,62 @@ describe('idQuery', () => {
       const result = await executeIdQuery('venues', params, 'req-1');
 
       expect(result.items).toEqual([]);
+    });
+  });
+
+  describe('フルスキャンフォールバック（$eq以外の残存フィルタがある場合）', () => {
+    it('$containsフィルタは複数ページをまたいで全件をループ取得してから絞り込む', async () => {
+      // 1ページ目（Limit=1000）: マッチしないレコードのみ + 次ページあり
+      mockDbClient.send
+        .mockResolvedValueOnce({
+          Items: [
+            { PK: 'venues', SK: 'id#venue-1', data: { id: 'venue-1', name: 'デモ会場' } },
+            { PK: 'venues', SK: 'id#venue-2', data: { id: 'venue-2', name: '別会場' } },
+          ],
+          LastEvaluatedKey: { PK: 'venues', SK: 'id#venue-2' },
+        })
+        // 2ページ目: マッチするレコードを含む + 次ページなし
+        .mockResolvedValueOnce({
+          Items: [{ PK: 'venues', SK: 'id#venue-3', data: { id: 'venue-3', name: '保木公園' } }],
+        });
+
+      const params: NormalizedFindParams = {
+        sort: { field: 'id', order: 'ASC' },
+        // perPage を小さくしても、$containsが残存フィルタである限りDynamoDB Queryの
+        // Limitには使われない（常に1000でループ取得する）ことを担保する
+        pagination: { perPage: 1, nextToken: undefined },
+        parsedFilters: [{ parsed: { field: 'name', operator: '$contains' }, value: '保木' }],
+      };
+
+      const result = await executeIdQuery('venues', params, 'req-1');
+
+      // Limitなしで複数ページをループ取得したことを確認（1ページ目だけで打ち切られていない）
+      expect(mockDbClient.send).toHaveBeenCalledTimes(2);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].name).toBe('保木公園');
+    });
+
+    it('オフセットトークンでフルスキャン結果の続きを取得できる', async () => {
+      mockDbClient.send.mockResolvedValueOnce({
+        Items: [
+          { PK: 'venues', SK: 'id#venue-1', data: { id: 'venue-1', name: '保木公園A' } },
+          { PK: 'venues', SK: 'id#venue-2', data: { id: 'venue-2', name: '保木公園B' } },
+          { PK: 'venues', SK: 'id#venue-3', data: { id: 'venue-3', name: '保木公園C' } },
+        ],
+      });
+
+      const params: NormalizedFindParams = {
+        sort: { field: 'id', order: 'ASC' },
+        pagination: { perPage: 1, nextToken: 'offset:1' },
+        parsedFilters: [{ parsed: { field: 'name', operator: '$contains' }, value: '保木' }],
+      };
+
+      const result = await executeIdQuery('venues', params, 'req-1');
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].name).toBe('保木公園B');
+      expect(result.pageInfo.hasPreviousPage).toBe(true);
+      expect(result.pageInfo.hasNextPage).toBe(true);
     });
   });
 });

@@ -29,6 +29,16 @@ const logger = createLogger({
 });
 
 /**
+ * DynamoDBのKeyConditionExpressionで実際に絞り込める演算子
+ *
+ * buildKeyCondition()のswitch文で個別実装されている演算子のみ。
+ * これ以外（$contains, $ends, $ne, $in, $nin, $exists, $regex等）は
+ * begins_with(SK, sortField#)による全件プレフィックスマッチにフォールバックし、
+ * DB側では一切絞り込まれない（メモリ内フィルタでのみ判定される）。
+ */
+const KEY_CONDITION_OPERATORS = new Set(['$eq', '$gt', '$gte', '$lt', '$lte', '$starts']);
+
+/**
  * シャドウレコードクエリを実行する
  *
  * @param resource - リソース名
@@ -65,6 +75,26 @@ export async function executeShadowQuery(
 
   // 通常戦略: ソートシャドウでページネーション取得
   const optimizableFilter = findOptimizableFilter(sort.field, parsedFilters);
+  const isKeyConditionOptimized =
+    optimizableFilter !== undefined && KEY_CONDITION_OPERATORS.has(optimizableFilter.parsed.operator);
+
+  // KeyConditionExpressionで絞り込めなかった残存フィルタ（$contains等）
+  // これが1件でもあると、Limit付き単発クエリでは「取得したLimit件の中にだけ」
+  // フィルタが適用され、ページの外にある本来マッチすべきレコードが漏れてしまう。
+  // 正確性を優先し、全件フルスキャン（Limitなしループ取得）にフォールバックする。
+  const residualFilters = parsedFilters.filter(
+    (f) => !(isKeyConditionOptimized && f === optimizableFilter)
+  );
+
+  if (residualFilters.length > 0) {
+    logger.debug('Residual filters detected, falling back to full scan', {
+      requestId,
+      resource,
+      sortField: sort.field,
+      residualFilterFields: residualFilters.map((f) => f.parsed.field),
+    });
+    return executeFullScanQuery(resource, normalizedParams, costTracker, requestId);
+  }
 
   logger.debug('Executing shadow query', {
     requestId,
@@ -80,7 +110,7 @@ export async function executeShadowQuery(
     sort,
     perPage,
     nextToken,
-    optimizableFilter,
+    isKeyConditionOptimized ? optimizableFilter : undefined,
     costTracker,
     requestId
   );
@@ -191,48 +221,13 @@ async function executeFilterFirstQuery(
   });
 
   // フィルタシャドウインデックスから全件取得（Limit なし・全ページループ）
-  const allShadowItems: Record<string, unknown>[] = [];
-  let lastKey: Record<string, string> | undefined;
-  do {
-    const result = await executeShadowRecordQuery(
-      resource,
-      filterSort,
-      1000, // 大きめの Limit でループ回数を最小化
-      lastKey
-        ? encodeNextToken(lastKey.PK as string, lastKey.SK as string)
-        : undefined,
-      filterCandidate as OptimizableFilter,
-      costTracker,
-      requestId
-    );
-    allShadowItems.push(...(result.Items || []));
-    lastKey = result.LastEvaluatedKey;
-  } while (lastKey);
-
-  // ID 抽出（重複除去）
-  const allIds = Array.from(new Set(extractRecordIds(allShadowItems)));
-
-  if (allIds.length === 0) {
-    return {
-      items: [],
-      pageInfo: { hasNextPage: false, hasPreviousPage: offset > 0 },
-      consumedCapacity: costTracker.getAggregated(),
-    };
-  }
-
-  // 本体レコードを一括取得
-  const mainRecords = await fetchMainRecords(resource, allIds, costTracker, requestId);
-  const recordMap = new Map(
-    mainRecords.map((item) => {
-      const data = item.data as Record<string, unknown>;
-      return [data.id as string, extractCleanRecord(item)];
-    })
+  let items = await fetchAllRecordsViaShadowIndex(
+    resource,
+    filterSort,
+    filterCandidate as OptimizableFilter,
+    costTracker,
+    requestId
   );
-
-  // ID 順に並べ、残りフィルタ適用
-  let items = allIds
-    .map((id) => recordMap.get(id))
-    .filter((r): r is Record<string, unknown> => r !== undefined);
 
   if (remainingFilters.length > 0) {
     items = items.filter((r) => matchesAllFilters(r, remainingFilters));
@@ -263,6 +258,129 @@ async function executeFilterFirstQuery(
     ...(nextTokenValue && { nextToken: nextTokenValue }),
     consumedCapacity: costTracker.getAggregated(),
   };
+}
+
+/**
+ * フルスキャンクエリを実行する（フィルタ候補なし、正確性優先のフォールバック経路）
+ *
+ * sort.field に対する残存フィルタが KeyConditionExpression で絞り込めない演算子
+ * （$contains, $ends, $ne, $in, $nin, $exists, $regex 等）の場合に使用する。
+ * Limit 付き単発クエリでは「取得した1ページの中にだけ」フィルタが適用され、
+ * ページの外にある本来マッチすべきレコードが漏れてしまうため、
+ * ソートシャドウインデックスを Limit なしで全件ループ取得し、
+ * メモリ内で全フィルタ条件を適用してからオフセットベースでページングする。
+ * filter-first と異なり cardinality ヒントは不要（効率よりも正確性を優先する経路）。
+ *
+ * ページネーションはオフセットベース（nextToken に offset を埋め込む）
+ */
+async function executeFullScanQuery(
+  resource: string,
+  normalizedParams: NormalizedFindParams,
+  costTracker: CostTracker,
+  requestId: string
+): Promise<FindResult> {
+  const { sort, pagination, parsedFilters } = normalizedParams;
+  const { perPage, nextToken } = pagination;
+
+  // nextToken からオフセットを復元（フルスキャン用オフセットトークン）
+  const offset = nextToken ? (decodeOffsetToken(nextToken) ?? 0) : 0;
+
+  logger.debug('Executing full scan query', {
+    requestId,
+    resource,
+    sortField: sort.field,
+    offset,
+  });
+
+  // ソートシャドウインデックスから全件取得（Limit なし・全ページループ）
+  // 最適化フィルタなし（undefined）＝ begins_with(SK, `${sort.field}#`) で全件取得
+  let items = await fetchAllRecordsViaShadowIndex(resource, sort, undefined, costTracker, requestId);
+
+  if (parsedFilters.length > 0) {
+    items = items.filter((r) => matchesAllFilters(r, parsedFilters));
+  }
+
+  // 取得順が既に sort 順（シャドウインデックスの並び）のため、追加ソートは不要
+
+  // オフセットでスライス
+  const page = items.slice(offset, offset + perPage);
+  const hasNextPage = offset + perPage < items.length;
+  const nextTokenValue = hasNextPage ? encodeOffsetToken(offset + perPage) : undefined;
+
+  logger.info('Full scan query succeeded', {
+    requestId,
+    resource,
+    sortField: sort.field,
+    totalMatched: items.length,
+    offset,
+    returned: page.length,
+    hasNextPage,
+  });
+
+  return {
+    items: page,
+    pageInfo: { hasNextPage, hasPreviousPage: offset > 0 },
+    ...(nextTokenValue && { nextToken: nextTokenValue }),
+    consumedCapacity: costTracker.getAggregated(),
+  };
+}
+
+/**
+ * ソートシャドウインデックスを Limit なしで全件ループ取得し、
+ * 対応する本体レコードを ID 順（重複除去済み）で返す
+ *
+ * filter-first / フルスキャンの両方で共有する処理
+ *
+ * @param resource - リソース名
+ * @param indexSort - シャドウインデックスの走査順（ソートフィールド）
+ * @param indexFilter - シャドウインデックスに適用する最適化フィルタ（undefinedなら全件プレフィックスマッチ）
+ * @param costTracker - コスト追跡インスタンス
+ * @param requestId - リクエストID
+ * @returns ID順に並んだ本体レコードの配列（重複除去済み）
+ */
+async function fetchAllRecordsViaShadowIndex(
+  resource: string,
+  indexSort: { field: string; order: 'ASC' | 'DESC' },
+  indexFilter: OptimizableFilter | undefined,
+  costTracker: CostTracker,
+  requestId: string
+): Promise<Record<string, unknown>[]> {
+  const allShadowItems: Record<string, unknown>[] = [];
+  let lastKey: Record<string, string> | undefined;
+  do {
+    const result = await executeShadowRecordQuery(
+      resource,
+      indexSort,
+      1000, // 大きめの Limit でループ回数を最小化
+      lastKey ? encodeNextToken(lastKey.PK as string, lastKey.SK as string) : undefined,
+      indexFilter,
+      costTracker,
+      requestId
+    );
+    allShadowItems.push(...(result.Items || []));
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+
+  // ID 抽出（重複除去）
+  const allIds = Array.from(new Set(extractRecordIds(allShadowItems)));
+
+  if (allIds.length === 0) {
+    return [];
+  }
+
+  // 本体レコードを一括取得
+  const mainRecords = await fetchMainRecords(resource, allIds, costTracker, requestId);
+  const recordMap = new Map(
+    mainRecords.map((item) => {
+      const data = item.data as Record<string, unknown>;
+      return [data.id as string, extractCleanRecord(item)];
+    })
+  );
+
+  // ID 順に並べる
+  return allIds
+    .map((id) => recordMap.get(id))
+    .filter((r): r is Record<string, unknown> => r !== undefined);
 }
 
 /**

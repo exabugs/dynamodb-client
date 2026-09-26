@@ -13,7 +13,12 @@ import {
   getDBClient,
   getTableName,
 } from '../../utils/dynamodb.js';
-import { decodeNextToken, encodeNextToken } from '../../utils/pagination.js';
+import {
+  decodeNextToken,
+  decodeOffsetToken,
+  encodeNextToken,
+  encodeOffsetToken,
+} from '../../utils/pagination.js';
 import type { FindResult, NormalizedFindParams, ParsedFilter } from './types.js';
 import { matchesAllFilters } from './utils.js';
 
@@ -201,6 +206,15 @@ async function executeAllRecordsQuery(
   parsedFilters: ParsedFilter[],
   requestId: string
 ): Promise<FindResult> {
+  // id フィルタ（$eq/$in）はこの関数に到達する前に別処理されているため、
+  // ここに残るフィルタは全て id 以外のフィールドに対するもの＝KeyConditionExpression
+  // では絞り込めない。Limit 付き単発クエリでは「取得した1ページの中にだけ」
+  // フィルタが適用され、ページの外にある本来マッチすべきレコードが漏れてしまうため、
+  // フィルタが1件でもあれば全件フルスキャン（Limitなしループ取得）にフォールバックする。
+  if (parsedFilters.length > 0) {
+    return executeAllRecordsQueryFullScan(resource, sort, perPage, nextToken, parsedFilters, requestId);
+  }
+
   const dbClient = getDBClient();
   const tableName = getTableName();
   const costTracker = new CostTracker();
@@ -285,6 +299,98 @@ async function executeAllRecordsQuery(
       hasNextPage,
       hasPreviousPage: !!nextToken,
     },
+    ...(nextTokenValue && { nextToken: nextTokenValue }),
+    consumedCapacity: costTracker.getAggregated(),
+  };
+}
+
+/**
+ * 全レコードを取得する（IDソート・フルスキャン版）
+ *
+ * id 以外のフィールドに対するフィルタ（KeyConditionExpression では絞り込めない）
+ * がある場合のフォールバック経路。本体レコードを Limit なしで全件ループ取得し、
+ * メモリ内で全フィルタ条件を適用してからオフセットベースでページングする。
+ *
+ * @param resource - リソース名
+ * @param sort - ソート条件
+ * @param perPage - ページサイズ
+ * @param nextToken - 次ページトークン（オフセットベース）
+ * @param parsedFilters - 解析済みフィルター条件
+ * @param requestId - リクエストID
+ * @returns クエリ実行結果
+ */
+async function executeAllRecordsQueryFullScan(
+  resource: string,
+  sort: { field: string; order: 'ASC' | 'DESC' },
+  perPage: number,
+  nextToken: string | undefined,
+  parsedFilters: ParsedFilter[],
+  requestId: string
+): Promise<FindResult> {
+  const dbClient = getDBClient();
+  const tableName = getTableName();
+  const costTracker = new CostTracker();
+
+  // nextToken からオフセットを復元（フルスキャン用オフセットトークン）
+  const offset = nextToken ? (decodeOffsetToken(nextToken) ?? 0) : 0;
+
+  logger.debug('Executing full scan query (ID sort)', {
+    requestId,
+    resource,
+    offset,
+  });
+
+  // 本体レコードを Limit なしで全件ループ取得
+  const allRecords: Record<string, unknown>[] = [];
+  let exclusiveStartKey: Record<string, string> | undefined;
+  do {
+    const queryResult = await executeDynamoDBOperation(
+      () =>
+        dbClient.send(
+          new QueryCommand({
+            TableName: tableName,
+            KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+            ExpressionAttributeValues: {
+              ':pk': resource,
+              ':skPrefix': 'id#',
+            },
+            ScanIndexForward: sort.order === 'ASC',
+            Limit: 1000, // 大きめの Limit でループ回数を最小化
+            ExclusiveStartKey: exclusiveStartKey,
+            ConsistentRead: true,
+            ReturnConsumedCapacity: 'TOTAL',
+          })
+        ),
+      'Query'
+    );
+    costTracker.add(queryResult.ConsumedCapacity);
+    allRecords.push(...(queryResult.Items || []));
+    exclusiveStartKey = queryResult.LastEvaluatedKey as Record<string, string> | undefined;
+  } while (exclusiveStartKey);
+
+  // クリーンなレコードに変換してフィルター適用
+  let items = allRecords.map((item) => extractCleanRecord(item));
+  items = items.filter((record) => matchesAllFilters(record, parsedFilters));
+
+  // 取得順が既に sort 順（begins_with('id#')のScanIndexForward）のため、追加ソートは不要
+
+  // オフセットでスライス
+  const page = items.slice(offset, offset + perPage);
+  const hasNextPage = offset + perPage < items.length;
+  const nextTokenValue = hasNextPage ? encodeOffsetToken(offset + perPage) : undefined;
+
+  logger.info('ID full scan query succeeded', {
+    requestId,
+    resource,
+    totalMatched: items.length,
+    offset,
+    returned: page.length,
+    hasNextPage,
+  });
+
+  return {
+    items: page,
+    pageInfo: { hasNextPage, hasPreviousPage: offset > 0 },
     ...(nextTokenValue && { nextToken: nextTokenValue }),
     consumedCapacity: costTracker.getAggregated(),
   };
