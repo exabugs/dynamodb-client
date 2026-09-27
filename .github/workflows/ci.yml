@@ -13,11 +13,13 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
+        shard: [1, 2, 3, 4]
     env:
-      # V8のデフォルトold spaceヒープ上限(~4GB)にテストスイート全体で到達し
-      # 「JavaScript heap out of memory」で落ちるため引き上げる
-      # （ubuntu-latestランナーは7GB RAM）
-      NODE_OPTIONS: '--max-old-space-size=6144'
+      # V8のデフォルトold spaceヒープ上限(~4GB)にテストスイート全体を
+      # 1プロセスで実行すると到達し「JavaScript heap out of memory」で
+      # 落ちるようになったため、テストファイルを4分割して実行する
+      # （NODE_OPTIONS/execArgvでのヒープ拡大では解消しなかった）
+      NODE_OPTIONS: '--max-old-space-size=4096'
 
     steps:
       - name: Checkout code
@@ -33,13 +35,14 @@ jobs:
         run: npm ci
 
       - name: Run linter
+        if: matrix.shard == 1
         run: npm run lint
 
       - name: Run tests
-        run: npm test
+        run: npx vitest run --shard=${{ matrix.shard }}/4
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npx vitest run --coverage --shard=${{ matrix.shard }}/4
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
