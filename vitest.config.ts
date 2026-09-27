@@ -36,11 +36,14 @@ export default defineConfig({
     exclude: ['node_modules', 'dist'],
     // CI(ubuntu-latest, 7GB RAM)でテストスイート全体を並列実行すると
     // ワーカーごとにヒープを消費しOOM(JavaScript heap out of memory)で
-    // 落ちるようになったため、単一プロセスに集約してメモリ使用を抑える
+    // 落ちるようになったため、単一プロセスに集約してメモリ使用を抑える。
+    // NODE_OPTIONS環境変数はtinypoolがforkするワーカープロセスに伝播しない
+    // ため、execArgvで直接ヒープ上限を引き上げる。
     pool: 'forks',
     poolOptions: {
       forks: {
         singleFork: true,
+        execArgv: ['--max-old-space-size=6144'],
       },
     },
   },
