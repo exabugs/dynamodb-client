@@ -42,7 +42,9 @@ jobs:
         run: npx vitest run --shard=${{ matrix.shard }}/4
 
       - name: Run tests with coverage
-        run: npx vitest run --coverage --shard=${{ matrix.shard }}/4
+        # シャード単位ではglobal thresholdを満たせないため無効化する
+        # （全体のカバレッジはCodecov側で各シャードのレポートをマージして評価する）
+        run: npx vitest run --coverage --shard=${{ matrix.shard }}/4 --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
