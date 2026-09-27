@@ -13,6 +13,11 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
+    env:
+      # V8のデフォルトold spaceヒープ上限(~4GB)にテストスイート全体で到達し
+      # 「JavaScript heap out of memory」で落ちるため引き上げる
+      # （ubuntu-latestランナーは7GB RAM）
+      NODE_OPTIONS: '--max-old-space-size=6144'
 
     steps:
       - name: Checkout code
