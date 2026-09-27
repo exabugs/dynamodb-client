@@ -343,7 +343,22 @@ async function executeAllRecordsQueryFullScan(
   // 本体レコードを Limit なしで全件ループ取得
   const allRecords: Record<string, unknown>[] = [];
   let exclusiveStartKey: Record<string, string> | undefined;
+  let previousKeySignature: string | undefined;
+  // 安全装置: DynamoDBが同一のLastEvaluatedKeyを返し続ける異常系
+  // （テストモックの誤設定や予期しないレスポンス）で無限ループに陥り
+  // メモリを食い潰す（OOM）のを防ぐ
+  const MAX_ITERATIONS = 10000;
+  let iterations = 0;
   do {
+    if (++iterations > MAX_ITERATIONS) {
+      logger.error('executeAllRecordsQueryFullScan: 最大反復回数を超過したため中断', {
+        requestId,
+        resource,
+        iterations,
+      });
+      break;
+    }
+
     const queryResult = await executeDynamoDBOperation(
       () =>
         dbClient.send(
@@ -365,7 +380,19 @@ async function executeAllRecordsQueryFullScan(
     );
     costTracker.add(queryResult.ConsumedCapacity);
     allRecords.push(...(queryResult.Items || []));
-    exclusiveStartKey = queryResult.LastEvaluatedKey as Record<string, string> | undefined;
+
+    const nextKey = queryResult.LastEvaluatedKey as Record<string, string> | undefined;
+    const nextKeySignature = nextKey ? `${nextKey.PK}#${nextKey.SK}` : undefined;
+    if (nextKeySignature && nextKeySignature === previousKeySignature) {
+      logger.error('executeAllRecordsQueryFullScan: 同一のLastEvaluatedKeyが返却されたため中断', {
+        requestId,
+        resource,
+        iterations,
+      });
+      break;
+    }
+    previousKeySignature = nextKeySignature;
+    exclusiveStartKey = nextKey;
   } while (exclusiveStartKey);
 
   // クリーンなレコードに変換してフィルター適用

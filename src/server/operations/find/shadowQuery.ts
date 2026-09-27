@@ -347,7 +347,22 @@ async function fetchAllRecordsViaShadowIndex(
 ): Promise<Record<string, unknown>[]> {
   const allShadowItems: Record<string, unknown>[] = [];
   let lastKey: Record<string, string> | undefined;
+  let previousKeySignature: string | undefined;
+  // 安全装置: DynamoDBが同一のLastEvaluatedKeyを返し続ける異常系
+  // （テストモックの誤設定や予期しないレスポンス）で無限ループに陥り
+  // メモリを食い潰す（OOM）のを防ぐ
+  const MAX_ITERATIONS = 10000;
+  let iterations = 0;
   do {
+    if (++iterations > MAX_ITERATIONS) {
+      logger.error('fetchAllRecordsViaShadowIndex: 最大反復回数を超過したため中断', {
+        requestId,
+        resource,
+        iterations,
+      });
+      break;
+    }
+
     const result = await executeShadowRecordQuery(
       resource,
       indexSort,
@@ -358,7 +373,19 @@ async function fetchAllRecordsViaShadowIndex(
       requestId
     );
     allShadowItems.push(...(result.Items || []));
-    lastKey = result.LastEvaluatedKey;
+
+    const nextKey = result.LastEvaluatedKey;
+    const nextKeySignature = nextKey ? `${nextKey.PK}#${nextKey.SK}` : undefined;
+    if (nextKeySignature && nextKeySignature === previousKeySignature) {
+      logger.error('fetchAllRecordsViaShadowIndex: 同一のLastEvaluatedKeyが返却されたため中断', {
+        requestId,
+        resource,
+        iterations,
+      });
+      break;
+    }
+    previousKeySignature = nextKeySignature;
+    lastKey = nextKey;
   } while (lastKey);
 
   // ID 抽出（重複除去）
