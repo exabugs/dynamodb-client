@@ -18,7 +18,9 @@ Records Lambda（`terraform/main.tf`で定義、`src/server/`）は1本のLambda
 
 ### 被害調査
 
-本番環境（`asanowa-prd-records`・`asanowa-prd-records-custom`）のCloudWatch Logsを過去90日分（ログ保持期間の上限）調査したが、`"IAM authenticated request"`ログは1件も記録されていなかった。実際の悪用の痕跡は確認されなかった（ただしログ保持期間を超える過去分は確認不能）。
+本番環境（`asanowa-prd-records`・`asanowa-prd-records-custom`）のCloudWatch Logsを過去90日分（ログ保持期間の上限）調査したが、`"IAM authenticated request"`ログは1件も記録されていなかった。
+
+**【訂正】この調査結果は当初「悪用の痕跡なし」と結論付けたが、誤りだった。** 第三者レビューで判明した通り、このログは`logger.info`で出力される実装だったのに対し、prd環境の`LOG_LEVEL`はTerraform（`infra/apps/*/envs/prd.tfvars`）で`warn`に設定されていた。そのため**このログ行はprdでは実装上そもそも一度も出力されない**（正規のサーバー間呼び出しが同じIAM経路を毎回通っていたにもかかわらず、それすら0件だったことからも裏付けられる）。したがって「0件＝悪用なし」という結論は成立せず、**ログからは過去の悪用有無を判断できない**。この点は未解決の残課題として扱う（「残課題」節を参照）。
 
 ## 決定
 
@@ -36,8 +38,9 @@ Records Lambda（`terraform/main.tf`で定義、`src/server/`）は1本のLambda
 
 #### 実地検証
 
-- Lambda エイリアスが`$LATEST`を指せること、そのエイリアスにAWS_IAM認証のFunction URLを設定できることを、本番以外のサンドボックス関数（`dynamodb-client-example-dev-records`）上で実際にAWS CLIを使って検証した（作成・確認後、検証用リソースは削除済み）。
+- Lambda エイリアスが`$LATEST`を指せること、そのエイリアスにAWS_IAM認証のFunction URLを設定できることを、本番以外のサンドボックス関数（`dynamodb-client-example-dev-records`）上で実際にAWS CLIを使って検証した。
 - 同一Lambda関数コードに対し、NONE認証のURL（既存、無修飾子）とAWS_IAM認証のURL（エイリアス修飾）を同時に設定できることを確認した。
+- **【訂正】「検証用リソースは削除済み」としていたが誤りだった。** 2026-10-04の第三者レビューで、この`dynamodb-client-example-dev-records`（および同様のサンプル`ainews-dev-records`・`my-project-dev-records`）がus-east-1に残存し、**修正前の脆弱なコードのまま、公開NONE認証Function URLで稼働し続けていた**ことが判明した（実際に偽装ヘッダーで認証バイパスできることを確認）。本番（asanowa/asaichiのap-northeast-1環境）とは無関係だが、同じ脆弱性を持つ野良環境が放置されていた事実として記録する。`dynamodb-client-example-dev-records`・`my-project-dev-records`は発見後ただちに削除した（`ainews-dev-records`は別プロジェクトのため対象外、別途対応）。
 
 ### 2. Cognito JWTのaud検証を有効化
 
@@ -57,5 +60,6 @@ Records Lambda（`terraform/main.tf`で定義、`src/server/`）は1本のLambda
 
 ## 残課題
 
-- `lambda:InvokeFunction`権限（`InvokeFunctionUrl`に加えて必要になるかどうか）は、呼び出し側の実装時に実環境で確認する。
-- 被害調査はログ保持期間（90日）内に限られる。より長期の不正アクセスがなかったことの確証はない。
+- ~~`lambda:InvokeFunction`権限（`InvokeFunctionUrl`に加えて必要になるかどうか）は、呼び出し側の実装時に実環境で確認する。~~ **解決済み（2026-10-04確認）**: asanowa/asaichi側のIAMポリシー（records-asanowa・records-asaichi・weather）はいずれも`lambda:InvokeFunction`と`lambda:InvokeFunctionUrl`の両方を許可しており、prd環境で実際にIAM経路への呼び出しが届いていることをCloudWatch Metricsで確認済み。
+- **被害調査は実質的に未解決（上記「被害調査」節の訂正を参照）**。prdの`LOG_LEVEL=warn`設定により、脆弱性調査に使った`"IAM authenticated request"`ログがそもそも出力されない状態だったため、「過去90日間悪用がなかった」という結論は裏付けられていない。ログ保持期間を超える過去分も含め、確証は得られていない。
+- 呼び出し側（asanowa）の運用スクリプト（seed/migrate/backfill等）が、修正後も旧NONE認証URLを参照したままだった（SSMパラメータの向き先が旧URLのまま）。401で失敗するため安全ではあるが、「切り替え済み」という本ADRの記述と実態が食い違っていた。呼び出し側リポジトリで別途対応する。
