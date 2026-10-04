@@ -20,10 +20,12 @@ import {
 import { SSMClient } from '@aws-sdk/client-ssm';
 
 import { createLogger } from '../../shared/index.js';
+import { handleFindMany } from '../operations/findMany.js';
 import { handleUpdateOne } from '../operations/updateOne.js';
 import { isProcessableImage, verifyMagicBytes } from './magicBytes.js';
 import { buildContentDisposition, decodeOriginalFilename, extractAppMetadata } from './metadata.js';
 import { getImagePolicy } from './ssmParams.js';
+import type { MediaRecord } from './types.js';
 
 const logger = createLogger({ service: 'media-process-handler' });
 
@@ -84,6 +86,21 @@ async function processRecord(bucket: string, rawKey: string): Promise<void> {
   const key = decodeURIComponent(rawKey.replace(/\+/g, ' '));
   const fileId = key.replace(/^raw\//, '');
   const requestId = `s3-event-${fileId}`;
+
+  // fileId→内容の不変性を保証する: 同じpresignのTTL内（既定30秒）に2回目のPOSTが
+  // 行われた場合、raw/{fileId}への2回目のPutObjectイベントが発火しうる。既にこの
+  // fileIdがcompletedとして処理済みなら、再処理してmasterを上書きしない
+  // （process-handler-dlq.tsの重複配信対策と同じガード。詳細: docs/media-design.md
+  // 「presigned POSTの再利用・master不変性について」）
+  const existing = await handleFindMany('media', { ids: [fileId] }, requestId);
+  const existingRecord = existing[0] as MediaRecord | undefined;
+  if (existingRecord?.status === 'completed') {
+    logger.warn('Media already completed, ignoring re-upload to the same fileId', {
+      requestId,
+      fileId,
+    });
+    return;
+  }
 
   const head = await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
   const contentType = head.ContentType || 'application/octet-stream';

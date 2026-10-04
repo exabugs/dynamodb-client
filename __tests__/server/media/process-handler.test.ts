@@ -45,6 +45,11 @@ vi.mock('../../../src/server/operations/updateOne.js', () => ({
   handleUpdateOne: (...args: unknown[]) => handleUpdateOneMock(...args),
 }));
 
+const handleFindManyMock = vi.fn().mockResolvedValue([]);
+vi.mock('../../../src/server/operations/findMany.js', () => ({
+  handleFindMany: (...args: unknown[]) => handleFindManyMock(...args),
+}));
+
 function fakeBody(bytes: Buffer) {
   return { transformToByteArray: vi.fn().mockResolvedValue(new Uint8Array(bytes)) };
 }
@@ -66,6 +71,7 @@ const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 describe('process-handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    handleFindManyMock.mockResolvedValue([]);
     getImagePolicyMock.mockResolvedValue({
       masterMaxDimension: 4096,
       allowedContentTypes: ['image/jpeg', 'image/png'],
@@ -277,5 +283,17 @@ describe('process-handler', () => {
     const [, params] = handleUpdateOneMock.mock.calls[0];
     expect(params.data.$set['owner-id']).toBe('user-1');
     expect(params.data.$set['venue-id']).toBe('venue-1');
+  });
+
+  it('【回帰テスト】既にcompletedのfileIdへの再アップロード（presign再利用）はmasterを上書きしない', async () => {
+    // 同じpresignのTTL内に2回目のPOSTが行われraw/{fileId}へ2回目のPutObjectイベントが
+    // 発火しても、fileId→内容の不変性を保つため再処理しない（詳細: docs/media-design.md）
+    handleFindManyMock.mockResolvedValue([{ id: 'file-done', status: 'completed' }]);
+
+    const { handler } = await import('../../../src/server/media/process-handler.js');
+    await handler(makeEvent('raw/file-done'), {} as never, vi.fn());
+
+    expect(s3SendMock).not.toHaveBeenCalled();
+    expect(handleUpdateOneMock).not.toHaveBeenCalled();
   });
 });
