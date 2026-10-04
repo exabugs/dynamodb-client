@@ -87,7 +87,36 @@
       "import": "./dist/mcp/index.js",
       "types": "./dist/mcp/index.d.ts"
     },
-    "./terraform": "./terraform/main.tf"
+    "./server/media/presign": {
+      "import": "./dist/server/media/presign.js",
+      "types": "./dist/server/media/presign.d.ts"
+    },
+    "./server/media/upload-handler": {
+      "import": "./dist/server/media/upload-handler.js",
+      "types": "./dist/server/media/upload-handler.d.ts"
+    },
+    "./server/media-process-handler": {
+      "import": "./dist/server/media-process-handler.cjs",
+      "types": "./dist/server/media/process-handler.d.ts"
+    },
+    "./server/media-process-handler-dlq": {
+      "import": "./dist/server/media-process-handler-dlq.cjs",
+      "types": "./dist/server/media/process-handler-dlq.d.ts"
+    },
+    "./server/media-handler": {
+      "import": "./dist/server/media-handler.cjs",
+      "types": "./dist/server/media/media-handler.d.ts"
+    },
+    "./server/media-sign": {
+      "import": "./dist/server/media/sign.js",
+      "types": "./dist/server/media/sign.d.ts"
+    },
+    "./types/media": {
+      "import": "./dist/server/media/types.js",
+      "types": "./dist/server/media/types.d.ts"
+    },
+    "./terraform": "./terraform/main.tf",
+    "./terraform/media": "./terraform/media/main.tf"
   },
   "peerDependencies": {
     "react-admin": "^5.0.0"
@@ -99,9 +128,10 @@
   },
   "scripts": {
     "prebuild": "npm run generate-types",
-    "build": "tsc && node esbuild.config.js",
+    "build": "tsc && node esbuild.config.js && npm run build:sharp-layer",
     "build:client": "tsc",
     "build:lambda": "node esbuild.config.js",
+    "build:sharp-layer": "bash scripts/build-sharp-layer.sh",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext ts --max-warnings 0",
     "format": "prettier --write .",
@@ -119,8 +149,12 @@
   "dependencies": {
     "@aws-crypto/sha256-js": "5.2.0",
     "@aws-sdk/client-dynamodb": "3.946.0",
+    "@aws-sdk/client-s3": "3.946.0",
+    "@aws-sdk/client-ssm": "3.946.0",
+    "@aws-sdk/cloudfront-signer": "3.946.0",
     "@aws-sdk/credential-provider-node": "3.946.0",
     "@aws-sdk/lib-dynamodb": "3.946.0",
+    "@aws-sdk/s3-presigned-post": "3.946.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@smithy/protocol-http": "5.3.5",
     "@smithy/signature-v4": "5.3.5",
@@ -146,6 +180,7 @@
     "orval": "^8.2.0",
     "prettier": "^3.0.0",
     "react-admin": "^5.0.0",
+    "sharp": "^0.35.5",
     "tsx": "^4.21.0",
     "typescript": "^5.3.0",
     "vitest": "^2.0.0",

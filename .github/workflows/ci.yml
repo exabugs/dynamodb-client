@@ -72,6 +72,10 @@ jobs:
           test -d dist || (echo "dist directory not found" && exit 1)
           test -f dist/index.js || (echo "dist/index.js not found" && exit 1)
           test -f dist/index.d.ts || (echo "dist/index.d.ts not found" && exit 1)
+          test -f dist/server/media-process-handler.cjs || (echo "dist/server/media-process-handler.cjs not found" && exit 1)
+          test -f dist/server/media-process-handler-dlq.cjs || (echo "dist/server/media-process-handler-dlq.cjs not found" && exit 1)
+          test -f dist/server/media-handler.cjs || (echo "dist/server/media-handler.cjs not found" && exit 1)
+          test -f dist/sharp-layer.zip || (echo "dist/sharp-layer.zip not found (sharp Lambda Layer build failed)" && exit 1)
           echo "Build artifacts verified successfully"
 
   publish:

@@ -117,26 +117,26 @@ cache/{fileId}/{width}  … オンデマンドで生成したリサイズ結果�
 
 ## セキュリティ・堅牢性対応一覧
 
-| # | 問題 | 対応 |
-|---|---|---|
-| 1 | オリジナル・マスターファイルの意図しない公開 | S3バケットは非公開（OAC経由のみ）。`raw/*`・`cache/*`はCloudFrontからも直接公開しない（`cache/*`はmedia-handler Lambda経由のみ） |
-| 2 | クライアントがメタデータ（所有者情報等）を偽装できる | presigned POSTのpolicyでメタデータフィールドを`eq`条件固定。除外リスト方式ではなく、**サーバー側が値を強制する**方式にする |
-| 3 | 許可MIMEタイプのリストがクライアント指定になっていた | `allowedContentTypes`はサーバー設定（image policy、Parameter Store経由）としてのみ渡す。クライアントが指定した値は使わない |
-| 4 | contentType偽装による無加工配信XSS | マジックナンバー照合、`image/svg+xml`除外、非画像は`Content-Disposition: attachment`、CloudFrontに`X-Content-Type-Options: nosniff` |
-| 5 | `pending`レコードの永久放置（TTLが機能しない） | presign時にレコードを作らない設計にしたため、そもそも放置レコードが発生しない |
-| 6 | 呼び出し側のアーキテクチャ規約違反（DBクライアント直接使用による層構造バイパス） | ライブラリは呼び出し側の認可レイヤー（Handler→Service→Repositoryのような層構造）に乗る形で個別取得を実装することを推奨する。presign発行（S3署名のみ）はDBアクセスがないためこの規約の対象外 |
-| 7 | 汎用CRUD LambdaのIAM認証パスが署名検証を行っていなかった問題 | [ADR 0001](adr/0001-fix-iam-auth-bypass.md)で修正済み。メディア機能とは独立した既存課題だった |
-| 8 | 呼び出し側の認証方式（ヘッダーベースの識別子等）が署名検証を伴わない場合がある | ライブラリ側の制約ではなく、呼び出し側アプリの認証方式の限界として認識する事項 |
-| 9 | `process-handler`が失敗・タイムアウトした場合、`failed`レコードが作られずクライアントが永久にポーリングし続ける | `process-handler`にLambda非同期呼び出しの`on-failure`宛先（SQS DLQ）を設定し、DLQ経由で`failed`レコードを書き込む後続処理を追加する |
-| 10 | presign発行時のアップロード権限チェック | ライブラリはこの判断を持たない。呼び出し側が自身のビジネスロジックでpresign発行前に権限チェックを行うことを前提とする |
-| 11 | 画像配信CDNに認証が全くない | CloudFront署名付きURL（trusted key group）を必須にする |
-| 12 | 署名付きURLの有効期限とアプリ側キャッシュの不整合 | クライアント側の画像キャッシュキーは署名パラメータを含めない値（`{fileId}-{width}`等）にする。アプリ側キャッシュの有効期限は署名URLの有効期限より必ず短くする |
-| 13 | オンデマンドリサイズの悪用（任意幅の大量リクエストによるコスト増） | 署名は呼び出し時点で確定した具体的な幅に対して発行する（ワイルドカード署名はしない）。加えて`media-handler`が`1 <= width <= masterMaxDimension`を健全性チェックとして検証する。リサイズキャッシュはS3 Lifecycleで自動的に有限化される |
-| 14（Critical） | 署名付きURLを永続フィールドにそのまま書き込むと、期限切れ後に壊れたリンクになる | 呼び出し側は「安定した参照（fileId）」と「表示専用の解決済みURL（応答専用、永続化しない）」を分離すること |
-| 15（Critical） | `media-handler`のFunction URLが`NONE`だと、CloudFrontを経由せず直接叩くことで署名検証を迂回できる | Function URLを`AWS_IAM`にし、CloudFront用OAC（lambdaタイプ）＋`aws_lambda_permission`（principal=cloudfront、source_arn=Distribution ARN）で保護する |
-| 16（Major） | Lambda Function URLの応答サイズ上限（バッファ型で約4.4MB相当）に大きいmaster・非画像ファイルが収まらない可能性 | masterの配信（`width`省略時）はS3オリジン（OAC）から直接行い、Lambdaを経由させない。Lambdaオリジンはリサイズ（`/resize/*`、幅を絞ったサイズのみ）専用にする |
-| 17（Minor） | 404応答がCloudFrontのネガティブキャッシュ（既定約10秒）で意図せず長引く | エラー応答に`Cache-Control: no-store`を付け、`custom_error_response`の`error_caching_min_ttl`を0にする |
-| 18（Minor） | 署名のたびに`Expires`が変わり、同じ画像への短時間の再取得でもブラウザキャッシュが効かない | `Expires`を1時間単位等に切り上げてから署名し、同一時間帯内は同じURLになるようにする |
+| #              | 問題                                                                                                            | 対応                                                                                                                                                                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1              | オリジナル・マスターファイルの意図しない公開                                                                    | S3バケットは非公開（OAC経由のみ）。`raw/*`・`cache/*`はCloudFrontからも直接公開しない（`cache/*`はmedia-handler Lambda経由のみ）                                                                                                      |
+| 2              | クライアントがメタデータ（所有者情報等）を偽装できる                                                            | presigned POSTのpolicyでメタデータフィールドを`eq`条件固定。除外リスト方式ではなく、**サーバー側が値を強制する**方式にする                                                                                                            |
+| 3              | 許可MIMEタイプのリストがクライアント指定になっていた                                                            | `allowedContentTypes`はサーバー設定（image policy、Parameter Store経由）としてのみ渡す。クライアントが指定した値は使わない                                                                                                            |
+| 4              | contentType偽装による無加工配信XSS                                                                              | マジックナンバー照合、`image/svg+xml`除外、非画像は`Content-Disposition: attachment`、CloudFrontに`X-Content-Type-Options: nosniff`                                                                                                   |
+| 5              | `pending`レコードの永久放置（TTLが機能しない）                                                                  | presign時にレコードを作らない設計にしたため、そもそも放置レコードが発生しない                                                                                                                                                         |
+| 6              | 呼び出し側のアーキテクチャ規約違反（DBクライアント直接使用による層構造バイパス）                                | ライブラリは呼び出し側の認可レイヤー（Handler→Service→Repositoryのような層構造）に乗る形で個別取得を実装することを推奨する。presign発行（S3署名のみ）はDBアクセスがないためこの規約の対象外                                           |
+| 7              | 汎用CRUD LambdaのIAM認証パスが署名検証を行っていなかった問題                                                    | [ADR 0001](adr/0001-fix-iam-auth-bypass.md)で修正済み。メディア機能とは独立した既存課題だった                                                                                                                                         |
+| 8              | 呼び出し側の認証方式（ヘッダーベースの識別子等）が署名検証を伴わない場合がある                                  | ライブラリ側の制約ではなく、呼び出し側アプリの認証方式の限界として認識する事項                                                                                                                                                        |
+| 9              | `process-handler`が失敗・タイムアウトした場合、`failed`レコードが作られずクライアントが永久にポーリングし続ける | `process-handler`にLambda非同期呼び出しの`on-failure`宛先（SQS DLQ）を設定し、DLQ経由で`failed`レコードを書き込む後続処理を追加する                                                                                                   |
+| 10             | presign発行時のアップロード権限チェック                                                                         | ライブラリはこの判断を持たない。呼び出し側が自身のビジネスロジックでpresign発行前に権限チェックを行うことを前提とする                                                                                                                 |
+| 11             | 画像配信CDNに認証が全くない                                                                                     | CloudFront署名付きURL（trusted key group）を必須にする                                                                                                                                                                                |
+| 12             | 署名付きURLの有効期限とアプリ側キャッシュの不整合                                                               | クライアント側の画像キャッシュキーは署名パラメータを含めない値（`{fileId}-{width}`等）にする。アプリ側キャッシュの有効期限は署名URLの有効期限より必ず短くする                                                                         |
+| 13             | オンデマンドリサイズの悪用（任意幅の大量リクエストによるコスト増）                                              | 署名は呼び出し時点で確定した具体的な幅に対して発行する（ワイルドカード署名はしない）。加えて`media-handler`が`1 <= width <= masterMaxDimension`を健全性チェックとして検証する。リサイズキャッシュはS3 Lifecycleで自動的に有限化される |
+| 14（Critical） | 署名付きURLを永続フィールドにそのまま書き込むと、期限切れ後に壊れたリンクになる                                 | 呼び出し側は「安定した参照（fileId）」と「表示専用の解決済みURL（応答専用、永続化しない）」を分離すること                                                                                                                             |
+| 15（Critical） | `media-handler`のFunction URLが`NONE`だと、CloudFrontを経由せず直接叩くことで署名検証を迂回できる               | Function URLを`AWS_IAM`にし、CloudFront用OAC（lambdaタイプ）＋`aws_lambda_permission`（principal=cloudfront、source_arn=Distribution ARN）で保護する                                                                                  |
+| 16（Major）    | Lambda Function URLの応答サイズ上限（バッファ型で約4.4MB相当）に大きいmaster・非画像ファイルが収まらない可能性  | masterの配信（`width`省略時）はS3オリジン（OAC）から直接行い、Lambdaを経由させない。Lambdaオリジンはリサイズ（`/resize/*`、幅を絞ったサイズのみ）専用にする                                                                           |
+| 17（Minor）    | 404応答がCloudFrontのネガティブキャッシュ（既定約10秒）で意図せず長引く                                         | エラー応答に`Cache-Control: no-store`を付け、`custom_error_response`の`error_caching_min_ttl`を0にする                                                                                                                                |
+| 18（Minor）    | 署名のたびに`Expires`が変わり、同じ画像への短時間の再取得でもブラウザキャッシュが効かない                       | `Expires`を1時間単位等に切り上げてから署名し、同一時間帯内は同じURLになるようにする                                                                                                                                                   |
 
 ## メタデータ管理（DynamoDB方式）
 
@@ -144,11 +144,11 @@ cache/{fileId}/{width}  … オンデマンドで生成したリサイズ結果�
 
 ```ts
 interface ImagePolicy {
-  masterMaxDimension: number;                   // process-handlerがmaster生成時に使う長辺上限。
-                                                 // media-handlerのwidth健全性チェックの上限もこの値を流用する
-                                                 // （下限は固定`1`。署名付きURL必須のため独立フィールドは持たない）
-  allowedContentTypes: string[];                // upload-handlerがpresign発行時に使う許可MIMEタイプ
-  maxUploadSize: number;                        // upload-handlerがpresign発行時に使う最大アップロードサイズ
+  masterMaxDimension: number; // process-handlerがmaster生成時に使う長辺上限。
+  // media-handlerのwidth健全性チェックの上限もこの値を流用する
+  // （下限は固定`1`。署名付きURL必須のため独立フィールドは持たない）
+  allowedContentTypes: string[]; // upload-handlerがpresign発行時に使う許可MIMEタイプ
+  maxUploadSize: number; // upload-handlerがpresign発行時に使う最大アップロードサイズ
 }
 ```
 
@@ -156,14 +156,14 @@ interface ImagePolicy {
 
 ```ts
 interface MediaRecord {
-  id: string;                                      // fileId (ULID)
-  status: 'completed' | 'failed';                   // pendingは存在しない（レコードが無ければ処理中の意）
-  contentType: string;                              // アップロード時に申告され、実バイトと照合済みのMIMEタイプ
-  outputContentType: string;                        // masterとして実際に保存される形式（画像なら'image/jpeg'、それ以外は
-                                                     // contentTypeと同じ）。contentTypeとの不一致を明示的に区別する
-  originalFilename?: string;                        // 元のファイル名（拡張子込み）
-  dimensions?: { width: number; height: number };   // master（画像の場合のみ）の寸法
-  size?: number;                                    // masterのファイルサイズ
+  id: string; // fileId (ULID)
+  status: 'completed' | 'failed'; // pendingは存在しない（レコードが無ければ処理中の意）
+  contentType: string; // アップロード時に申告され、実バイトと照合済みのMIMEタイプ
+  outputContentType: string; // masterとして実際に保存される形式（画像なら'image/jpeg'、それ以外は
+  // contentTypeと同じ）。contentTypeとの不一致を明示的に区別する
+  originalFilename?: string; // 元のファイル名（拡張子込み）
+  dimensions?: { width: number; height: number }; // master（画像の場合のみ）の寸法
+  size?: number; // masterのファイルサイズ
   error?: string;
   createdAt: string;
   updatedAt: string;
@@ -220,7 +220,7 @@ interface MediaRecord {
   - ビヘイビア`/master/*`: オリジン=S3（OAC）、`trusted_key_groups`必須
   - ビヘイビア`/resize/*`: オリジン=`media-handler` Function URL（Lambda用OAC）、`trusted_key_groups`必須、キャッシュポリシーは`width`クエリパラメータをキャッシュキーに含め署名パラメータは除外、オリジンリクエストポリシーはHostヘッダーを転送しないもの（Function URLがHostヘッダー転送時に403を返す実装があるため）
   - `custom_error_response`でエラー系ステータスの`error_caching_min_ttl`を0に設定
-  - + Route53 Aliasレコード（`domain_name`/`acm_certificate_arn`/`route53_zone_id`はオプション変数）
+  - - Route53 Aliasレコード（`domain_name`/`acm_certificate_arn`/`route53_zone_id`はオプション変数）
 - `aws_cloudfront_public_key`・`aws_cloudfront_key_group`（公開鍵はSSM Parameter経由でTerraform変数として受け取る）
 - Terraform変数: `table_name`・`table_arn`、`image_cache_ttl_days`（既定30、S3 Lifecycleの設定値なのでTerraform変数のまま）、`signing_public_key_param`（SSM Parameter名）、`image_policy_param`（image policy JSONを格納するSSM Parameter名。値そのもの＝`masterMaxDimension`・`allowedContentTypes`・`maxUploadSize`はTerraform変数にせず、呼び出し側の秘密情報管理の仕組みで別途登録・更新する）
 - **Terraformの依存関係の向き**: `media`モジュールが呼び出し側のCloudFront・テーブルARNに依存する片方向にし、循環依存を避ける。`media`モジュールのoutput（`key_pair_id`・配信ベースURL）を呼び出し側の署名発行コンポーネントへ配線する必要がある。
