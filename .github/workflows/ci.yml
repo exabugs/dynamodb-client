@@ -64,6 +64,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ubuntu-latestランナーはx86_64のため、sharp Lambda LayerはLambdaと
+      # 揃えてarm64向けにビルドする（scripts/build-sharp-layer.sh参照）。
+      # QEMUエミュレーションが無いと `docker run --platform linux/arm64` が
+      # "exec format error" で失敗するため、ここで事前にセットアップする。
+      - name: Set up QEMU (for arm64 Docker builds)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Build package
         run: npm run build
 
@@ -100,6 +109,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Set up QEMU (for arm64 Docker builds)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Build package
         run: npm run build
