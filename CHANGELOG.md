@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-10-04
+
+### Security
+
+- **IAM認証バイパスの脆弱性を修正**: `authHandler.ts`が`x-amz-date`/`x-amz-content-sha256`等のヘッダーの「見た目」だけでIAM認証とみなし、実際の署名検証を行っていなかった問題を修正
+  - Function URLをAWS_IAM認証で保護した専用エイリアス（`iam`）を新設し、サーバー間呼び出しはそちらを使う
+  - 認証判定は`event.requestContext.authorizer.iam`（AWSが検証済みの場合にのみ付与され、クライアントから偽装不可）の有無に変更
+  - 既存のNONE認証Function URLからはIAM認証の分岐を削除し、Cognito JWTのみを受け付ける
+  - 詳細は`docs/adr/0001-fix-iam-auth-bypass.md`参照
+- **Cognito JWTのaud検証が無効だった問題を修正**: `COGNITO_CLIENT_ID`環境変数が未設定のため`aud`クレームの検証が常にスキップされていた。新規`cognito_client_id`Terraform変数を追加し配線
+
+### Added
+
+- `terraform/main.tf`: `aws_lambda_alias.iam`（AWS_IAM認証用エイリアス）、`aws_lambda_function_url.records_iam`を追加
+- `terraform/outputs.tf`: `iam_function_url`・`iam_alias_arn`を追加
+- `terraform/variables.tf`: `cognito_client_id`（オプション）を追加
+
 ## [1.5.0] - 2026-08-23
 
 ### Added

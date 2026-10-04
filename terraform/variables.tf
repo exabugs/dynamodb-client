@@ -30,6 +30,12 @@ variable "cognito_user_pool_id" {
   type        = string
 }
 
+variable "cognito_client_id" {
+  description = "Cognito App Client ID（JWTのaud検証に使用。未指定の場合はaud検証をスキップする）"
+  type        = string
+  default     = null
+}
+
 
 
 variable "log_retention_days" {

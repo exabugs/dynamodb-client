@@ -49,3 +49,13 @@ output "function_url_id" {
   description = "Lambda Function URL ID"
   value       = aws_lambda_function_url.records.url_id
 }
+
+output "iam_function_url" {
+  description = "AWS_IAM認証のLambda Function URL（サーバー間呼び出し専用）"
+  value       = aws_lambda_function_url.records_iam.function_url
+}
+
+output "iam_alias_arn" {
+  description = "AWS_IAM認証用エイリアスのARN。呼び出し元IAMロールのlambda:InvokeFunctionUrl権限のResourceに指定する"
+  value       = aws_lambda_alias.iam.arn
+}

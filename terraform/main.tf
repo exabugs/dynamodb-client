@@ -116,6 +116,7 @@ resource "aws_lambda_function" "records" {
       REGION               = var.region
       TABLE_NAME           = var.dynamodb_table_name
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
+      COGNITO_CLIENT_ID    = var.cognito_client_id
       LOG_LEVEL            = var.log_level
       # シャドウ設定（環境変数ベース）
       SHADOW_CREATED_AT_FIELD = var.shadow_created_at_field
@@ -167,6 +168,38 @@ resource "aws_lambda_permission" "function_url" {
   function_name          = aws_lambda_function.records.function_name
   principal              = "*"
   function_url_auth_type = "NONE"
+}
+
+# サーバー間（Lambda-to-Lambda）呼び出し専用のエイリアス
+# NONE認証のFunction URL（上記）とは別に、AWS_IAM認証のFunction URLをこのエイリアス経由で公開する。
+# 同一のLambda関数コード（$LATEST）を指すが、Function URLは修飾子（エイリアス）ごとに1本しか
+# 設定できないため、2本目のURLを持つにはエイリアスが必要。
+resource "aws_lambda_alias" "iam" {
+  name             = "iam"
+  description      = "サーバー間呼び出し用（AWS_IAM認証のFunction URL向け）"
+  function_name    = aws_lambda_function.records.function_name
+  function_version = "$LATEST"
+}
+
+# AWS_IAM認証のLambda Function URL
+# サーバー間呼び出し元（モバイルBFF・weather Lambda・運用スクリプト等）はこちらを使う。
+# NONE認証URLと異なり、呼び出し元のIAMロールにlambda:InvokeFunctionUrl権限が必要で、
+# AWSが実際にSigV4署名を検証する（NONE側のような「なんちゃってIAM認証」ではない）。
+resource "aws_lambda_function_url" "records_iam" {
+  function_name      = aws_lambda_function.records.function_name
+  qualifier          = aws_lambda_alias.iam.name
+  authorization_type = "AWS_IAM"
+
+  cors {
+    allow_origins     = ["*"]
+    allow_methods     = ["GET", "POST", "PUT", "DELETE"]
+    allow_headers     = ["content-type", "authorization", "x-amz-date", "x-api-key", "x-amz-security-token"]
+    expose_headers    = ["content-type", "x-amzn-requestid"]
+    allow_credentials = false
+    max_age           = 86400 # 24時間
+  }
+
+  depends_on = [aws_lambda_alias.iam]
 }
 # Parameter Store モジュール
 module "parameter_store" {
