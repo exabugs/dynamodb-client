@@ -72,3 +72,27 @@ S3 Presigned POSTのpolicyでメタデータを`eq`条件固定した上でpresi
 - **決定**: 既定値を**30秒**に変更する（悪条件時の想定遅延の約3倍の余裕）。あわせて、**失敗時は理由を問わず同じpresignで再試行せず、必ず新しいpresignを取り直す**という設計原則を明記する（TTLの長さをリトライ回数・間隔から独立させ、設計をシンプルに保つため）。
 - **4番（再利用リスク）の軽減策の訂正**: TTLの長さは、このリスクへの主たる対策ではないと判明した。実質的な対策は(1)`fileId`の一意性（ULID）、(2)`content-length-range`・`Content-Type`のpolicy条件、(3)アップロード後のサーバー側検証（マジックナンバー照合）の3点であり、いずれも実装済み。TTLを極端に短くしてもこのリスク自体はほとんど縮小しないため、30秒という値は「再利用リスクの軽減」ではなく「正当なアップロード開始までの遅延を安全にカバーする」という別の目的のために設定する。
 - 実装: `src/server/media/presign.ts`の`DEFAULT_EXPIRES_IN_SECONDS`を30に変更済み。
+
+## 2026-10-05追記: 実装レビュー指摘のうち未反映だった項目の監査と残りの設計決定
+
+設計書・本ADRには決定事項を記録したが、コードへの反映を確認せず「対応済み」として扱っていた項目が複数あった。監査の結果、以下は**設計判断を伴わない単純な実装ミス・未着手**であり、ADR追記なしに直接修正する:
+
+- `magicBytes.ts`のGIF判定: `SIGNATURES`配列に対して`.every()`（全件AND）を使っていたため、GIF87a/GIF89aという**互いに排他的な2つの代替パターン**を両方満たすことを要求してしまい、実在するGIFファイルが常に一致しない（＝常にfailedになる）バグがあった。「代替候補のいずれか一致（OR）」と「1候補内の複数条件はすべて一致（AND、WebPのRIFF+WEBP識別子のケース）」を区別する実装に修正する。
+- `dynamodb:DeleteItem`のIAM権限欠落: `updateMany`はTransactWriteの中で古いShadow Recordを削除する処理を含むため、`process-handler`・`process-handler-dlq`のIAMロールに`dynamodb:DeleteItem`が無いと2回目以降の更新がAccessDeniedになる。権限を追加する。
+- DLQでのメタデータ再取得・日本語ファイル名のRFC 6266エンコード・media-handlerの品質段階的フォールバック: 設計書に決定事項として既に記載済み（本ADR2026-10-05改訂の6番、media-design.md「メタデータの契約」「リサイズのサイズ設計」参照）だが、コード実装が漏れていた。設計の再検討は不要で、記載済みの決定に従って実装する。
+
+以下2点は**新たな設計判断を伴う**ため、ここに記録してから実装する:
+
+### 非画像ファイルのマジックナンバー検証（Range GET化）
+
+`process-handler`は、マジックナンバー照合のためだけに非画像ファイルも含めて`GetObjectCommand`で全量を読み込んでいた。`maxUploadSize`に明確な上限はあるが、大きな動画・PDF等では不要にメモリを消費する（Lambdaメモリ1024MBに対し、巨大ファイルでOOMのリスク）。
+
+**決定**: マジックナンバー照合に必要な先頭バイト数（現状の照合表で最大12バイト程度、将来の拡張を見込んで余裕を持たせ256バイト）のみを`Range: bytes=0-255`ヘッダー付きの`GetObjectCommand`で取得して検証する。検証を通過した後、画像処理（sharp）が必要な場合のみ、あらためて全量を取得する（非画像の場合はCopyObjectで足りるため全量取得が不要なのは既存の設計通り）。2回に分けてGetObjectすることになるが、画像の場合は元々sharp処理に全量が必要なため追加コストは小さく、非画像の場合はこの256バイトの取得だけで完結し、大幅にメモリ効率が改善する。
+
+### CloudFront→media-handlerのLambda呼び出し権限
+
+**2026-10-05訂正（初版は誤り）**: 初版では「AWSの要求が文書上曖昧」「時期・リージョンで挙動が違う」として不確実性を理由に両方のactionを付与するとしていたが、これは未検証の推測だった（Opusレビューで指摘）。実際にはAWSがLambda Function URL + OAC経由の呼び出しに対し**Dual Auth（`lambda:InvokeFunctionUrl`と`lambda:InvokeFunction`の両方の許可）を正式に要求する仕様変更を導入済み**であり、ドキュメントに明記されている（[AWS公式ドキュメント](https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html)）。移行猶予期間は**2026-11-01**に終了し、それ以降`lambda:InvokeFunctionUrl`のみでは`/resize/*`が全件403になる（CDK・Terraform AWS Providerの双方で同種の不足が報告・修正されている: [aws-cdk#35872](https://github.com/aws/aws-cdk/issues/35872)、[terraform-provider-aws#44829](https://github.com/hashicorp/terraform-provider-aws/issues/44829)）。
+
+**決定**: 両方の`action`を付与するのは「念のための安全策」ではなく**AWSの正式要件への準拠として必須**。`lambda:InvokeFunction`側の`aws_lambda_permission`には、AWS推奨の`invoked_via_function_url = true`を指定し、この許可をFunction URL経由の呼び出しに限定する（Terraform AWS Provider 6.67.0で対応済みの属性）。「dev環境で実地検証後に不要な方を外す」という初版の計画は撤回する（猶予期間終了後に外すと障害になるため）。検証タスクは「`InvokeFunctionUrl`だけで403になることの確認」ではなく、**両方付与した構成で`/resize/*`が実際に200を返すことの確認**に変更する。
+
+**セキュリティ補足**: principal `cloudfront.amazonaws.com`は他サービスが詐称できず、`source_arn`でこのDistribution 1つに限定されているため、confused deputy対策は担保されている。CloudFrontがFunction URLを経由せず素の`Invoke` APIを叩く経路は存在しないため、`lambda:InvokeFunction`の追加付与自体が新たな攻撃面を開くことはない。

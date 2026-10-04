@@ -169,7 +169,9 @@ describe('process-handler', () => {
 
     const copyCall = s3SendMock.mock.calls.find((c) => c[0].__type === 'CopyObject');
     expect(copyCall).toBeDefined();
-    expect(copyCall![0].input.ContentDisposition).toBe('attachment; filename="doc.pdf"');
+    expect(copyCall![0].input.ContentDisposition).toBe(
+      "attachment; filename=\"doc.pdf\"; filename*=UTF-8''doc.pdf"
+    );
     expect(copyCall![0].input.MetadataDirective).toBe('REPLACE');
     expect(sharpMock).not.toHaveBeenCalled();
 

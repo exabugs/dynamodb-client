@@ -43,6 +43,23 @@ describe('verifyMagicBytes', () => {
     expect(verifyMagicBytes('image/png', Buffer.from([0x89, 0x50]))).toBe(false);
   });
 
+  it('【回帰テスト】正しいGIF87aマジックナンバーを認める', () => {
+    // GIF87a/GIF89aは互いに排他的な代替候補（OR）であり、両方を同時に満たす
+    // ことを要求する実装（AND）だと、実在するGIFが常に不一致になるバグがあった
+    const buf = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x00, 0x00]);
+    expect(verifyMagicBytes('image/gif', buf)).toBe(true);
+  });
+
+  it('【回帰テスト】正しいGIF89aマジックナンバーを認める', () => {
+    const buf = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00, 0x00]);
+    expect(verifyMagicBytes('image/gif', buf)).toBe(true);
+  });
+
+  it('GIFと偽ってJPEGバイト列を送った場合は拒否する', () => {
+    const jpegBuf = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+    expect(verifyMagicBytes('image/gif', jpegBuf)).toBe(false);
+  });
+
   it('未知のcontentTypeは常に一致扱いにする（非画像は別の対策で守るため）', () => {
     expect(verifyMagicBytes('application/pdf', Buffer.from([0x01, 0x02]))).toBe(true);
   });

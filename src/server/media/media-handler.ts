@@ -26,6 +26,24 @@ const MAX_INPUT_PIXELS = 100_000_000;
 const CACHE_CONTROL_IMMUTABLE = 'public, max-age=31536000, immutable';
 const CACHE_CONTROL_NO_STORE = 'no-store';
 
+/**
+ * Lambda Function URLのバッファ型応答上限（約6MB、base64化を考慮すると実質
+ * 約4.4MB）に対する安全マージン。これを超えると502になり、しかも一度
+ * cache/{fileId}/{width}に書き込まれると自動削除（S3 Lifecycle）されるまで
+ * 同じリクエストが502であり続けるため、キャッシュに書き込む前に検査する
+ * （詳細: docs/media-design.md「リサイズのサイズ設計」）。
+ */
+const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+const QUALITY_FALLBACK_STEPS = [80, 60, 40];
+
+function payloadTooLargeResponse(message: string): APIGatewayProxyStructuredResultV2 {
+  return {
+    statusCode: 413,
+    headers: { 'Cache-Control': CACHE_CONTROL_NO_STORE, 'Content-Type': 'text/plain' },
+    body: message,
+  };
+}
+
 function notFoundResponse(message: string): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 404,
@@ -150,12 +168,22 @@ export async function handler(
   // image/jpeg）にのみ適用できる。非画像ファイル・SVGのmasterはオリジナル
   // バイト列のまま保存されており、sharpで処理すると例外（PDF等）や意図しない
   // ラスタライズ（SVG）を起こすため、ここで明示的に拒否する。
-  let resized: Buffer;
+  //
+  // JPEG品質フォールバック: 応答サイズがLambda Function URLの上限を超える
+  // 場合、品質を段階的に下げて再エンコードする。最低品質でも閾値を超える
+  // 場合はキャッシュに書き込まず413を返す（詳細: docs/media-design.md）。
+  let resized: Buffer | undefined;
   try {
-    resized = await sharp(master, { limitInputPixels: MAX_INPUT_PIXELS })
-      .resize(width, width, { fit: 'inside', withoutEnlargement: true })
-      .jpeg()
-      .toBuffer();
+    for (const quality of QUALITY_FALLBACK_STEPS) {
+      const buffer = await sharp(master, { limitInputPixels: MAX_INPUT_PIXELS })
+        .resize(width, width, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality })
+        .toBuffer();
+      if (buffer.length <= MAX_RESPONSE_BYTES) {
+        resized = buffer;
+        break;
+      }
+    }
   } catch (error) {
     logger.warn('Resize not applicable (master is not a processable raster image)', {
       requestId,
@@ -163,6 +191,15 @@ export async function handler(
       error: error instanceof Error ? error.message : String(error),
     });
     return badRequestResponse('Resize is not applicable to this file');
+  }
+
+  if (!resized) {
+    logger.warn('Resized output exceeds response size limit even at minimum quality', {
+      requestId,
+      fileId,
+      width,
+    });
+    return payloadTooLargeResponse('Resized output is too large to return');
   }
 
   await s3Client.send(

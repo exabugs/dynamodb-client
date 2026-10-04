@@ -182,4 +182,56 @@ describe('media-handler', () => {
     expect(res.statusCode).toBe(400);
     expect(s3SendMock.mock.calls.find((c) => c[0].__type === 'PutObject')).toBeUndefined();
   });
+
+  it('【回帰テスト】初回品質で閾値超過なら品質を下げて再試行し、閾値以下になった結果をキャッシュへ書き込む', async () => {
+    sharpInstanceMock.toBuffer
+      .mockResolvedValueOnce(Buffer.alloc(5 * 1024 * 1024)) // quality 80: 閾値(4MB)超過
+      .mockResolvedValueOnce(Buffer.alloc(1024)); // quality 60: 閾値以下
+
+    s3SendMock.mockImplementation((cmd: { __type: string; input: { Key: string } }) => {
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'cache/file-big/320') {
+        return Promise.reject(new FakeNoSuchKey('not found'));
+      }
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'master/file-big') {
+        return Promise.resolve({ Body: fakeBody(Buffer.from('master-bytes')) });
+      }
+      if (cmd.__type === 'PutObject') {
+        return Promise.resolve({});
+      }
+      throw new Error('unexpected call: ' + JSON.stringify(cmd));
+    });
+
+    const { handler } = await import('../../../src/server/media/media-handler.js');
+    const res = await handler(makeEvent('/resize/file-big', '320'));
+
+    expect(res.statusCode).toBe(200);
+    expect(sharpInstanceMock.jpeg).toHaveBeenNthCalledWith(1, { quality: 80 });
+    expect(sharpInstanceMock.jpeg).toHaveBeenNthCalledWith(2, { quality: 60 });
+    const putCall = s3SendMock.mock.calls.find((c) => c[0].__type === 'PutObject');
+    expect(putCall![0].input.Key).toBe('cache/file-big/320');
+  });
+
+  it('【回帰テスト】最低品質でも閾値を超える場合はキャッシュに書き込まず413を返す', async () => {
+    sharpInstanceMock.toBuffer
+      .mockResolvedValueOnce(Buffer.alloc(5 * 1024 * 1024))
+      .mockResolvedValueOnce(Buffer.alloc(5 * 1024 * 1024))
+      .mockResolvedValueOnce(Buffer.alloc(5 * 1024 * 1024));
+
+    s3SendMock.mockImplementation((cmd: { __type: string; input: { Key: string } }) => {
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'cache/file-huge/320') {
+        return Promise.reject(new FakeNoSuchKey('not found'));
+      }
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'master/file-huge') {
+        return Promise.resolve({ Body: fakeBody(Buffer.from('master-bytes')) });
+      }
+      throw new Error('unexpected call: ' + JSON.stringify(cmd));
+    });
+
+    const { handler } = await import('../../../src/server/media/media-handler.js');
+    const res = await handler(makeEvent('/resize/file-huge', '320'));
+
+    expect(res.statusCode).toBe(413);
+    expect(res.headers?.['Cache-Control']).toBe('no-store');
+    expect(s3SendMock.mock.calls.find((c) => c[0].__type === 'PutObject')).toBeUndefined();
+  });
 });

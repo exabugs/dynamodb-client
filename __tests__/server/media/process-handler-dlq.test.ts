@@ -14,6 +14,12 @@ vi.mock('../../../src/server/operations/updateOne.js', () => ({
   handleUpdateOne: (...args: unknown[]) => handleUpdateOneMock(...args),
 }));
 
+const s3SendMock = vi.fn();
+vi.mock('@aws-sdk/client-s3', () => ({
+  S3Client: vi.fn().mockImplementation(() => ({ send: (...args: unknown[]) => s3SendMock(...args) })),
+  HeadObjectCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),
+}));
+
 function makeDlqEvent(body: unknown): SQSEvent {
   return {
     Records: [{ body: typeof body === 'string' ? body : JSON.stringify(body) }],
@@ -23,7 +29,9 @@ function makeDlqEvent(body: unknown): SQSEvent {
 
 const failureEnvelope = {
   requestContext: { condition: 'RetriesExhausted' },
-  requestPayload: { Records: [{ s3: { object: { key: 'raw/file-abc' } } }] },
+  requestPayload: {
+    Records: [{ s3: { bucket: { name: 'my-bucket' }, object: { key: 'raw/file-abc' } } }],
+  },
   responsePayload: { errorMessage: 'timeout' },
 };
 
@@ -31,6 +39,7 @@ describe('process-handler-dlq', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handleFindManyMock.mockResolvedValue([]);
+    s3SendMock.mockRejectedValue(new Error('NotFound'));
   });
 
   it('既存レコードが無い場合はfailedレコードを新規作成する', async () => {
@@ -68,9 +77,36 @@ describe('process-handler-dlq', () => {
     expect(handleUpdateOneMock).not.toHaveBeenCalled();
   });
 
-  it('fileIdを抽出できないメッセージは無視する', async () => {
+  it('S3参照（bucket/key）を抽出できないメッセージは無視する', async () => {
     const { handler } = await import('../../../src/server/media/process-handler-dlq.js');
     await handler(makeDlqEvent({ requestPayload: { Records: [] } }), {} as never, vi.fn());
     expect(handleUpdateOneMock).not.toHaveBeenCalled();
+  });
+
+  it('【回帰テスト】HeadObjectでメタデータを再取得し、failedレコードに含める', async () => {
+    s3SendMock.mockResolvedValue({
+      Metadata: { 'owner-id': 'user-1', 'original-filename': encodeURIComponent('日本語.png') },
+    });
+
+    const { handler } = await import('../../../src/server/media/process-handler-dlq.js');
+    await handler(makeDlqEvent(failureEnvelope), {} as never, vi.fn());
+
+    expect(handleUpdateOneMock).toHaveBeenCalledTimes(1);
+    const [, params] = handleUpdateOneMock.mock.calls[0];
+    expect(params.data.$set['owner-id']).toBe('user-1');
+    expect(params.data.$set.originalFilename).toBe('日本語.png');
+    expect(params.data.$set.status).toBe('failed');
+  });
+
+  it('【回帰テスト】HeadObjectが失敗してもfailedレコードの書き込みは続行する（fail-soft）', async () => {
+    s3SendMock.mockRejectedValue(new Error('NoSuchKey'));
+
+    const { handler } = await import('../../../src/server/media/process-handler-dlq.js');
+    await handler(makeDlqEvent(failureEnvelope), {} as never, vi.fn());
+
+    expect(handleUpdateOneMock).toHaveBeenCalledTimes(1);
+    const [, params] = handleUpdateOneMock.mock.calls[0];
+    expect(params.data.$set.status).toBe('failed');
+    expect(params.data.$set.originalFilename).toBeUndefined();
   });
 });

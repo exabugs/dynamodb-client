@@ -22,6 +22,7 @@ import { SSMClient } from '@aws-sdk/client-ssm';
 import { createLogger } from '../../shared/index.js';
 import { handleUpdateOne } from '../operations/updateOne.js';
 import { isProcessableImage, verifyMagicBytes } from './magicBytes.js';
+import { buildContentDisposition, decodeOriginalFilename, extractAppMetadata } from './metadata.js';
 import { getImagePolicy } from './ssmParams.js';
 
 const logger = createLogger({ service: 'media-process-handler' });
@@ -32,33 +33,31 @@ const ssmClient = new SSMClient({ region: process.env.AWS_REGION });
 /** sharp のDoS対策（極端に大きい画素数の画像を拒否） */
 const MAX_INPUT_PIXELS = 100_000_000;
 
-/** メディアレコードに持ち込まないS3メタデータキー（original-filenameは専用フィールドとして扱う） */
-const RESERVED_METADATA_KEYS = new Set(['original-filename']);
-
 /**
- * S3オブジェクトメタデータ（x-amz-meta-プレフィックスを除いた小文字キー）から、
- * アプリ固有の追加フィールドのみを抽出する。
+ * マジックナンバー照合に必要な先頭バイト数。現状の照合表（magicBytes.ts）は
+ * 最大12バイト程度までしか見ないが、将来の形式追加を見込んで余裕を持たせる。
  */
-function extractAppMetadata(metadata: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, value] of Object.entries(metadata)) {
-    if (!RESERVED_METADATA_KEYS.has(key)) {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-/** Content-Dispositionのfilenameパラメータに安全に埋め込めるよう制御文字・ダブルクォートを除去する */
-function sanitizeFilenameForHeader(filename: string): string {
-  return filename.replace(/["\r\n]/g, '');
-}
+const MAGIC_BYTES_CHECK_RANGE = 255;
 
 async function streamToBuffer(body: unknown): Promise<Buffer> {
   const bytes = await (
     body as { transformToByteArray: () => Promise<Uint8Array> }
   ).transformToByteArray();
   return Buffer.from(bytes);
+}
+
+/**
+ * マジックナンバー照合用に、先頭の一部バイトだけを取得する。
+ *
+ * 非画像ファイル（CopyObjectで足りる）は、これ以上ファイル全体をメモリに
+ * 読み込む必要が無い。大きな動画・PDF等でも、この先頭バイトの取得だけで
+ * 検証が完結し、Lambdaのメモリを無駄に消費しない（詳細: docs/adr/0002-media-design.md）。
+ */
+async function getHeadBytes(bucket: string, key: string): Promise<Buffer> {
+  const result = await s3Client.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=0-${MAGIC_BYTES_CHECK_RANGE}` })
+  );
+  return streamToBuffer(result.Body);
 }
 
 async function writeMediaRecord(
@@ -89,12 +88,13 @@ async function processRecord(bucket: string, rawKey: string): Promise<void> {
   const head = await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
   const contentType = head.ContentType || 'application/octet-stream';
   const metadata = head.Metadata || {};
-  const originalFilename = metadata['original-filename'];
+  const originalFilename = decodeOriginalFilename(metadata['original-filename']);
 
-  const getResult = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-  const buffer = await streamToBuffer(getResult.Body);
+  // マジックナンバー照合は先頭バイトのみで完結する。非画像（CopyObjectで足りる）
+  // の場合、このあとファイル全体を読み込む必要が無い
+  const headBytes = await getHeadBytes(bucket, key);
 
-  if (!verifyMagicBytes(contentType, buffer)) {
+  if (!verifyMagicBytes(contentType, headBytes)) {
     logger.warn('Content type does not match file signature', { requestId, fileId, contentType });
     await writeMediaRecord(
       fileId,
@@ -117,6 +117,10 @@ async function processRecord(bucket: string, rawKey: string): Promise<void> {
       throw new Error('IMAGE_POLICY_PARAM environment variable is not set');
     }
     const imagePolicy = await getImagePolicy(ssmClient, imagePolicyParam);
+
+    // 画像処理にはファイル全体が必要なため、ここで改めて全量を取得する
+    const getResult = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    const buffer = await streamToBuffer(getResult.Body);
 
     const image = sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS }).rotate();
     const inputMeta = await image.metadata();
@@ -158,9 +162,7 @@ async function processRecord(bucket: string, rawKey: string): Promise<void> {
         CopySource: `${bucket}/${key}`,
         MetadataDirective: 'REPLACE',
         ContentType: contentType,
-        ContentDisposition: originalFilename
-          ? `attachment; filename="${sanitizeFilenameForHeader(originalFilename)}"`
-          : 'attachment',
+        ContentDisposition: buildContentDisposition(originalFilename),
       })
     );
 
@@ -170,7 +172,7 @@ async function processRecord(bucket: string, rawKey: string): Promise<void> {
         status: 'completed',
         contentType,
         outputContentType: contentType,
-        size: head.ContentLength ?? buffer.length,
+        size: head.ContentLength ?? 0,
         ...(originalFilename ? { originalFilename } : {}),
         ...appMetadata,
       },

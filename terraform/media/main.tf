@@ -179,8 +179,10 @@ resource "aws_iam_role_policy" "process_handler_dynamodb" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:BatchGetItem", "dynamodb:Query"]
+        Effect = "Allow"
+        # DeleteItem: updateMany（handleUpdateOneの内部実装）はTransactWriteの中で
+        # 更新前の古いShadow Recordを削除する処理を含むため、2回目以降の更新に必須
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchGetItem", "dynamodb:Query"]
         Resource = [var.table_arn, "${var.table_arn}/index/*"]
       }
     ]
@@ -356,6 +358,27 @@ resource "aws_iam_role_policy" "process_handler_dlq_sqs" {
   })
 }
 
+resource "aws_iam_role_policy" "process_handler_dlq_s3" {
+  name = "s3-access"
+  role = aws_iam_role.process_handler_dlq.id
+
+  # failedレコードにownerId等のアプリ固有メタデータを含めるため、raw/{fileId}を
+  # HeadObjectで再取得する（process-handler-dlq.ts）。この権限が無いとHeadObjectが
+  # 常にAccessDeniedになり、fail-soft設計により静かに失敗し続ける
+  # （メタデータ無しのfailedレコードが書き込まれ、権限スコープ付きポーリングで
+  # 読めないままクライアントが無限ポーリングする問題が再発する）。
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.media.arn}/raw/*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "process_handler_dlq_dynamodb" {
   name = "dynamodb-access"
   role = aws_iam_role.process_handler_dlq.id
@@ -365,7 +388,7 @@ resource "aws_iam_role_policy" "process_handler_dlq_dynamodb" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:BatchGetItem"]
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchGetItem"]
         Resource = [var.table_arn, "${var.table_arn}/index/*"]
       }
     ]
@@ -417,6 +440,7 @@ resource "aws_lambda_function" "process_handler_dlq" {
     aws_cloudwatch_log_group.process_handler_dlq,
     aws_iam_role_policy.process_handler_dlq_sqs,
     aws_iam_role_policy.process_handler_dlq_dynamodb,
+    aws_iam_role_policy.process_handler_dlq_s3,
   ]
 
   tags = {
@@ -568,12 +592,27 @@ resource "aws_lambda_function_url" "media_handler" {
 }
 
 resource "aws_lambda_permission" "cloudfront_invoke_media_handler" {
-  statement_id           = "AllowCloudFrontInvoke"
+  statement_id           = "AllowCloudFrontInvokeFunctionUrl"
   action                 = "lambda:InvokeFunctionUrl"
   function_name          = aws_lambda_function.media_handler.function_name
   principal              = "cloudfront.amazonaws.com"
   source_arn             = aws_cloudfront_distribution.media.arn
   function_url_auth_type = "AWS_IAM"
+}
+
+# AWSはFunction URL + OAC経由の呼び出しに対してDual Auth（lambda:InvokeFunctionUrl
+# とlambda:InvokeFunctionの両方の許可）を正式に要求する（移行猶予期間は2026-11-01
+# まで）。lambda:InvokeFunctionUrlだけの許可では、猶予期間終了後に/resize/*が
+# 全件403になる（詳細: docs/adr/0002-media-design.md）。
+# invoked_via_function_url=true により、この許可をFunction URL経由の呼び出しに
+# 限定する（AWS推奨の条件キー）。
+resource "aws_lambda_permission" "cloudfront_invoke_media_handler_function" {
+  statement_id             = "AllowCloudFrontInvokeFunction"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.media_handler.function_name
+  principal                = "cloudfront.amazonaws.com"
+  source_arn               = aws_cloudfront_distribution.media.arn
+  invoked_via_function_url = true
 }
 
 # ============================================================
