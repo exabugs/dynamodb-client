@@ -99,8 +99,8 @@ resource "aws_lambda_layer_version" "sharp" {
   filename            = "${path.module}/../../dist/sharp-layer.zip"
   source_code_hash    = filebase64sha256("${path.module}/../../dist/sharp-layer.zip")
   compatible_runtimes = ["nodejs22.x"]
-  # sharp-layer.zipはlinux/amd64向けにビルドされる（build-sharp-layer.sh参照）
-  compatible_architectures = ["x86_64"]
+  # sharp-layer.zipはlinux/arm64向けにビルドされる（build-sharp-layer.sh参照）
+  compatible_architectures = ["arm64"]
 }
 
 # ============================================================
@@ -225,7 +225,7 @@ resource "aws_lambda_function" "process_handler" {
   source_code_hash = data.archive_file.process_handler.output_base64sha256
 
   runtime       = "nodejs22.x"
-  architectures = ["x86_64"] # sharp-layer.zip（linux/amd64）に合わせる
+  architectures = ["arm64"] # sharp-layer.zip（linux/arm64）に合わせる
   handler       = "media-process-handler.handler"
 
   timeout     = var.process_handler_timeout
@@ -488,7 +488,7 @@ resource "aws_lambda_function" "media_handler" {
   source_code_hash = data.archive_file.media_handler.output_base64sha256
 
   runtime       = "nodejs22.x"
-  architectures = ["x86_64"] # sharp-layer.zip（linux/amd64）に合わせる
+  architectures = ["arm64"] # sharp-layer.zip（linux/arm64）に合わせる
   handler       = "media-handler.handler"
 
   timeout     = 30

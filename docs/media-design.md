@@ -202,7 +202,7 @@ interface MediaRecord {
   - `exports`の`./server/media-handler`として公開
 - `types.ts`: `MediaRecord`（共通フィールドのみ）とリクエスト/レスポンス型。`exports`の`./types/media`として公開。
 
-**sharp依存の扱い**: `dependencies`には加えず`devDependencies`のみ。既存のTerraformモジュールはLayer等の成果物を相対パスで参照する構成になっているため、`scripts/build-sharp-layer.sh`（Dockerの`--platform linux/amd64`でビルド）を`npm run build`スクリプトチェーンに組み込み、`dist/sharp-layer.zip`として生成した上でnpm publish対象に含める。`process-handler`・`media-handler`の両方がこのレイヤーを使う。`sharp()`呼び出し時に`limitInputPixels`を設定し、極端に大きい画素数の画像でのDoS的な処理負荷を防ぐ。
+**sharp依存の扱い**: `dependencies`には加えず`devDependencies`のみ。既存のTerraformモジュールはLayer等の成果物を相対パスで参照する構成になっているため、`scripts/build-sharp-layer.sh`（Dockerの`--platform linux/arm64`でビルド）を`npm run build`スクリプトチェーンに組み込み、`dist/sharp-layer.zip`として生成した上でnpm publish対象に含める。`process-handler`・`media-handler`の両方がこのレイヤーを使う。`sharp()`呼び出し時に`limitInputPixels`を設定し、極端に大きい画素数の画像でのDoS的な処理負荷を防ぐ。
 
 ## Terraformモジュール `terraform/media/`
 
@@ -213,8 +213,8 @@ interface MediaRecord {
 - S3イベント通知（`raw/*` ObjectCreated → `process-handler` Lambda）
 - SQS DLQ（`process-handler`の`on-failure`宛先）
 - `upload-handler` Lambda（presign + `/sign`、Function URL、認証は呼び出し側の認証方式に依存。SSMから署名用秘密鍵・image policyを取得するため`ssm:GetParameter`権限が必要）
-- `process-handler` Lambda（S3トリガーのみ、x86_64、sharp Layer付き、メモリ1024MB/タイムアウト60秒、DLQ設定済み、image policy（`masterMaxDimension`）取得のため`ssm:GetParameter`権限、呼び出し側が渡す既存テーブルARNへの`dynamodb:PutItem`等の権限が必要）
-- `media-handler` Lambda（CloudFrontの`/resize/*`ビヘイビア専用オリジン、**Function URLは`AWS_IAM`**、x86_64、sharp Layer付き、S3の`master/*`読み取り・`cache/*`読み書き権限、image policy（`masterMaxDimension`をwidth上限チェックに流用）取得のため`ssm:GetParameter`権限。**署名鍵へのSSM権限・DynamoDB権限は付与しない**）
+- `process-handler` Lambda（S3トリガーのみ、arm64、sharp Layer付き、メモリ1024MB/タイムアウト60秒、DLQ設定済み、image policy（`masterMaxDimension`）取得のため`ssm:GetParameter`権限、呼び出し側が渡す既存テーブルARNへの`dynamodb:PutItem`等の権限が必要）
+- `media-handler` Lambda（CloudFrontの`/resize/*`ビヘイビア専用オリジン、**Function URLは`AWS_IAM`**、arm64、sharp Layer付き、S3の`master/*`読み取り・`cache/*`読み書き権限、image policy（`masterMaxDimension`をwidth上限チェックに流用）取得のため`ssm:GetParameter`権限。**署名鍵へのSSM権限・DynamoDB権限は付与しない**）
 - `aws_lambda_permission`（`media-handler`向け、principal=`cloudfront.amazonaws.com`、source_arn=Distribution ARN）
 - CloudFront Distribution（新規・独立）:
   - ビヘイビア`/master/*`: オリジン=S3（OAC）、`trusted_key_groups`必須
