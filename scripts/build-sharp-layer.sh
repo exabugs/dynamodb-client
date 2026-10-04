@@ -44,8 +44,19 @@ cat >"$BUILD_DIR/nodejs/package.json" <<EOF
 }
 EOF
 
+# --user でホスト側の実行ユーザーとしてコンテナ内のnpm installを実行する。
+# 省略するとコンテナ内はrootとして書き込むため、バインドマウント先
+# （$BUILD_DIR、ホスト側のファイルシステム）にroot所有のファイルが残り、
+# 非rootユーザーで動くCIランナー（GitHub Actions等）でのtrap内`rm -rf`が
+# Permission deniedで失敗する（実際にCIで発生、ローカルのDocker Desktopでは
+# UIDマッピングが透過的なため再現しなかった）。
+# HOME/npmキャッシュも書き込み可能な場所に向け直す（nodeイメージの既定は
+# root想定のため、非rootユーザーのままだと npm install 自体が失敗する）。
 docker run --rm \
   --platform linux/arm64 \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp \
+  -e npm_config_cache=/tmp/.npm \
   -v "$BUILD_DIR/nodejs:/var/task" \
   -w /var/task \
   node:22-slim \
