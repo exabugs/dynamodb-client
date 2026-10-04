@@ -211,8 +211,9 @@ module "parameter_store" {
   region       = var.region
 
   # Records Lambda設定
-  records_function_url = aws_lambda_function_url.records.function_url
-  records_function_arn = aws_lambda_function.records.arn
+  records_function_url     = aws_lambda_function_url.records.function_url
+  records_iam_function_url = aws_lambda_function_url.records_iam.function_url
+  records_function_arn     = aws_lambda_function.records.arn
 
   # Cognito設定
   cognito_user_pool_id = var.cognito_user_pool_id

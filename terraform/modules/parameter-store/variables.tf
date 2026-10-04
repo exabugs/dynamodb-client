@@ -16,8 +16,14 @@ variable "region" {
 }
 
 variable "records_function_url" {
-  description = "Records Lambda Function URL"
+  description = "Records Lambda Function URL（NONE認証。ブラウザ・Admin UI向け）"
   type        = string
+}
+
+variable "records_iam_function_url" {
+  description = "Records Lambda の AWS_IAM認証Function URL（サーバー間呼び出し・運用スクリプト向け）。省略時はパラメータを作成しない"
+  type        = string
+  default     = null
 }
 
 variable "records_function_arn" {
