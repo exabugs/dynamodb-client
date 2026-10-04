@@ -73,7 +73,7 @@ export interface PresignedUploadParams {
   maxUploadSize: number;
   /** x-amz-meta-{key} としてpolicyのeq条件に固定するアプリ固有メタデータ */
   metadata: Record<string, string>;
-  /** presigned POSTの有効期限（秒）。省略時は300秒 */
+  /** presigned POSTの有効期限（秒）。省略時は30秒（presign.ts参照） */
   expiresInSeconds?: number;
 }
 

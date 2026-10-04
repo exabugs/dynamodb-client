@@ -11,11 +11,30 @@ import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 
 import type { PresignedUploadParams, PresignedUploadResult } from './types.js';
 
-const DEFAULT_EXPIRES_IN_SECONDS = 300;
+/**
+ * presignは「呼び出し側がアップロードを開始する直前」に発行する設計を前提とする
+ * （事前に先回りして取得・保持しておくものではない）。そのためTTLがカバえるべきは
+ * 「presignを受け取ってからS3へのPOSTを開始するまでの間隔」（ネットワーク往復・
+ * 悪条件下でのTCP/TLSハンドシェイク等）であり、ファイル転送そのものの所要時間では
+ * ない（S3は presigned POST のpolicy expirationをリクエスト開始時点で判定し、
+ * 転送開始後に期限が切れても転送自体は継続する。AWS公式ドキュメントで
+ * presigned URL（GET/PUT）について明記されている挙動 -
+ * https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html
+ * 。POSTについても同様の挙動と推定されるが、本番投入前に実機で確認すること）。
+ * 悪条件のモバイル回線（DNS・TCP/TLSハンドシェイクのSYN再送込み）を想定しても
+ * 数秒〜10秒程度に収まるため、30秒は十分な余裕を持った値とする。
+ *
+ * 失敗時（ネットワークエラー・期限切れ等いずれの場合も）は、同じpresignで
+ * 再試行せず、必ず新しいpresignを取り直すこと。これによりTTLの長さを
+ * リトライ回数・間隔から独立させ、設計をシンプルに保てる。
+ */
+const DEFAULT_EXPIRES_IN_SECONDS = 30;
 
 // @aws-sdk/s3-presigned-post は Conditions の要素型を公開exportしていないため、
 // createPresignedPost 自体のパラメータ型から導出する
-type PresignCondition = NonNullable<Parameters<typeof createPresignedPost>[1]['Conditions']>[number];
+type PresignCondition = NonNullable<
+  Parameters<typeof createPresignedPost>[1]['Conditions']
+>[number];
 
 /**
  * S3はユーザー定義メタデータのキーを常に小文字で保存する（AWS仕様）。
