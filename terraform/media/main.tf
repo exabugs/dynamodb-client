@@ -3,10 +3,15 @@
 # 詳細設計: ../../docs/media-design.md
 # 決定事項・トレードオフ: ../../docs/adr/0002-media-design.md
 #
-# 本モジュールは upload-handler（presign/sign発行）のLambdaを含まない。
-# 「誰にpresign/署名URLを発行するか」の認可判断はアプリごとに異なるため、呼び出し側は
-# 既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・
-# `sign.ts` を直接呼び出して自前のLambda/ルートに組み込むこと。
+# 本モジュールは upload-handler（presign/sign発行）のLambdaリソースを含まない。
+# 「誰にpresign/署名URLを発行するか」の認可判断はアプリごとに、かつ同一アプリ内でも
+# クライアント（モバイル/管理画面等）ごとに異なるため、Terraformでは画一的な
+# リソースとして定義できない。呼び出し側は次のいずれかの方法で自前にデプロイすること:
+#   (a) 既存のHTTP APIレイヤー（認証・権限チェック済み）から
+#       `../../src/server/media/presign.ts`・`sign.ts` を直接呼び出す
+#   (b) 対応する既存HTTPレイヤーが無いクライアント（例: 別の認証方式を使う管理画面）向けには
+#       `../../src/server/media/upload-handler.ts` の `createUploadHandler()` を使い、
+#       専用の小さなLambdaとして自前でバンドル・デプロイする
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}-media"
@@ -48,6 +53,22 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
     expiration {
       days = var.image_cache_ttl_days
     }
+  }
+}
+
+# ブラウザ（管理画面等）からpresigned POSTで直接S3へアップロードする場合に必要。
+# 無いとプリフライトリクエストが失敗しアップロードが全滅する
+# （モバイルアプリ（React Native）はCORSの対象外のため影響しない）。
+resource "aws_s3_bucket_cors_configuration" "media" {
+  count = length(var.allowed_upload_origins) > 0 ? 1 : 0
+
+  bucket = aws_s3_bucket.media.id
+
+  cors_rule {
+    allowed_methods = ["POST"]
+    allowed_origins = var.allowed_upload_origins
+    allowed_headers = ["*"]
+    max_age_seconds = 3000
   }
 }
 
@@ -233,9 +254,13 @@ resource "aws_lambda_function" "process_handler" {
 
   environment {
     variables = {
-      REGION             = var.region
-      TABLE_NAME         = var.table_name
-      IMAGE_POLICY_PARAM = var.image_policy_param
+      REGION                  = var.region
+      TABLE_NAME              = var.table_name
+      IMAGE_POLICY_PARAM      = var.image_policy_param
+      SHADOW_CREATED_AT_FIELD = var.shadow_created_at_field
+      SHADOW_UPDATED_AT_FIELD = var.shadow_updated_at_field
+      SHADOW_STRING_MAX_BYTES = var.shadow_string_max_bytes
+      SHADOW_NUMBER_PADDING   = var.shadow_number_padding
     }
   }
 
@@ -254,6 +279,11 @@ resource "aws_lambda_function" "process_handler" {
 resource "aws_lambda_function_event_invoke_config" "process_handler" {
   function_name          = aws_lambda_function.process_handler.function_name
   maximum_retry_attempts = 2
+  # 既定の6時間だと、リトライが尽きてDLQ経由でfailedが書き込まれるまで
+  # 呼び出し側のポーリングが長時間ブロックされ得る。短く設定し、クライアントの
+  # タイムアウト判断（詳細: docs/media-design.md「ポーリングが区別すべき状態」）
+  # と整合させる。
+  maximum_event_age_in_seconds = 300
 
   destination_config {
     on_failure {
@@ -374,8 +404,12 @@ resource "aws_lambda_function" "process_handler_dlq" {
 
   environment {
     variables = {
-      REGION     = var.region
-      TABLE_NAME = var.table_name
+      REGION                  = var.region
+      TABLE_NAME              = var.table_name
+      SHADOW_CREATED_AT_FIELD = var.shadow_created_at_field
+      SHADOW_UPDATED_AT_FIELD = var.shadow_updated_at_field
+      SHADOW_STRING_MAX_BYTES = var.shadow_string_max_bytes
+      SHADOW_NUMBER_PADDING   = var.shadow_number_padding
     }
   }
 

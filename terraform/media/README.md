@@ -17,7 +17,10 @@
 - CloudFront Distribution（`/master/*`はS3直接配信、`/resize/*`はmedia-handler経由、両方とも署名付きURL必須）
 - CloudFront Public Key / Key Group（署名鍵は呼び出し側がSSM Parameter Storeに別途登録する）
 
-**含まないもの**: presign/署名URL発行用のLambda。「誰にpresign/署名URLを発行してよいか」の認可判断はアプリごとに異なるため、呼び出し側は既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・`sign.ts` を直接呼び出して自前のLambda/ルートに組み込んでください。
+**含まないもの**: presign/署名URL発行用のLambdaリソース。「誰にpresign/署名URLを発行してよいか」の認可判断はアプリごとに、かつ同一アプリ内でもクライアント（モバイル/管理画面等）ごとに異なるため、Terraformでは画一的なリソースとして定義できません。呼び出し側は次のいずれかの方法で自前にデプロイしてください:
+
+- 既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・`sign.ts` を直接呼び出す
+- 対応する既存HTTPレイヤーが無いクライアント向けには `../../src/server/media/upload-handler.ts` の `createUploadHandler()` を使い、専用の小さなLambdaとして自前でバンドル・デプロイする
 
 ## 前提条件
 

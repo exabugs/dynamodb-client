@@ -31,6 +31,39 @@ variable "image_cache_ttl_days" {
   default     = 30
 }
 
+variable "allowed_upload_origins" {
+  description = "presigned POSTでのブラウザアップロードを許可するオリジン（例: Admin UIのドメイン）。空配列の場合はCORS設定自体を作らない（モバイルのみの利用等、ブラウザアップロードが不要な場合）"
+  type        = list(string)
+  default     = []
+}
+
+# 呼び出し側の既存テーブルに相乗りするため、process-handlerが生成するShadow Recordsの
+# 形式は呼び出し側の既存Lambda（records等）の設定と一致させる必要がある
+# （詳細: docs/media-design.md「環境変数の一致」）。既定値は本体（terraform/variables.tf）と揃える。
+variable "shadow_created_at_field" {
+  description = "作成日時フィールド名（呼び出し側の既存設定と一致させること）"
+  type        = string
+  default     = "createdAt"
+}
+
+variable "shadow_updated_at_field" {
+  description = "更新日時フィールド名（呼び出し側の既存設定と一致させること）"
+  type        = string
+  default     = "updatedAt"
+}
+
+variable "shadow_string_max_bytes" {
+  description = "プリミティブ型の最大バイト数（呼び出し側の既存設定と一致させること）"
+  type        = number
+  default     = 100
+}
+
+variable "shadow_number_padding" {
+  description = "数値のパディング桁数（呼び出し側の既存設定と一致させること）"
+  type        = number
+  default     = 15
+}
+
 variable "signing_public_key_param" {
   description = "CloudFront署名用の公開鍵（PEM形式）を保持するSSM Parameter名。値そのものは呼び出し側が別途登録する"
   type        = string
