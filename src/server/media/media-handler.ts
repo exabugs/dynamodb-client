@@ -62,6 +62,23 @@ function extractFileId(rawPath: string): string {
   return rawPath.replace(/^\/resize\//, '').replace(/^\//, '');
 }
 
+/**
+ * s3:ListBucketが無いロールでGetObjectが存在しないキーを指すと、S3はNoSuchKey
+ * ではなく403 AccessDeniedを返す（存在確認防止のためのAWS仕様）。IAM側で
+ * ListBucketを許可済みだが、念のためAccessDeniedも「存在しない」として扱う
+ * （IAM設定の将来的な regression に対する防御）。
+ */
+function isNotFoundError(error: unknown): boolean {
+  if (error instanceof NoSuchKey) return true;
+  if (error instanceof Error) {
+    const name = (error as { name?: string }).name;
+    const statusCode = (error as { $metadata?: { httpStatusCode?: number } }).$metadata
+      ?.httpStatusCode;
+    return name === 'AccessDenied' || statusCode === 403;
+  }
+  return false;
+}
+
 async function tryGetFromS3(bucket: string, key: string): Promise<Buffer | undefined> {
   try {
     const result = await s3Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
@@ -70,7 +87,7 @@ async function tryGetFromS3(bucket: string, key: string): Promise<Buffer | undef
     ).transformToByteArray();
     return Buffer.from(bytes);
   } catch (error) {
-    if (error instanceof NoSuchKey) return undefined;
+    if (isNotFoundError(error)) return undefined;
     throw error;
   }
 }
@@ -129,10 +146,24 @@ export async function handler(
     return notFoundResponse('Not found');
   }
 
-  const resized = await sharp(master, { limitInputPixels: MAX_INPUT_PIXELS })
-    .resize(width, width, { fit: 'inside', withoutEnlargement: true })
-    .jpeg()
-    .toBuffer();
+  // リサイズは process-handler がラスター画像として正規化した master（常に
+  // image/jpeg）にのみ適用できる。非画像ファイル・SVGのmasterはオリジナル
+  // バイト列のまま保存されており、sharpで処理すると例外（PDF等）や意図しない
+  // ラスタライズ（SVG）を起こすため、ここで明示的に拒否する。
+  let resized: Buffer;
+  try {
+    resized = await sharp(master, { limitInputPixels: MAX_INPUT_PIXELS })
+      .resize(width, width, { fit: 'inside', withoutEnlargement: true })
+      .jpeg()
+      .toBuffer();
+  } catch (error) {
+    logger.warn('Resize not applicable (master is not a processable raster image)', {
+      requestId,
+      fileId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return badRequestResponse('Resize is not applicable to this file');
+  }
 
   await s3Client.send(
     new PutObjectCommand({

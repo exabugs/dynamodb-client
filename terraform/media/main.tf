@@ -4,11 +4,9 @@
 # 決定事項・トレードオフ: ../../docs/adr/0002-media-design.md
 #
 # 本モジュールは upload-handler（presign/sign発行）のLambdaを含まない。
-# 「誰にpresign/署名URLを発行するか」の認可判断はアプリごとに異なり、多くの呼び出し側は
+# 「誰にpresign/署名URLを発行するか」の認可判断はアプリごとに異なるため、呼び出し側は
 # 既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・
-# `sign.ts` を直接呼び出す統合を選ぶため（標準実装 `upload-handler.ts` の
-# `createUploadHandler()` を使う場合は、呼び出し側が自前でLambdaとして
-# バンドル・デプロイすること）。
+# `sign.ts` を直接呼び出して自前のLambda/ルートに組み込むこと。
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}-media"
@@ -443,6 +441,20 @@ resource "aws_iam_role_policy" "media_handler_s3" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject"]
         Resource = "${aws_s3_bucket.media.arn}/cache/*"
+      },
+      {
+        # s3:ListBucket が無いロールでGetObjectが存在しないキーを指すと、S3は
+        # NoSuchKey（404相当）ではなく403 AccessDeniedを返す（存在確認防止のためのAWS仕様）。
+        # これを許可しないと tryGetFromS3() の NoSuchKey 判定に当たらず、
+        # cache未生成時の初回リクエストが常に500になる。
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = aws_s3_bucket.media.arn
+        Condition = {
+          StringLike = {
+            "s3:prefix" = ["master/*", "cache/*"]
+          }
+        }
       }
     ]
   })

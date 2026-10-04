@@ -95,8 +95,8 @@ describe('signMediaUrl', () => {
     expect(result.url).not.toContain('.com//master');
   });
 
-  it('有効期限を粒度（expiresInSeconds）単位に切り上げる', () => {
-    // 10:15:00 を 3600秒（1時間）粒度で切り上げ → 11:00:00
+  it('有効期限は「現在時刻+TTL」を粒度（TTL）単位に切り上げる', () => {
+    // 10:15:00 + TTL(3600秒) = 11:15:00 → 3600秒粒度で切り上げ → 12:00:00
     vi.setSystemTime(new Date('2026-01-01T10:15:00.000Z'));
 
     const result = signMediaUrl({
@@ -107,8 +107,26 @@ describe('signMediaUrl', () => {
       expiresInSeconds: 3600,
     });
 
-    const expectedExpiresAt = Math.floor(new Date('2026-01-01T11:00:00.000Z').getTime() / 1000);
+    const expectedExpiresAt = Math.floor(new Date('2026-01-01T12:00:00.000Z').getTime() / 1000);
     expect(result.expiresAt).toBe(expectedExpiresAt);
+  });
+
+  it('TTL境界の直前に発行しても、有効期間がTTLより短くならない（回帰テスト）', () => {
+    // 10:59:59 発行、TTL=3600秒。「現在時刻を切り上げる」実装だと11:00:00になり
+    // 有効期間が1秒になってしまう。正しくは [TTL, 2*TTL) の範囲を保証する。
+    vi.setSystemTime(new Date('2026-01-01T10:59:59.000Z'));
+
+    const result = signMediaUrl({
+      fileId: 'file-1',
+      keyPairId: 'KPID123',
+      privateKey: TEST_PRIVATE_KEY,
+      baseUrl: 'https://media.example.com',
+      expiresInSeconds: 3600,
+    });
+
+    const issuedAt = Math.floor(new Date('2026-01-01T10:59:59.000Z').getTime() / 1000);
+    expect(result.expiresAt - issuedAt).toBeGreaterThanOrEqual(3600);
+    expect(result.expiresAt - issuedAt).toBeLessThan(7200);
   });
 
   it('同じ時間帯内であれば同一のExpiresになる（ブラウザキャッシュが効く）', () => {

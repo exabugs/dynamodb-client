@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-10-04
+
+### Fixed
+
+- `terraform/modules/parameter-store`: 新規SSM Parameter `infra/dynamodb-client-api-iam-url`（AWS_IAM認証URL）を追加。既存の`infra/dynamodb-client-api-url`（NONE認証URL）は1.5.2でIAM認証の分岐を削除済みのため、IAM署名クライアント（`@exabugs/dynamodb-client/client/iam`）を使う呼び出し元・運用スクリプトは新しいパラメータを参照すること
+
+### Docs
+
+- `docs/adr/0001-fix-iam-auth-bypass.md`: 被害調査（90日分ログに悪用痕跡なし）が、prd環境の`LOG_LEVEL=warn`設定により実際には検証になっていなかった点を訂正。検証用サンドボックスが削除されずus-east-1に残存していた点も訂正
+
+### Added（実験的・未統合）
+
+- `src/server/media/`: ファイルアップロード・処理（EXIF除去・リサイズ）・CloudFront署名付きURL配信機能を追加（presign・sign・process-handler・process-handler-dlq・media-handler・ssmParams・magicBytes）。`terraform/media/`・`scripts/build-sharp-layer.sh`も追加
+  - **設計レビューの結果、現状の設計には実装前に解決すべき既知の欠落がある**（S3メタデータキーの契約未定義、管理画面向けpresign/sign発行の担い手不在、presigned POSTの再利用に対する不変性保証の欠如、リサイズのサイズ設計の不整合など）。詳細は`docs/media-design.md`・`docs/adr/0002-media-design.md`を参照。**いずれのアプリにもまだ統合されていない。設計改訂が完了するまで本番導入は推奨しない**
+
 ## [1.5.2] - 2026-10-04
 
 ### Security

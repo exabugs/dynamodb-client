@@ -30,7 +30,7 @@ describe('generatePresignedUpload', () => {
       fileSize: 1000,
       allowedContentTypes: ['image/jpeg', 'image/png'],
       maxUploadSize: 10_000_000,
-      metadata: { ownerId: 'user-1' },
+      metadata: { 'owner-id': 'user-1' },
     });
 
     expect(result.fileId).toBeTruthy();
@@ -90,14 +90,29 @@ describe('generatePresignedUpload', () => {
       fileSize: 1000,
       allowedContentTypes: ['image/jpeg'],
       maxUploadSize: 10_000_000,
-      metadata: { ownerId: 'user-1', venueId: 'venue-1' },
+      metadata: { 'owner-id': 'user-1', 'venue-id': 'venue-1' },
     });
 
     const callArgs = createPresignedPostMock.mock.calls[0][1];
-    expect(callArgs.Fields['x-amz-meta-ownerId']).toBe('user-1');
-    expect(callArgs.Fields['x-amz-meta-venueId']).toBe('venue-1');
-    expect(callArgs.Conditions).toContainEqual({ 'x-amz-meta-ownerId': 'user-1' });
-    expect(callArgs.Conditions).toContainEqual({ 'x-amz-meta-venueId': 'venue-1' });
+    expect(callArgs.Fields['x-amz-meta-owner-id']).toBe('user-1');
+    expect(callArgs.Fields['x-amz-meta-venue-id']).toBe('venue-1');
+    expect(callArgs.Conditions).toContainEqual({ 'x-amz-meta-owner-id': 'user-1' });
+    expect(callArgs.Conditions).toContainEqual({ 'x-amz-meta-venue-id': 'venue-1' });
+  });
+
+  it('大文字を含むメタデータキーは拒否する（S3がキーを小文字化するため、サイレントな不一致を防ぐ）', async () => {
+    await expect(
+      generatePresignedUpload({
+        s3Client,
+        bucket: 'test-bucket',
+        contentType: 'image/jpeg',
+        fileSize: 1000,
+        allowedContentTypes: ['image/jpeg'],
+        maxUploadSize: 10_000_000,
+        metadata: { ownerId: 'user-1' },
+      })
+    ).rejects.toThrow('Invalid metadata key');
+    expect(createPresignedPostMock).not.toHaveBeenCalled();
   });
 
   it('originalFilenameを指定した場合はメタデータに含める', async () => {

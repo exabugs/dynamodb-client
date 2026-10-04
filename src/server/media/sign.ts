@@ -9,14 +9,20 @@ import { getSignedUrl } from '@aws-sdk/cloudfront-signer';
 import type { SignMediaUrlParams, SignMediaUrlResult } from './types.js';
 
 /**
- * Expires（epoch seconds）を指定した粒度に切り上げる。
+ * Expires（epoch seconds）を計算する。
  *
- * 生の現在時刻+TTLをそのまま使うと、署名APIを呼ぶたびに毎回異なる署名URLになり
- * クライアント側のブラウザキャッシュが効かない。粒度（expiresInSeconds）単位で
- * 切り上げることで、同じ時間帯内は同一URLになりブラウザキャッシュも活用できる。
+ * 生の「現在時刻+TTL」をそのまま使うと、署名APIを呼ぶたびに毎回異なる署名URLになり
+ * クライアント側のブラウザキャッシュが効かない。TTL単位の境界に切り上げることで、
+ * 同じ時間帯内は同一URLになりブラウザキャッシュも活用できる。
+ *
+ * 必ず「現在時刻+TTLを切り上げる」のであって、「現在時刻を切り上げる」のではない
+ * ことに注意する。後者だと、TTL境界の直前に発行した場合に有効期間がTTLよりずっと
+ * 短くなってしまう（例: TTL=3600秒で境界の1秒前に発行すると有効期間は1秒になる）。
+ * この実装は常に [TTL, 2*TTL) の範囲の有効期間を保証する。
  */
-function roundUpExpiry(nowSeconds: number, granularitySeconds: number): number {
-  return Math.ceil(nowSeconds / granularitySeconds) * granularitySeconds;
+function computeExpiry(nowSeconds: number, ttlSeconds: number): number {
+  const target = nowSeconds + ttlSeconds;
+  return Math.ceil(target / ttlSeconds) * ttlSeconds;
 }
 
 /**
@@ -38,7 +44,7 @@ export function signMediaUrl(params: SignMediaUrlParams): SignMediaUrlResult {
   const targetUrl = `${baseUrl.replace(/\/$/, '')}${path}`;
 
   const nowSeconds = Math.floor(Date.now() / 1000);
-  const expiresAt = roundUpExpiry(nowSeconds, expiresInSeconds);
+  const expiresAt = computeExpiry(nowSeconds, expiresInSeconds);
 
   const url = getSignedUrl({
     url: targetUrl,

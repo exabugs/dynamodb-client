@@ -13,6 +13,30 @@ import type { PresignedUploadParams, PresignedUploadResult } from './types.js';
 
 const DEFAULT_EXPIRES_IN_SECONDS = 300;
 
+// @aws-sdk/s3-presigned-post は Conditions の要素型を公開exportしていないため、
+// createPresignedPost 自体のパラメータ型から導出する
+type PresignCondition = NonNullable<Parameters<typeof createPresignedPost>[1]['Conditions']>[number];
+
+/**
+ * S3はユーザー定義メタデータのキーを常に小文字で保存する（AWS仕様）。
+ * ここで大文字混じりのキーを許可すると、アップロード時に指定したキー名と
+ * process-handlerがHeadObjectで読み戻すキー名が一致しなくなり、呼び出し側の
+ * 権限スコープ判定（例: ownerIdでのフィルタ）がサイレントに失敗する。
+ * 呼び出し側の実装ミスを早期に検出するため、小文字以外のキーは拒否する。
+ */
+const METADATA_KEY_PATTERN = /^[a-z0-9-]+$/;
+
+function validateMetadataKeys(metadata: Record<string, string>): void {
+  for (const key of Object.keys(metadata)) {
+    if (!METADATA_KEY_PATTERN.test(key)) {
+      throw new Error(
+        `Invalid metadata key "${key}": S3 lowercases metadata keys, so keys must already be ` +
+          `lowercase (and use only [a-z0-9-]) to avoid a silent mismatch after upload`
+      );
+    }
+  }
+}
+
 /**
  * presign付きアップロードURLを発行する
  *
@@ -40,12 +64,12 @@ export async function generatePresignedUpload(
   if (fileSize <= 0 || fileSize > maxUploadSize) {
     throw new Error(`File size out of range: ${fileSize} (max: ${maxUploadSize})`);
   }
+  validateMetadataKeys(metadata);
 
   const fileId = ulid();
   const key = `raw/${fileId}`;
 
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const conditions: any[] = [
+  const conditions: PresignCondition[] = [
     ['content-length-range', 1, maxUploadSize],
     { 'Content-Type': contentType },
   ];

@@ -17,12 +17,12 @@
 - CloudFront Distribution（`/master/*`はS3直接配信、`/resize/*`はmedia-handler経由、両方とも署名付きURL必須）
 - CloudFront Public Key / Key Group（署名鍵は呼び出し側がSSM Parameter Storeに別途登録する）
 
-**含まないもの**: presign/署名URL発行用の `upload-handler` Lambda。「誰にpresign/署名URLを発行してよいか」の認可判断はアプリごとに異なるため、多くの呼び出し側は既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・`sign.ts` を直接呼び出す統合を選びます。標準実装（`src/server/media/upload-handler.ts`の`createUploadHandler()`）を使う場合は、呼び出し側が自前でLambdaとしてバンドル・デプロイしてください。
+**含まないもの**: presign/署名URL発行用のLambda。「誰にpresign/署名URLを発行してよいか」の認可判断はアプリごとに異なるため、呼び出し側は既存のHTTP APIレイヤー（認証・権限チェック済み）から `../../src/server/media/presign.ts`・`sign.ts` を直接呼び出して自前のLambda/ルートに組み込んでください。
 
 ## 前提条件
 
 1. `npm run build`（`scripts/build-sharp-layer.sh`を含む。Dockerが必要）を実行し、`dist/`配下にLambda成果物を生成しておくこと
-2. 署名鍵（RSA 2048bit）を生成し、公開鍵を`signing_public_key_param`で指定するSSM Parameterに登録しておくこと（秘密鍵は呼び出し側の`upload-handler`相当のコンポーネントが別途SSM経由で取得する）
+2. 署名鍵（RSA 2048bit）を生成し、公開鍵を`signing_public_key_param`で指定するSSM Parameterに登録しておくこと（秘密鍵は呼び出し側のpresign/署名URL発行処理が別途SSM経由で取得する）
 3. image policy（`masterMaxDimension`・`allowedContentTypes`・`maxUploadSize`）のJSONを`image_policy_param`で指定するSSM Parameterに登録しておくこと
 
 ## 使用方法

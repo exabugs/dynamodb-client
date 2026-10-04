@@ -112,6 +112,22 @@ describe('media-handler', () => {
     expect(res.headers?.['Cache-Control']).toBe('no-store');
   });
 
+  it('s3:ListBucket権限が無い場合にS3が返す403 AccessDeniedも「存在しない」として404を返す（回帰テスト）', async () => {
+    // s3:ListBucketが無いロールでGetObjectが存在しないキーを指すと、S3はNoSuchKeyでは
+    // なく403 AccessDeniedを返す。これをNoSuchKeyとしてしか扱わないと、cache未生成時の
+    // 初回リクエストが常に500になっていた（IAMのListBucket付与漏れに対する防御）。
+    class FakeAccessDenied extends Error {
+      name = 'AccessDenied';
+      $metadata = { httpStatusCode: 403 };
+    }
+    s3SendMock.mockImplementation(() => Promise.reject(new FakeAccessDenied('Access Denied')));
+
+    const { handler } = await import('../../../src/server/media/media-handler.js');
+    const res = await handler(makeEvent('/resize/file-missing', '320'));
+
+    expect(res.statusCode).toBe(404);
+  });
+
   it('widthが1未満なら400', async () => {
     const { handler } = await import('../../../src/server/media/media-handler.js');
     const res = await handler(makeEvent('/resize/file-1', '0'));
@@ -142,5 +158,28 @@ describe('media-handler', () => {
     const res = await handler(makeEvent('/resize/file-1', '320'));
     expect(res.statusCode).toBe(500);
     expect(res.headers?.['Cache-Control']).toBe('no-store');
+  });
+
+  it('masterが処理不能な形式（sharpが例外を投げる）の場合は400を返す', async () => {
+    // 非画像ファイル・SVGのmasterはオリジナルバイト列のまま保存されており、
+    // sharpで処理するとエラーになる。500ではなく400（リサイズ非対応）を返すべき。
+    sharpInstanceMock.toBuffer.mockRejectedValueOnce(
+      new Error('Input buffer contains unsupported image format')
+    );
+    s3SendMock.mockImplementation((cmd: { __type: string; input: { Key: string } }) => {
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'cache/file-pdf/320') {
+        return Promise.reject(new FakeNoSuchKey('not found'));
+      }
+      if (cmd.__type === 'GetObject' && cmd.input.Key === 'master/file-pdf') {
+        return Promise.resolve({ Body: fakeBody(Buffer.from('%PDF-1.4...')) });
+      }
+      throw new Error('unexpected call: ' + JSON.stringify(cmd));
+    });
+
+    const { handler } = await import('../../../src/server/media/media-handler.js');
+    const res = await handler(makeEvent('/resize/file-pdf', '320'));
+
+    expect(res.statusCode).toBe(400);
+    expect(s3SendMock.mock.calls.find((c) => c[0].__type === 'PutObject')).toBeUndefined();
   });
 });

@@ -44,7 +44,7 @@ export interface MediaRecord {
 /**
  * image policy（Parameter Store経由で実行時取得するJSON）
  *
- * upload-handler（presign発行時の allowedContentTypes/maxUploadSize）、
+ * 呼び出し側のpresign発行処理（allowedContentTypes/maxUploadSize）、
  * process-handler（masterMaxDimension）、
  * media-handler（widthの健全性チェック上限として masterMaxDimension を流用）が参照する。
  *
@@ -54,9 +54,9 @@ export interface MediaRecord {
 export interface ImagePolicy {
   /** process-handlerがmaster生成時に使う長辺上限。media-handlerのwidth上限チェックにも流用する */
   masterMaxDimension: number;
-  /** upload-handlerがpresign発行時に使う許可MIMEタイプ */
+  /** presign発行時に使う許可MIMEタイプ */
   allowedContentTypes: string[];
-  /** upload-handlerがpresign発行時に使う最大アップロードサイズ（バイト） */
+  /** presign発行時に使う最大アップロードサイズ（バイト） */
   maxUploadSize: number;
 }
 

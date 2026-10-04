@@ -104,16 +104,16 @@ cache/{fileId}/{width}  … オンデマンドで生成したリサイズ結果�
 
 - RSA鍵ペア（**2048ビット固定**。CloudFrontは4096ビットRSA公開鍵を受け付けないため）を生成し、呼び出し側の秘密情報管理の仕組み（Parameter Store等）に公開鍵・秘密鍵を登録する。
 - 公開鍵はTerraform変数（`signing_public_key_param`、SSM Parameter名を渡す想定）として受け取り、`aws_cloudfront_public_key`→`aws_cloudfront_key_group`とTerraformで渡す。
-- 秘密鍵はLambdaの環境変数やTerraformのdata sourceには流さない。署名を生成するLambda（`upload-handler`。呼び出し側が用意する署名発行APIも同様）が実行時にSecrets Manager/Parameter Store等から取得しモジュールスコープにキャッシュするパターンを推奨する。**秘密鍵が必要なのは署名を生成するコンポーネントだけ**（`process-handler`・`media-handler`には権限を付けない、最小権限）。
+- 秘密鍵はLambdaの環境変数やTerraformのdata sourceには流さない。署名を生成する呼び出し側の署名発行APIが実行時にSecrets Manager/Parameter Store等から取得しモジュールスコープにキャッシュするパターンを推奨する。**秘密鍵が必要なのは署名を生成するコンポーネントだけ**（`process-handler`・`media-handler`には権限を付けない、最小権限）。
 - key groupは複数鍵を保持できるため、将来の鍵ローテーションにも対応できる。
 
 **image policyの管理（画像サイズ等はTerraform変数にしない）**:
 
 - masterの最大寸法（`masterMaxDimension`）・許可contentType（`allowedContentTypes`）・最大アップロードサイズ（`maxUploadSize`）は、**1つのJSON値（image policy）としてParameter Store等に保存**し、Terraformが管理するのは**そのパラメータの「名前」だけ**（`image_policy_param`という変数でパスを受け取る）。**widthの健全性チェックには独立フィールドを持たない**（`min`は固定`1`、`max`は`masterMaxDimension`を流用すれば十分。詳細は前述）。
 - 値自体（JSON本体）は署名鍵と同じ「呼び出し側の秘密情報管理の仕組みで登録・更新する」対象とし、**変更してもTerraform apply・Lambda再デプロイを必要としない**（Lambdaはモジュールスコープにキャッシュしつつ、コールドスタートのたびに再取得する。頻繁な変更に即座に追従する必要がなければこれで十分）。
-- 取得が必要なコンポーネント: `upload-handler`（presign発行時の`allowedContentTypes`/`maxUploadSize`）、`process-handler`（`masterMaxDimension`）、`media-handler`（widthの健全性チェック上限として`masterMaxDimension`を流用）。それぞれ`ssm:GetParameter`権限が必要（機密情報ではないためSecureStringである必要はない）。
+- 取得が必要なコンポーネント: 呼び出し側のpresign発行処理（`allowedContentTypes`/`maxUploadSize`）、`process-handler`（`masterMaxDimension`）、`media-handler`（widthの健全性チェック上限として`masterMaxDimension`を流用）。それぞれ`ssm:GetParameter`権限が必要（機密情報ではないためSecureStringである必要はない）。
 - これにより、呼び出し側アプリが運用判断（許可contentTypeの追加、最大アップロードサイズの変更等）に応じて画像ポリシーを調整する際、インフラのデプロイサイクルに縛られない。**具体的なwidthの値はimage policyでは管理しない**（署名付きURL必須のため、widthの選択は呼び出し側アプリコードの判断で良く、`media-handler`側は`masterMaxDimension`による健全性チェックのみ行う）。
-- **取得失敗時はfail-closed**: Parameter Storeにimage policyが未登録・不正なJSONの場合、安全側の既定値にフォールバックするのではなく、該当リクエストを拒否する（`upload-handler`はpresign発行を拒否、`media-handler`はリサイズ要求を拒否）。「取得できない＝無制限を許可」になってしまう実装ミスを避けるため。
+- **取得失敗時はfail-closed**: Parameter Storeにimage policyが未登録・不正なJSONの場合、安全側の既定値にフォールバックするのではなく、該当リクエストを拒否する（呼び出し側のpresign発行処理はリクエストを拒否、`media-handler`はリサイズ要求を拒否）。「取得できない＝無制限を許可」になってしまう実装ミスを避けるため。
 
 ## セキュリティ・堅牢性対応一覧
 
@@ -140,15 +140,15 @@ cache/{fileId}/{width}  … オンデマンドで生成したリサイズ結果�
 
 ## メタデータ管理（DynamoDB方式）
 
-**image policyの型**（`upload-handler`・`process-handler`・`media-handler`がParameter Storeから実行時取得するJSON。前述「image policyの管理」参照）:
+**image policyの型**（呼び出し側のpresign発行処理・`process-handler`・`media-handler`がParameter Storeから実行時取得するJSON。前述「image policyの管理」参照）:
 
 ```ts
 interface ImagePolicy {
   masterMaxDimension: number; // process-handlerがmaster生成時に使う長辺上限。
   // media-handlerのwidth健全性チェックの上限もこの値を流用する
   // （下限は固定`1`。署名付きURL必須のため独立フィールドは持たない）
-  allowedContentTypes: string[]; // upload-handlerがpresign発行時に使う許可MIMEタイプ
-  maxUploadSize: number; // upload-handlerがpresign発行時に使う最大アップロードサイズ
+  allowedContentTypes: string[]; // 呼び出し側のpresign発行処理が使う許可MIMEタイプ
+  maxUploadSize: number; // 呼び出し側のpresign発行処理が使う最大アップロードサイズ
 }
 ```
 
@@ -181,8 +181,7 @@ interface MediaRecord {
 
 ## コンポーネント一覧（`src/server/media/`）
 
-- `presign.ts`: `generatePresignedUpload({ s3Client, bucket, contentType, originalFilename, fileSize, allowedContentTypes, maxUploadSize, metadata })` — DynamoDBには一切触れない。`metadata`の各キーを`x-amz-meta-{key}`としてpolicyの`eq`条件に固定する。ULID採番、`{ fileId, uploadUrl, fields }`を返す。`exports`の`./server/media/presign`として公開。
-- `upload-handler.ts`: `POST /presign`・`POST /sign`（署名付きURL発行、`{fileId, width?}[]`のバッチAPI）を扱うLambda Function URL用ハンドラ。呼び出し側の認証方式（JWT等）に応じた検証は呼び出し側が用意した認証ユーティリティを再利用する想定。**image policy（後述、`allowedContentTypes`・`maxUploadSize`等）はParameter Storeから実行時に取得**し、`presign.ts`呼び出し時の引数として渡す（Terraform環境変数には焼き込まない。ポリシー変更にインフラデプロイを不要にするため）。署名生成は`sign.ts`を呼ぶ。`exports`の`./server/media-upload-handler`として公開。
+- `presign.ts`: `generatePresignedUpload({ s3Client, bucket, contentType, originalFilename, fileSize, allowedContentTypes, maxUploadSize, metadata })` — DynamoDBには一切触れない。`metadata`の各キーを`x-amz-meta-{key}`としてpolicyの`eq`条件に固定する。ULID採番、`{ fileId, uploadUrl, fields }`を返す。`exports`の`./server/media/presign`として公開。「誰にpresign発行してよいか」の認可・HTTPルーティングはライブラリの関心事ではないため、呼び出し側が自前のAPIレイヤー（認証・権限チェック済み）からこの関数を直接呼ぶ（`image policy`はParameter Storeから呼び出し側が取得し、この関数の引数として渡す）。
 - `sign.ts`: `signMediaUrl({ fileId, width?, keyPairId, privateKey, baseUrl, expiresInSeconds })` — Canned Policyで署名付きURLを生成する共通ロジック。`width`指定時は`/resize/{fileId}?width=N`、省略時は`/master/{fileId}`のURLに署名する（**呼び出し元が具体的な幅を決めてから呼ぶ**。ワイルドカード署名はしない）。`Expires`は指定した粒度（例: 1時間）に切り上げてから署名する。秘密鍵の取得はこの関数の責務外とし、引数で受け取るだけにする。`exports`の`./server/media-sign`として公開。
 - `process-handler.ts`: S3 `ObjectCreated`イベント（`raw/*`）をトリガーに起動。HeadObjectでメタデータ取得→マジックナンバー検証→`contentType`で分岐:
   - 画像（svg除く）: sharp: rotate()（EXIF Orientationに基づく向き補正）→ 長辺がimage policy（Parameter Storeから実行時取得、既定4096px）の`masterMaxDimension`を超える場合のみresize → strip metadata → jpeg（limitInputPixelsで巨大画像を拒否）→ `master/{fileId}`へ配置
@@ -212,7 +211,6 @@ interface MediaRecord {
   - `cache/*`: **Lifecycleルールで`image_cache_ttl_days`（既定30日）経過後に自動削除**。CloudFrontのどのビヘイビアにも直接マッピングしない。OACへの許可も与えない
 - S3イベント通知（`raw/*` ObjectCreated → `process-handler` Lambda）
 - SQS DLQ（`process-handler`の`on-failure`宛先）
-- `upload-handler` Lambda（presign + `/sign`、Function URL、認証は呼び出し側の認証方式に依存。SSMから署名用秘密鍵・image policyを取得するため`ssm:GetParameter`権限が必要）
 - `process-handler` Lambda（S3トリガーのみ、arm64、sharp Layer付き、メモリ1024MB/タイムアウト60秒、DLQ設定済み、image policy（`masterMaxDimension`）取得のため`ssm:GetParameter`権限、呼び出し側が渡す既存テーブルARNへの`dynamodb:PutItem`等の権限が必要）
 - `media-handler` Lambda（CloudFrontの`/resize/*`ビヘイビア専用オリジン、**Function URLは`AWS_IAM`**、arm64、sharp Layer付き、S3の`master/*`読み取り・`cache/*`読み書き権限、image policy（`masterMaxDimension`をwidth上限チェックに流用）取得のため`ssm:GetParameter`権限。**署名鍵へのSSM権限・DynamoDB権限は付与しない**）
 - `aws_lambda_permission`（`media-handler`向け、principal=`cloudfront.amazonaws.com`、source_arn=Distribution ARN）
